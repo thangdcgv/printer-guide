@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả tìm kiếm: {{ keyword }} - Máy In Đại Thành</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .back-link { color: #64748b; text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 16px; }
+        .back-link:hover { color: #2563eb; }
+        .result-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .result-item:last-child { border-bottom: none; }
+        .result-title { font-weight: 600; color: #0f172a; text-decoration: none; }
+        .result-title:hover { color: #2563eb; }
+        .btn-view { background: #eff6ff; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; text-decoration: none; font-weight: 600; }
+        .empty { text-align: center; color: #64748b; padding: 30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/" class="back-link">← Quay lại trang chủ</a>
+    <h2 style="font-size: 1.25rem; margin-top: 0;">Kết quả tìm kiếm cho: "<span style="color: #2563eb;">{{ keyword }}</span>"</h2>
+
+    <div style="margin-top: 16px;">
+        {% if guides %}
+            {% for guide in guides %}
+            <div class="result-item">
+                <a href="/admin/guide-step?guide_id={{ guide.id }}" class="result-title">🔧 {{ guide.title }}</a>
+                <a href="/admin/guide-step?guide_id={{ guide.id }}" class="btn-view">Xem chi tiết</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>Không tìm thấy tài liệu hướng dẫn nào phù hợp với từ khóa "<strong>{{ keyword }}</strong>".</p>
+                <p style="font-size: 0.85rem; color: #94a3b8;">Vui lòng thử lại với tên dòng máy khác (Ví dụ: PRO-1000, Epson, kẹt giấy...).</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

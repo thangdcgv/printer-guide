@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Tích hợp Font Inter và đồng bộ style Modern UI -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    .modern-ui {
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+        background-color: #f8fafc;
+        min-height: calc(100vh - 60px);
+        padding: 2rem 1rem;
+    }
+
+    .modern-ui h3 {
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.025em;
+        color: #0f172a;
+    }
+
+    .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .modern-input, .modern-select, .modern-textarea {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        color: #334155;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    .modern-input:focus, .modern-select:focus, .modern-textarea:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+
+    .btn-warning-modern {
+        background-color: #d97706;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.6rem 1.4rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-warning-modern:hover {
+        background-color: #b45309;
+        color: white;
+    }
+
+    .btn-secondary-modern {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.6rem 1.2rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+    .btn-secondary-modern:hover {
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }
+</style>
+
+<div class="modern-ui">
+    <div class="container" style="max-width: 750px;">
+        
+        <!-- HEADER -->
+        <div class="mb-4">
+            <h3 class="mb-1 d-flex align-items-center gap-2">
+                <!-- SVG Edit Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                {{ title }}
+            </h3>
+            <p class="text-muted small mb-0" style="color: #64748b !important;">
+                Chỉnh sửa thông tin bài hướng dẫn kỹ thuật trên hệ thống
+            </p>
+        </div>
+
+        <!-- FORM CARD -->
+        <div class="glass-card">
+            <div class="card-body p-4">
+                <form action="/admin/guide/edit/{{ guide.id }}" method="POST">
+                    
+                    <!-- 1. Chọn Model Máy In -->
+                    <div class="mb-3">
+                        <label for="printer_model_id" class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem;">Model Máy In <span class="text-danger">*</span></label>
+                        <select name="printer_model_id" id="printer_model_id" class="form-select modern-select" required>
+                            {% for p in printers %}
+                                <option value="{{ p.id }}" {% if guide.printer_model_id == p.id %}selected{% endif %}>
+                                    {{ p.brand }} - {{ p.model }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 2. Tiêu đề -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem;">Tiêu đề <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="title" class="form-control modern-input" maxlength="200" value="{{ guide.title }}" required>
+                        {% if errors and errors.title %}
+                            <div class="text-danger small mt-1">{{ errors.title }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- 3. Mô tả ngắn -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem;">Mô tả ngắn</label>
+                        <textarea name="description" id="description" rows="3" class="form-control modern-textarea">{{ guide.description or '' }}</textarea>
+                    </div>
+
+                    <!-- 4. Thứ tự & Trạng thái -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="sort_order" class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem;">Thứ tự sắp xếp</label>
+                            <input type="number" name="sort_order" id="sort_order" class="form-control modern-input" value="{{ guide.sort_order or 1 }}">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2 ms-md-2">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" value="true" {% if guide.is_active %}checked{% endif %} style="width: 2.5em; height: 1.25em; cursor: pointer;">
+                                <label class="form-check-label fw-semibold ms-2" for="is_active" style="color: #334155; font-size: 0.9rem; cursor: pointer;">Kích hoạt hiển thị</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Nút điều hướng -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top" style="border-color: #f1f5f9 !important;">
+                        <a href="/admin/guide" class="btn-secondary-modern">
+                            <!-- SVG Arrow Left -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            Quay lại
+                        </a>
+                        <button type="submit" class="btn-warning-modern shadow-sm">
+                            <!-- SVG Check Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            Cập nhật Bài Hướng Dẫn
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

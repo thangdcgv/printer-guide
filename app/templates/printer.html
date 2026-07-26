@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+.printer-ui {
+
+    font-family:
+        'Inter',
+        'Roboto',
+        Arial,
+        sans-serif;
+
+    background:#f8fafc;
+
+    min-height:
+        calc(100vh - 60px);
+
+    padding:
+        1rem .75rem;
+
+    color:#1e293b;
+
+}
+
+
+
+/* HEADER */
+
+.printer-header h3 {
+
+    font-size:
+        1.35rem;
+
+    font-weight:
+        700;
+
+    color:#0f172a;
+
+}
+
+
+.btn-add {
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    padding:
+        .45rem 1rem;
+
+    font-size:
+        .85rem;
+
+    font-weight:
+        500;
+
+    text-decoration:none;
+
+}
+
+
+.btn-add:hover {
+
+    background:#1d4ed8;
+
+    color:white;
+
+}
+
+
+
+/* CARD */
+
+.printer-card {
+
+    background:white;
+
+    border:
+        1px solid #e2e8f0;
+
+    border-radius:12px;
+
+    box-shadow:
+        0 4px 8px rgba(0,0,0,.05);
+
+    overflow:hidden;
+
+}
+
+
+
+/* TABLE */
+
+.printer-table {
+
+
+    width:100%;
+
+    border-collapse:
+        separate;
+
+    border-spacing:0;
+
+}
+
+
+
+.printer-table th {
+
+
+    background:#f8fafc;
+
+    color:#64748b;
+
+    font-size:
+        .7rem;
+
+    text-transform:
+        uppercase;
+
+    font-weight:
+        600;
+
+    padding:
+        .8rem 1rem;
+
+    border-bottom:
+        1px solid #e2e8f0;
+
+}
+
+
+
+.printer-table td {
+
+
+    padding:
+        .9rem 1rem;
+
+    border-bottom:
+        1px solid #f1f5f9;
+
+    font-size:
+        .85rem;
+
+    vertical-align:
+        middle;
+
+}
+
+
+
+.printer-table tbody tr:hover {
+
+    background:#fdfdfd;
+
+}
+
+
+
+.brand-text {
+
+
+    font-weight:
+        600;
+
+    color:#2563eb;
+
+}
+
+
+
+.model-text {
+
+
+    font-weight:
+        600;
+
+    color:#0f172a;
+
+}
+
+
+
+.description {
+
+
+    color:#64748b;
+
+    max-width:
+        350px;
+
+    overflow:hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+
+}
+
+
+
+/* ACTION */
+
+.btn-edit {
+
+
+    background:#fef3c7;
+
+    color:#92400e;
+
+    border:
+        1px solid #fde68a;
+
+
+    border-radius:
+        7px;
+
+
+    padding:
+        .35rem .75rem;
+
+
+    font-size:
+        .75rem;
+
+
+    font-weight:
+        600;
+
+
+    text-decoration:none;
+
+}
+
+
+
+.btn-edit:hover {
+
+
+    background:#fde68a;
+
+    color:#78350f;
+
+}
+
+
+
+/* =====================
+   TABLET 7 INCH
+===================== */
+
+
+@media(max-width:768px){
+
+
+.printer-ui {
+
+    padding:
+        .75rem .5rem;
+
+}
+
+
+
+.printer-header h3 {
+
+
+    font-size:
+        1.15rem;
+
+}
+
+
+
+.btn-add {
+
+
+    font-size:
+        .75rem;
+
+
+    padding:
+        .4rem .7rem;
+
+}
+
+
+
+.printer-table th {
+
+
+    padding:
+        .6rem .5rem;
+
+
+    font-size:
+        .6rem;
+
+}
+
+
+
+.printer-table td {
+
+
+    padding:
+        .65rem .5rem;
+
+
+    font-size:
+        .78rem;
+
+}
+
+
+
+}
+
+
+
+/* =====================
+   5-6 INCH
+===================== */
+
+
+@media(max-width:600px){
+
+
+/* Ẩn ID */
+
+.printer-table th:first-child,
+
+.printer-table td:first-child {
+
+    display:none;
+
+}
+
+
+/* Thu nhỏ description */
+
+.description {
+
+
+    max-width:
+        120px;
+
+}
+
+
+
+/* Nút */
+
+.btn-edit {
+
+
+    padding:
+        .3rem .55rem;
+
+}
+
+
+
+/* Ẩn chữ dài */
+
+.printer-table th:nth-child(4),
+
+.printer-table td:nth-child(4){
+
+
+    max-width:
+        120px;
+
+}
+
+
+}
+
+
+
+/* =====================
+   5 INCH
+===================== */
+
+
+@media(max-width:480px){
+
+
+/* Ẩn description */
+
+.printer-table th:nth-child(4),
+
+.printer-table td:nth-child(4){
+
+    display:none;
+
+}
+
+
+
+.printer-table th:nth-child(2){
+
+    width:
+        30%;
+
+}
+
+
+.printer-table th:nth-child(3){
+
+    width:
+        40%;
+
+}
+
+
+.printer-table th:nth-child(5){
+
+    width:
+        30%;
+
+}
+
+
+
+}
+
+</style>
+
+
+
+<div class="printer-ui">
+
+
+    <!-- HEADER -->
+
+    <div class="printer-header d-flex justify-content-between align-items-center mb-3">
+
+
+        <h3 class="mb-0">
+            Model máy in
+        </h3>
+
+
+        <a class="btn-add"
+           href="/admin/printer/create">
+
+            + Thêm mới
+
+        </a>
+
+
+    </div>
+
+
+
+
+    <!-- TABLE -->
+
+    <div class="printer-card">
+
+
+        <div class="table-responsive">
+
+
+            <table class="printer-table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Brand</th>
+
+                        <th>Model</th>
+
+                        <th>Mô tả</th>
+
+                        <th style="width:120px">
+                            Thao tác
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+
+                <tbody>
+
+
+                {% for p in printers %}
+
+
+                    <tr>
+
+
+                        <td>
+                            {{p.id}}
+                        </td>
+
+
+                        <td>
+
+                            <span class="brand-text">
+                                {{p.brand}}
+                            </span>
+
+                        </td>
+
+
+
+                        <td>
+
+                            <span class="model-text">
+                                {{p.model}}
+                            </span>
+
+                        </td>
+
+
+
+                        <td>
+
+                            <div class="description">
+
+                                {{p.description or '-'}}
+
+                            </div>
+
+
+                        </td>
+
+
+
+                        <td>
+
+
+                            <a
+                            class="btn-edit"
+                            href="/admin/printer/edit/{{p.id}}">
+
+                                Sửa
+
+                            </a>
+
+
+                        </td>
+
+
+
+                    </tr>
+
+
+                {% else %}
+
+
+                    <tr>
+
+                        <td colspan="5"
+                            class="text-center py-4">
+
+                            Chưa có dữ liệu
+
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

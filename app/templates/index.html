@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư viện Máy in Đại Thành</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* =====================================================
+        GLOBAL STYLES
+        ===================================================== */
+        .modern-ui {
+            font-family: 'Inter', Arial, sans-serif;
+            color: #1e293b;
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 16px 12px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* =====================================================
+        HEADER BANNER (Canh giữa, tối ưu cho màn hình 5-7 inch)
+        ===================================================== */
+        .navbar-banner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .brand-centered {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-decoration: none !important; /* Triệt tiêu hoàn toàn gạch chân liên kết */
+            transition: transform 0.25s ease;
+        }
+
+        .brand-centered:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Kích thước Logo cân đối, sắc nét */
+        .brand-logo {
+            height: 45px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.2));
+            transition: transform 0.3s ease;
+        }
+
+        .brand-centered:hover .brand-logo {
+            transform: scale(1.05) rotate(-2deg);
+        }
+
+        /* Tên thương hiệu hiệu ứng Gradient Đỏ - Cam - Vàng, chống rớt dòng */
+        .brand-centered span {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 10px rgba(220, 38, 38, 0.15);
+            white-space: nowrap;
+        }
+
+        .brand-centered:hover span {
+            opacity: 0.9;
+        }
+
+        /* Tự động phóng lớn hoành tráng hơn khi xem trên màn hình máy tính (Desktop) */
+        @media (min-width: 768px) {
+            .navbar-banner {
+                padding: 18px 24px;
+            }
+            .brand-logo {
+                height: 92px;
+            }
+            .brand-centered span {
+                font-size: 3.65rem;
+            }
+        }
+
+        /* =====================================================
+        HERO SECTION & SEARCH
+        ===================================================== */
+        .hero {
+            text-align: center;
+            padding: 30px 10px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            border: 1px solid #dbeafe;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .search-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* =====================================================
+        GRID SECTIONS
+        ===================================================== */
+        .grid-section {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 16px;
+        }
+
+        @media(max-width: 768px) {
+            .grid-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-list-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: #334155;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .card-list-item:hover {
+            background: #f8fafc;
+            color: #2563eb;
+        }
+
+        /* Admin Quick Panel Style */
+        .admin-panel-card {
+            background: #fdf4ff;
+            border: 1px solid #f5d0fe;
+        }
+
+        .admin-panel-card .section-title {
+            color: #86198f;
+        }
+
+        .admin-link-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            text-align: center;
+            background: #a855f7;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+        }
+
+        .admin-link-btn:hover {
+            background: #9333ea;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="modern-ui">
+    <div class="container">
+        
+        <!-- Navbar tích hợp Logo Supabase -->
+        <div class="header-container">
+            <a href="/" class="brand-centered">
+                <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo Máy In Đại Thành" class="brand-logo">
+                <span>Máy In Đại Thành</span>
+            </a>
+        </div>
+
+        <!-- Hero Section cho Khách hàng tra cứu -->
+        <div class="hero">
+            <h1>Trung tâm Hướng dẫn & Sửa chữa Máy in</h1>
+            <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
+            
+            <!-- Chuyển thành thẻ form để truyền từ khóa tìm kiếm -->
+            <form action="/search" method="GET" class="search-box">
+                <input type="text" name="q" class="search-input" placeholder="Nhập tên dòng máy cần tìm (vd: PRO-1000,..." required>
+                <button type="submit" class="search-btn">Tìm kiếm</button>
+            </form>
+        </div>
+
+        <!-- Phân vùng nội dung chính -->
+        <div class="grid-section">
+            
+        <!-- Cột trái: Khách hàng (Danh mục hướng dẫn mới cập nhật từ Database) -->
+        <div>
+            <div class="glass-card" style="margin-bottom: 0;">
+                <div class="section-title">📖 Tài liệu hướng dẫn mới cập nhật</div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    {% if recent_guides %}
+                        {% for guide in recent_guides %}
+                        <a href="/admin/guide-step?guide_id={{ guide.id }}" class="card-list-item">
+                            <span>🔧 {{ guide.title }}</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">Xem chi tiết →</span>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; padding: 16px; color: #94a3b8; font-size: 0.85rem;">
+                            Chưa có tài liệu hướng dẫn nào được cập nhật.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Quản trị viên (Lối tắt nhanh) -->
+        <div>
+            <div class="glass-card admin-panel-card" style="margin-bottom: 0;">
+                <div class="section-title">⚡ Khu vực Quản trị</div>
+                <p style="font-size: 0.8rem; color: #701a75; margin-bottom: 14px;">
+                    Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
+                </p>
+                <a href="/admin/login" class="admin-link-btn">Quản lý bài viết hướng dẫn</a>
+                <a href="/admin/dashboard" class="admin-link-btn" style="background: #7e22ce;">Mở Dashboard Thống kê</a>
+            </div>
+        </div>
+
+    </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Máy In Đại Thành Technical Support System &copy; 2026
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Đăng nhập Hệ thống - Máy In Đại Thành</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #cbd5e1;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-text: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            padding: 24px 20px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 640px) {
+            .login-card {
+                padding: 36px 32px;
+            }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            height: 44px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+
+        .logo-container h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .error-msg {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px; /* Ngăn chặn zoom tự động trên Safari iOS khi focus */
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+            min-height: 48px; /* Đảm bảo diện tích chạm tối ưu trên điện thoại */
+        }
+
+        .btn-submit:active {
+            background: var(--primary-hover);
+        }
+
+        .back-home {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
+
+        .back-home a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px;
+            display: inline-block;
+        }
+
+        .back-home a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo-container">
+        <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo">
+        <h2>Đăng nhập Quản trị</h2>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/admin/login" novalidate>
+        <div class="form-group">
+            <label class="form-label">Tên đăng nhập hoặc Email</label>
+            <input type="text" name="username" class="form-input" placeholder="Ví dụ: thangnv hoặc email..." required autofocus autocomplete="username">
+            <div class="helper-text">Có thể nhập tên viết tắt (vd: thangnv) hoặc email đầy đủ.</div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Mật khẩu</label>
+            <input type="password" name="password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn-submit">Đăng nhập</button>
+    </form>
+
+    <div class="back-home">
+        <a href="/">← Quay lại trang chủ</a>
+    </div>
+</div>
+
+</body>
+</html>

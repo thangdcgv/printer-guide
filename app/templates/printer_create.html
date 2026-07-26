@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="mb-4">
+
+Thêm Model máy in
+
+</h3>
+{% if errors.duplicate %}
+<div class="alert alert-danger">
+    {{ errors.duplicate }}
+</div>
+{% endif %}
+<form method="post">
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Brand
+
+</label>
+
+<input
+    type="text"
+    name="brand"
+    class="form-control {% if errors.brand %}is-invalid{% endif %}"
+    value="{{ brand }}"
+>
+
+<div class="invalid-feedback">
+    {{ errors.brand }}
+</div>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Model
+
+</label>
+
+<input
+    type="text"
+    name="model"
+    class="form-control {% if errors.model %}is-invalid{% endif %}"
+    value="{{ model }}"
+>
+
+<div class="invalid-feedback">
+    {{ errors.model }}
+</div>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Description
+
+</label>
+
+<textarea
+    class="form-control"
+    name="description">{{ description }}</textarea>
+
+</div>
+
+<button class="btn btn-primary">
+
+Lưu
+
+</button>
+
+<a class="btn btn-secondary"
+   href="/admin/printer">
+
+Quay lại
+
+</a>
+
+</form>
+
+{% endblock %}

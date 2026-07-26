@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Sửa Model máy in</h3>
+
+<form method="post">
+
+<div class="mb-3">
+
+<label>Brand</label>
+
+<input
+class="form-control"
+name="brand"
+value="{{ printer.brand }}"
+required>
+
+</div>
+
+<div class="mb-3">
+
+<label>Model</label>
+
+<input
+class="form-control"
+name="model"
+value="{{ printer.model }}"
+required>
+
+</div>
+
+<div class="mb-3">
+
+<label>Description</label>
+
+<textarea
+class="form-control"
+name="description">{{ printer.description }}</textarea>
+
+</div>
+
+<button class="btn btn-primary">
+
+Cập nhật
+
+</button>
+
+<a
+class="btn btn-secondary"
+href="/admin/printer">
+
+Quay lại
+
+</a>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+body{
+
+    font-family:Arial;
+
+    width:1000px;
+
+    margin:auto;
+
+    padding:40px;
+
+}
+
+header{
+
+    margin-bottom:30px;
+
+}
+
+a{
+
+    color:#1565C0;
+
+    text-decoration:none;
+
+}
+
+a:hover{
+
+    text-decoration:underline;
+
+}

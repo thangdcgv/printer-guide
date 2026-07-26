@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+.guide-form-ui {
+
+    font-family:'Inter', sans-serif;
+
+    background:#f8fafc;
+
+    min-height:calc(100vh - 60px);
+
+    padding:
+        1rem .75rem;
+
+    color:#1e293b;
+
+}
+
+
+
+/* HEADER */
+
+.guide-form-ui h3 {
+
+    font-size:
+        1.2rem;
+
+    font-weight:
+        700;
+
+    color:#0f172a;
+
+}
+
+
+
+.guide-subtitle {
+
+    font-size:
+        .85rem;
+
+    color:#64748b;
+
+}
+
+
+
+
+
+/* CARD */
+
+.form-card {
+
+
+    background:white;
+
+    border:
+        1px solid #e2e8f0;
+
+
+    border-radius:
+        12px;
+
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,.05);
+
+}
+
+
+
+
+
+.form-body {
+
+    padding:
+        1.25rem;
+
+}
+
+
+
+
+
+/* LABEL */
+
+.form-label {
+
+
+    font-size:
+        .85rem;
+
+
+    font-weight:
+        600;
+
+
+    color:#334155;
+
+
+    margin-bottom:
+        .35rem;
+
+}
+
+
+
+
+
+/* INPUT */
+
+.modern-control {
+
+
+    height:
+        44px;
+
+
+    border:
+        1px solid #cbd5e1;
+
+
+    border-radius:
+        8px;
+
+
+    font-size:
+        .95rem;
+
+
+    padding:
+        .5rem .75rem;
+
+
+    color:#334155;
+
+}
+
+
+
+textarea.modern-control {
+
+
+    height:
+        auto;
+
+
+    min-height:
+        100px;
+
+}
+
+
+
+.modern-control:focus {
+
+
+    border-color:#3b82f6;
+
+
+    box-shadow:
+        0 0 0 3px rgba(59,130,246,.12);
+
+
+}
+
+
+
+
+
+/* BUTTON */
+
+.btn-modern {
+
+
+    height:
+        42px;
+
+
+    padding:
+        0 1rem;
+
+
+    border-radius:
+        8px;
+
+
+    font-size:
+        .9rem;
+
+
+    font-weight:
+        600;
+
+
+    display:
+        inline-flex;
+
+
+    align-items:
+        center;
+
+
+    gap:
+        6px;
+
+
+    text-decoration:none;
+
+}
+
+
+
+
+.btn-save {
+
+
+    background:#2563eb;
+
+
+    color:white;
+
+
+    border:none;
+
+}
+
+
+.btn-save:hover {
+
+
+    background:#1d4ed8;
+
+    color:white;
+
+}
+
+
+
+
+
+.btn-back {
+
+
+    background:#f1f5f9;
+
+
+    color:#475569;
+
+
+    border:
+        1px solid #e2e8f0;
+
+}
+
+
+
+
+
+/* SWITCH */
+
+.form-switch .form-check-input {
+
+
+    width:
+        2.6rem;
+
+
+    height:
+        1.3rem;
+
+
+}
+
+
+
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+
+.guide-form-ui {
+
+
+    padding:
+        .75rem .5rem;
+
+}
+
+
+
+.form-body {
+
+
+    padding:
+        1rem;
+
+}
+
+
+
+.guide-form-ui h3 {
+
+
+    font-size:
+        1.05rem;
+
+}
+
+
+}
+
+
+
+@media(max-width:480px){
+
+
+.row-mobile {
+
+
+    display:
+        block!important;
+
+}
+
+
+
+.action-area {
+
+
+    flex-direction:
+        column-reverse;
+
+
+    gap:
+        .75rem;
+
+
+}
+
+
+
+.btn-modern {
+
+
+    width:
+        100%;
+
+
+    justify-content:center;
+
+}
+
+
+}
+
+</style>
+
+
+
+<div class="guide-form-ui">
+
+
+<div class="container-fluid"
+     style="max-width:700px;">
+
+
+
+<!-- HEADER -->
+
+<div class="mb-3">
+
+<h3 class="mb-1">
+
+    + Thêm bài hướng dẫn mới
+
+</h3>
+
+
+<div class="guide-subtitle">
+
+Tạo tài liệu kỹ thuật hoặc hướng dẫn xử lý lỗi máy in
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- FORM -->
+
+<div class="form-card">
+
+
+<div class="form-body">
+
+
+<form action="/admin/guide/create"
+      method="POST">
+
+
+
+
+
+<!-- MODEL -->
+
+<div class="mb-3">
+
+
+<label class="form-label">
+
+Chọn Model Máy In
+<span class="text-danger">*</span>
+
+</label>
+
+
+<select name="printer_model_id"
+        class="form-select modern-control"
+        required>
+
+
+<option value="">
+-- Chọn dòng máy --
+</option>
+
+
+{% for p in printers %}
+
+
+<option value="{{p.id}}">
+
+{{p.brand}} - {{p.model}}
+
+</option>
+
+
+{% endfor %}
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+<!-- TITLE -->
+
+<div class="mb-3">
+
+
+<label class="form-label">
+
+Tiêu đề hướng dẫn
+<span class="text-danger">*</span>
+
+</label>
+
+
+<input type="text"
+       name="title"
+       class="form-control modern-control"
+       maxlength="200"
+       placeholder="VD: HD cài đặt máy in đa chức năng,..."
+       required>
+
+
+{% if errors and errors.title %}
+
+<div class="text-danger small mt-1">
+
+{{errors.title}}
+
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+
+<!-- DESCRIPTION -->
+
+
+<div class="mb-3">
+
+
+<label class="form-label">
+
+Mô tả ngắn
+
+</label>
+
+
+<textarea name="description"
+          rows="3"
+          class="form-control modern-control"
+          placeholder="Cài đặt driver in, scan, copy..."></textarea>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- OPTION -->
+
+
+<div class="row g-3 mb-4">
+
+
+<div class="col-6">
+
+
+<label class="form-label">
+
+Thứ tự
+
+</label>
+
+
+<input type="number"
+       name="sort_order"
+       value="1"
+       class="form-control modern-control">
+
+
+</div>
+
+
+
+
+
+<div class="col-6 d-flex align-items-end">
+
+
+<div class="form-check form-switch mb-2">
+
+
+<input class="form-check-input"
+       type="checkbox"
+       name="is_active"
+       value="true"
+       checked>
+
+
+<label class="form-check-label ms-2"
+       style="font-size:.85rem">
+
+Hiển thị
+
+</label>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ACTION -->
+
+
+<div class="border-top pt-3 action-area d-flex justify-content-between">
+
+
+<a href="/admin/guide"
+   class="btn-modern btn-back">
+
+← Quay lại
+
+</a>
+
+
+
+<button type="submit"
+        class="btn-modern btn-save">
+
+
+✓ Lưu bài hướng dẫn
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}
