@@ -9,8 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Sao chép toàn bộ mã nguồn dự án vào container
 COPY . .
 
-# Hugging Face yêu cầu mở cổng 7860
-EXPOSE 7860
+# Mở cổng động cho Render (Render truyền cổng qua biến môi trường $PORT, mặc định là 10000)
+ENV PORT=10000
+EXPOSE 10000
 
-# Khởi chạy ứng dụng FastAPI (file main.py nằm ở thư mục gốc)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Khởi chạy ứng dụng FastAPI (Sửa lại "main:app" nếu tên file của bác khác)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
