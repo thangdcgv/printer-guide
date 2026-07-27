@@ -2,601 +2,269 @@
 
 {% block content %}
 
+<!-- Tích hợp Font Inter từ Google Fonts -->
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-
-.printer-ui {
-
-    font-family:
-        'Inter',
-        'Roboto',
-        Arial,
-        sans-serif;
-
-    background:#f8fafc;
-
-    min-height:
-        calc(100vh - 60px);
-
-    padding:
-        1rem .75rem;
-
-    color:#1e293b;
-
+/* =================================================
+   GLOBAL & LAYOUT RESPONSIVE
+================================================= */
+.step-ui {
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+    padding: clamp(10px, 2vw, 24px) clamp(8px, 1.5vw, 16px);
+    color: #1e293b;
+    box-sizing: border-box;
 }
 
-
-
-/* HEADER */
-
-.printer-header h3 {
-
-    font-size:
-        1.35rem;
-
-    font-weight:
-        700;
-
-    color:#0f172a;
-
+.step-header h3 {
+    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
 }
 
-
-.btn-add {
-
-    background:#2563eb;
-
-    color:white;
-
-    border:none;
-
-    border-radius:8px;
-
-    padding:
-        .45rem 1rem;
-
-    font-size:
-        .85rem;
-
-    font-weight:
-        500;
-
-    text-decoration:none;
-
+.step-header p {
+    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
 }
 
-
-.btn-add:hover {
-
-    background:#1d4ed8;
-
-    color:white;
-
+.btn-add-step {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: .45rem 1rem;
+    font-size: clamp(0.8rem, 1.8vw, 0.85rem);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-
-
-/* CARD */
-
-.printer-card {
-
-    background:white;
-
-    border:
-        1px solid #e2e8f0;
-
-    border-radius:12px;
-
-    box-shadow:
-        0 4px 8px rgba(0,0,0,.05);
-
-    overflow:hidden;
-
+.btn-add-step:hover {
+    background: #1d4ed8;
+    color: white;
 }
 
-
-
-/* TABLE */
-
-.printer-table {
-
-
-    width:100%;
-
-    border-collapse:
-        separate;
-
-    border-spacing:0;
-
+.step-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,.04);
+    overflow: hidden;
 }
 
-
-
-.printer-table th {
-
-
-    background:#f8fafc;
-
-    color:#64748b;
-
-    font-size:
-        .7rem;
-
-    text-transform:
-        uppercase;
-
-    font-weight:
-        600;
-
-    padding:
-        .8rem 1rem;
-
-    border-bottom:
-        1px solid #e2e8f0;
-
+/* =================================================
+   TABLE
+================================================= */
+.step-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-
-
-.printer-table td {
-
-
-    padding:
-        .9rem 1rem;
-
-    border-bottom:
-        1px solid #f1f5f9;
-
-    font-size:
-        .85rem;
-
-    vertical-align:
-        middle;
-
+.step-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: clamp(0.6rem, 1.5vw, 0.7rem);
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: .8rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
 }
 
-
-
-.printer-table tbody tr:hover {
-
-    background:#fdfdfd;
-
+.step-table td {
+    padding: .9rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: clamp(0.78rem, 1.8vw, 0.85rem);
+    vertical-align: middle;
 }
 
-
-
-.brand-text {
-
-
-    font-weight:
-        600;
-
-    color:#2563eb;
-
+.step-table tbody tr:hover {
+    background: #fdfdfd;
 }
 
-
-
-.model-text {
-
-
-    font-weight:
-        600;
-
-    color:#0f172a;
-
+/* =================================================
+   ELEMENTS
+================================================= */
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
 }
 
-
-
-.description {
-
-
-    color:#64748b;
-
-    max-width:
-        350px;
-
-    overflow:hidden;
-
-    text-overflow:
-        ellipsis;
-
-    white-space:
-        nowrap;
-
+.step-title {
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 2px;
 }
 
-
-
-/* ACTION */
-
-.btn-edit {
-
-
-    background:#fef3c7;
-
-    color:#92400e;
-
-    border:
-        1px solid #fde68a;
-
-
-    border-radius:
-        7px;
-
-
-    padding:
-        .35rem .75rem;
-
-
-    font-size:
-        .75rem;
-
-
-    font-weight:
-        600;
-
-
-    text-decoration:none;
-
+.step-desc {
+    color: #64748b;
+    font-size: 0.8rem;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-
-
-.btn-edit:hover {
-
-
-    background:#fde68a;
-
-    color:#78350f;
-
+/* =================================================
+   ACTION BUTTONS
+================================================= */
+.action-btn-group {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
 }
 
-
-
-/* =====================
-   TABLET 7 INCH
-===================== */
-
-
-@media(max-width:768px){
-
-
-.printer-ui {
-
-    padding:
-        .75rem .5rem;
-
+.action-icon-btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    color: #64748b;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
 }
 
-
-
-.printer-header h3 {
-
-
-    font-size:
-        1.15rem;
-
+.action-icon-btn svg {
+    width: 17px;
+    height: 17px;
 }
 
-
-
-.btn-add {
-
-
-    font-size:
-        .75rem;
-
-
-    padding:
-        .4rem .7rem;
-
+.action-icon-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
-
-
-.printer-table th {
-
-
-    padding:
-        .6rem .5rem;
-
-
-    font-size:
-        .6rem;
-
+.btn-delete-step:hover {
+    background: #fef2f2;
+    color: #ef4444;
 }
 
-
-
-.printer-table td {
-
-
-    padding:
-        .65rem .5rem;
-
-
-    font-size:
-        .78rem;
-
+/* =================================================
+   RESPONSIVE
+================================================= */
+@media(max-width: 768px) {
+    .step-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .step-header .btn-add-step {
+        width: 100%;
+        justify-content: center;
+    }
 }
-
-
-
-}
-
-
-
-/* =====================
-   5-6 INCH
-===================== */
-
-
-@media(max-width:600px){
-
-
-/* Ẩn ID */
-
-.printer-table th:first-child,
-
-.printer-table td:first-child {
-
-    display:none;
-
-}
-
-
-/* Thu nhỏ description */
-
-.description {
-
-
-    max-width:
-        120px;
-
-}
-
-
-
-/* Nút */
-
-.btn-edit {
-
-
-    padding:
-        .3rem .55rem;
-
-}
-
-
-
-/* Ẩn chữ dài */
-
-.printer-table th:nth-child(4),
-
-.printer-table td:nth-child(4){
-
-
-    max-width:
-        120px;
-
-}
-
-
-}
-
-
-
-/* =====================
-   5 INCH
-===================== */
-
-
-@media(max-width:480px){
-
-
-/* Ẩn description */
-
-.printer-table th:nth-child(4),
-
-.printer-table td:nth-child(4){
-
-    display:none;
-
-}
-
-
-
-.printer-table th:nth-child(2){
-
-    width:
-        30%;
-
-}
-
-
-.printer-table th:nth-child(3){
-
-    width:
-        40%;
-
-}
-
-
-.printer-table th:nth-child(5){
-
-    width:
-        30%;
-
-}
-
-
-
-}
-
 </style>
 
-
-
-<div class="printer-ui">
-
-
-    <!-- HEADER -->
-
-    <div class="printer-header d-flex justify-content-between align-items-center mb-3">
-
-
-        <h3 class="mb-0">
-            Model máy in
-        </h3>
-
-
-        <a class="btn-add"
-           href="/admin/printer/create">
-
-            + Thêm mới
-
-        </a>
-
-
-    </div>
-
-
-
-
-    <!-- TABLE -->
-
-    <div class="printer-card">
-
-
-        <div class="table-responsive">
-
-
-            <table class="printer-table">
-
-
-                <thead>
-
-                    <tr>
-
-                        <th>ID</th>
-
-                        <th>Brand</th>
-
-                        <th>Model</th>
-
-                        <th>Mô tả</th>
-
-                        <th style="width:120px">
-                            Thao tác
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-
-                <tbody>
-
-
-                {% for p in printers %}
-
-
-                    <tr>
-
-
-                        <td>
-                            {{p.id}}
-                        </td>
-
-
-                        <td>
-
-                            <span class="brand-text">
-                                {{p.brand}}
-                            </span>
-
-                        </td>
-
-
-
-                        <td>
-
-                            <span class="model-text">
-                                {{p.model}}
-                            </span>
-
-                        </td>
-
-
-
-                        <td>
-
-                            <div class="description">
-
-                                {{p.description or '-'}}
-
-                            </div>
-
-
-                        </td>
-
-
-
-                        <td>
-
-
-                            <a
-                            class="btn-edit"
-                            href="/admin/printer/edit/{{p.id}}">
-
-                                Sửa
-
-                            </a>
-
-
-                        </td>
-
-
-
-                    </tr>
-
-
-                {% else %}
-
-
-                    <tr>
-
-                        <td colspan="5"
-                            class="text-center py-4">
-
-                            Chưa có dữ liệu
-
-                        </td>
-
-                    </tr>
-
-
-                {% endfor %}
-
-
-                </tbody>
-
-
-            </table>
-
-
+<div class="step-ui">
+    <div class="container-fluid p-0" style="max-width: 1200px; margin: 0 auto;">
+        
+        <!-- HEADER -->
+        <div class="step-header d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <a href="/admin/guide" class="text-decoration-none" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 8px; color: #475569; border: 1px solid #e2e8f0;" title="Quay lại danh sách bài viết">
+                    <!-- SVG Back Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </a>
+                <div>
+                    <h3 class="mb-1">Quản lý các bước hướng dẫn (Steps)</h3>
+                    <p class="text-muted small mb-0" style="color: #64748b !important;">
+                        {% if guide %}Bài viết: <strong>{{ guide.title }}</strong>{% else %}Danh sách các bước thực hiện chi tiết{% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <a class="btn-add-step shadow-sm" href="/admin/guide-step/create?guide_id={{ guide_id }}">
+                <!-- SVG Plus Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Thêm bước mới
+            </a>
         </div>
 
+        <!-- TABLE CONTAINER -->
+        <div class="step-card">
+            <div class="table-responsive">
+                <table class="step-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 70px;">Bước</th>
+                            <th style="width: 35%;">Tiêu đề bước</th>
+                            <th style="width: 45%;">Mô tả / Nội dung</th>
+                            <th class="text-center" style="width: 130px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in steps %}
+                        <tr>
+                            <!-- Số thứ tự bước -->
+                            <td class="text-center">
+                                <span class="step-number">{{ s.step_order or loop.index }}</span>
+                            </td>
+                            
+                            <!-- Tiêu đề bước -->
+                            <td>
+                                <div class="step-title">{{ s.title or ('Bước ' ~ loop.index) }}</div>
+                            </td>
+
+                            <!-- Mô tả / Nội dung -->
+                            <td>
+                                <div class="step-desc">{{ s.description or s.content or '-' }}</div>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td>
+                                <div class="action-btn-group">
+                                    <a href="/admin/guide-step/edit/{{ s.id }}" class="action-icon-btn" title="Chỉnh sửa bước">
+                                        <!-- SVG Edit Icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </a>
+                                    
+                                    <form action="/admin/guide-step/delete/{{ s.id }}" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bước này?')">
+                                        <button class="action-icon-btn btn-delete-step" title="Xóa bước">
+                                            <!-- SVG Trash Icon -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <div style="color: #94a3b8; display: flex; flex-direction: column; align-items: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                    <h6 style="font-weight: 600; color: #475569;">Chưa có bước hướng dẫn nào</h6>
+                                    <p class="small mb-0">Nhấn nút "Thêm bước mới" để bắt đầu thiết lập các bước thực hiện cho bài viết.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </div>
-
-
 </div>
-
 
 {% endblock %}

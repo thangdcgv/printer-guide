@@ -1,6 +1,8 @@
 import os
 import uuid
 from typing import Optional
+from fastapi import APIRouter, Request, Form, UploadFile, File, status, HTTPException, Depends
+from app.routers.auth import require_admin
 
 from fastapi import (
     APIRouter,
@@ -20,9 +22,9 @@ from app.database import supabase
 
 router = APIRouter(
     prefix="/admin/guide",
-    tags=["guide"]
+    tags=["guide"],
+    dependencies=[Depends(require_admin)] # <--- Khóa toàn bộ các route quản lý bài viết lớn
 )
-
 
 templates = Jinja2Templates(
     directory="app/templates"

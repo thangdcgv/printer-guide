@@ -2,183 +2,283 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Thống kê - Máy In Đại Thành</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-        }
 
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
-        }
+<style>
+:root{
+    --primary:#2563eb;
+    --bg:#f8fafc;
+    --card-bg:#ffffff;
+    --text:#1e293b;
+    --text-secondary:#64748b;
+    --border:#e2e8f0;
+}
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+/* ===========================
+   RESET & BASE
+=========================== */
 
-        /* Navbar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-        .brand {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #0f172a;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+html{
+    font-size:16px;
+    overflow-x:hidden;
+}
 
-        .nav-actions {
-            display: flex;
-            gap: 8px;
-        }
+body{
+    font-family:'Inter',Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:clamp(8px, 2vw, 20px);
+    overflow-x:hidden;
+    line-height:1.5;
+}
 
-        .btn {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
+img{
+    max-width:100%;
+    height:auto;
+}
 
-        .btn-outline {
-            background: #f1f5f9;
-            color: #334155;
-            border: 1px solid var(--border);
-        }
+/* ===========================
+   CONTAINER
+=========================== */
 
-        .btn-danger {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
+.container{
+    width:100%;
+    max-width:1200px;
+    margin:auto;
+}
 
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
+/* ===========================
+   NAVBAR
+=========================== */
 
-        @media (min-width: 640px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    background:var(--card-bg);
+    padding:clamp(12px, 2vw, 16px);
+    border-radius:14px;
+    border:1px solid var(--border);
+    margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.03);
+}
 
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-        }
+.brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:clamp(0.9rem, 2vw, 1.05rem);
+    font-weight:700;
+    color:#111827;
+    text-decoration:none;
+}
 
-        .stat-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
+.nav-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
 
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
+/* ===========================
+   BUTTON
+=========================== */
 
-        /* Detail Section Card */
-        .glass-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-        }
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:38px;
+    padding:8px 14px;
+    border-radius:10px;
+    font-size:clamp(0.8rem, 2vw, 0.88rem);
+    font-weight:600;
+    text-decoration:none;
+    transition:.25s;
+    cursor:pointer;
+    white-space:nowrap;
+}
 
-        .section-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+.btn:hover{
+    opacity:.9;
+}
 
-        /* Table Style */
-        .table-responsive {
-            overflow-x: auto;
-        }
+.btn-outline{
+    background:#f8fafc;
+    border:1px solid var(--border);
+    color:#334155;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
+.btn-danger{
+    background:#ef4444;
+    color:#fff;
+    border:none;
+}
 
-        th {
-            background: #f8fafc;
-            color: var(--text-secondary);
-            font-weight: 600;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-        }
+/* ===========================
+   STATS GRID (TỰ CO GIÃN)
+=========================== */
 
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-        }
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+    margin-bottom:16px;
+}
 
-        tr:last-child td {
-            border-bottom: none;
-        }
+.stat-card{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:clamp(12px, 2vw, 20px);
+    box-shadow:0 2px 8px rgba(0,0,0,.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-        .badge {
-            background: #eff6ff;
-            color: #2563eb;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
+.stat-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,.06);
+}
 
-        .empty-state {
-            text-align: center;
-            padding: 24px;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-    </style>
+.stat-title{
+    font-size:clamp(0.75rem, 1.8vw, 0.85rem);
+    color:var(--text-secondary);
+    margin-bottom:6px;
+    font-weight:600;
+}
+
+.stat-value{
+    font-size:clamp(1.3rem, 4vw, 2rem);
+    font-weight:700;
+    color:#111827;
+}
+
+/* ===========================
+   CARD & TABLE CONTAINER
+=========================== */
+
+.glass-card{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:clamp(14px, 2vw, 22px);
+    margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.03);
+    overflow:hidden;
+}
+
+.section-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    font-size:clamp(0.95rem, 2vw, 1.1rem);
+    font-weight:700;
+}
+
+/* ===========================
+   TABLE
+=========================== */
+
+.table-responsive{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+
+table{
+    width:100%;
+    min-width:450px;
+    border-collapse:collapse;
+    font-size:0.88rem;
+}
+
+th{
+    background:#f8fafc;
+    color:#64748b;
+    padding:10px 12px;
+    text-align:left;
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+}
+
+td{
+    padding:10px 12px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+tr:hover{
+    background:#fafafa;
+}
+
+/* ===========================
+   BADGE & EMPTY
+=========================== */
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:0.75rem;
+    font-weight:600;
+}
+
+.empty-state{
+    text-align:center;
+    padding:24px 16px;
+    color:#64748b;
+    font-size:0.85rem;
+}
+
+/* ===========================
+   MEDIA QUERIES (RESPONSIVE)
+=========================== */
+
+@media (max-width: 480px){
+    .navbar{
+        flex-direction:column;
+        align-items:stretch;
+    }
+    .brand{
+        justify-content:center;
+        text-align:center;
+    }
+    .nav-actions{
+        width:100%;
+        display:flex;
+    }
+    .nav-actions .btn{
+        flex:1;
+    }
+}
+
+@media (min-width: 640px){
+    .stats-grid{
+        grid-template-columns:repeat(2, 1fr);
+        gap:16px;
+    }
+}
+
+@media (min-width: 1024px){
+    .stats-grid{
+        grid-template-columns:repeat(4, 1fr);
+    }
+}
+</style>
 </head>
 <body>
 

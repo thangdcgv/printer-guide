@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from app.database import supabase  
 from fastapi.responses import HTMLResponse
+
 
 router = APIRouter()
 
@@ -82,5 +83,49 @@ async def search_guides(request: Request, q: str = ""):
             "request": request,
             "keyword": keyword,
             "guides": search_results
+        }
+    )
+# --- BỔ SUNG ROUTE XEM CHI TIẾT BÀI HƯỚNG DẪN CHO KHÁCH ---
+@router.get("/guide/{guide_id}", response_class=HTMLResponse)
+async def view_guide_detail(request: Request, guide_id: int):
+    try:
+        # 1. Lấy thông tin bài hướng dẫn chính
+        guide_res = supabase.table("guide").select("*, printer_model(brand, model)").eq("id", guide_id).execute()
+        if not guide_res.data:
+            raise HTTPException(status_code=404, detail="Không tìm thấy bài hướng dẫn")
+        guide = guide_res.data[0]
+
+        # 2. Lấy danh sách các bước lớn (chỉ lấy các bước đang active nếu muốn, hoặc lấy tất cả)
+        steps_res = (
+            supabase.table("guide_step")
+            .select("*")
+            .eq("guide_id", guide_id)
+            .eq("is_active", True) # Chỉ hiện các bước được bật hiển thị
+            .order("step_number")
+            .execute()
+        )
+        steps = steps_res.data or []
+
+        # 3. Lấy thêm các bước con (sub_steps) cho từng bước lớn
+        for step in steps:
+            sub_res = (
+                supabase.table("guide_sub_steps")
+                .select("*")
+                .eq("step_id", step["id"])
+                .order("sub_order")
+                .execute()
+            )
+            step["sub_steps"] = sub_res.data or []
+
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Không thể tải nội dung bài viết")
+
+    # Trả về template hiển thị dành riêng cho khách (hoàn toàn thuần túy, không có form sửa xóa)
+    return templates.TemplateResponse(
+        "guide_detail.html",  # Tên file template giao diện đọc của khách
+        {
+            "request": request,
+            "guide": guide,
+            "steps": steps
         }
     )

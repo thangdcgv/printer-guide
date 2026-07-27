@@ -88,3 +88,9 @@ async def logout():
     except:
         pass
     return response
+# --- HÀM KIỂM TRA QUYỀN TRUY CẬP ADMIN ---
+async def require_admin(request: Request):
+    user_session = request.cookies.get("user_session")
+    if not user_session:
+        # Nếu chưa có session đăng nhập, tự động chuyển hướng về trang login
+        return RedirectResponse(url="/admin/login", status_code=303)

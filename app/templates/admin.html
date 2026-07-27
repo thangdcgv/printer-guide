@@ -1,80 +1,243 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Trang Quản Trị</h2>
+
+<style>
+:root{
+    --card-bg:#fff;
+    --border:#e2e8f0;
+    --text:#1e293b;
+    --text-light:#64748b;
+}
+
+/* =========================
+   CONTAINER QUẢN TRỊ
+========================= */
+
+.admin-dashboard-container{
+    width: 100%;
+    margin: 0 auto;
+    padding: clamp(4px, 1vw, 16px) 0;
+}
+
+.admin-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.admin-dashboard-container h2{
+    margin:0;
+    color:#0f172a;
+    font-weight:700;
+    font-size:clamp(1.25rem, 3vw, 1.75rem);
+}
+
+/* =========================
+   GRID TỰ CO GIÃN
+========================= */
+
+.admin-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:16px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.admin-card{
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: clamp(14px, 2vw, 22px);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+.admin-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    border-color: #cbd5e1;
+}
+
+.admin-card-icon{
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.admin-card-title{
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.admin-card-text{
+    font-size: clamp(0.85rem, 2vw, 0.92rem);
+    color: var(--text-light);
+    line-height: 1.5;
+    flex: 1;
+    margin-bottom: 16px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.admin-card-actions{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-card-actions .btn{
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    font-size: clamp(0.82rem, 2vw, 0.9rem);
+    font-weight: 600;
+}
+
+/* =========================
+   MOBILE (<= 480px)
+========================= */
+
+@media (max-width: 480px){
+    .admin-dashboard-container{
+        padding: 0;
+    }
+    .admin-grid{
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+/* =========================
+   TABLET & DESKTOP
+========================= */
+
+@media (min-width: 768px){
+    .admin-grid{
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px){
+    .admin-grid{
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+</style>
+
+<div class="admin-dashboard-container">
+
+    <div class="admin-header">
+        <h2>🛠️ Trang Quản Trị</h2>
     </div>
 
-    <div class="row g-4">
-        <!-- Card 1: Quản lý Model Máy In -->
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0 bg-light">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-3">
-                        <span class="fs-1">🖨️</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Model Máy In</h5>
-                    <p class="card-text text-muted flex-grow-1">
-                        Quản lý danh mục thương hiệu, hãng sản xuất và mã model máy in (Canon, Epson, HP...).
-                    </p>
-                    <div class="d-grid gap-2">
-                        <a href="/admin/printer" class="btn btn-primary">
-                            Xem danh sách Model
-                        </a>
-                        <a href="/admin/printer/create" class="btn btn-outline-primary">
-                            + Thêm Model mới
-                        </a>
-                    </div>
-                </div>
+    <div class="admin-grid">
+
+        <!-- Card 1 -->
+        <div class="admin-card">
+
+            <div class="admin-card-icon">🖨️</div>
+
+            <div class="admin-card-title">
+                Model Máy In
             </div>
+
+            <div class="admin-card-text">
+                Quản lý thương hiệu, hãng sản xuất và danh sách model máy in như Canon, Epson, HP, Brother...
+            </div>
+
+            <div class="admin-card-actions">
+
+                <a href="/admin/printer"
+                   class="btn btn-primary">
+                    📋 Xem danh sách
+                </a>
+
+                <a href="/admin/printer/create"
+                   class="btn btn-outline-primary">
+                    ➕ Thêm Model
+                </a>
+
+            </div>
+
         </div>
 
-        <!-- Card 2: Quản lý Guide -->
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0 bg-light">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-3">
-                        <span class="fs-1">📖</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Bài Hướng Dẫn (Guide)</h5>
-                    <p class="card-text text-muted flex-grow-1">
-                        Tạo và chỉnh sửa bài viết hướng dẫn khắc phục sự cố, mã lỗi hoặc quy trình kỹ thuật.
-                    </p>
-                    <div class="d-grid gap-2">
-                        <a href="/admin/guide" class="btn btn-success">
-                            Xem bài viết
-                        </a>
-                        <a href="/admin/guide/create" class="btn btn-outline-success">
-                            + Thêm bài mới
-                        </a>
-                    </div>
-                </div>
+        <!-- Card 2 -->
+        <div class="admin-card">
+
+            <div class="admin-card-icon">📖</div>
+
+            <div class="admin-card-title">
+                Bài Hướng Dẫn
             </div>
+
+            <div class="admin-card-text">
+                Tạo và chỉnh sửa các bài viết hướng dẫn xử lý lỗi, bảo trì và sửa chữa máy in.
+            </div>
+
+            <div class="admin-card-actions">
+
+                <a href="/admin/guide"
+                   class="btn btn-success">
+                    📚 Danh sách bài viết
+                </a>
+
+                <a href="/admin/guide/create"
+                   class="btn btn-outline-success">
+                    ➕ Thêm bài viết
+                </a>
+
+            </div>
+
         </div>
 
-        <!-- Card 3: Quản lý Guide Step -->
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0 bg-light">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-3">
-                        <span class="fs-1">📝</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Các Bước Chi Tiết (Guide Step)</h5>
-                    <p class="card-text text-muted flex-grow-1">
-                        Quản lý các bước thực hiện chi tiết (Step 1, Step 2...), hình ảnh thao tác minh họa theo từng bài.
-                    </p>
-                    <div class="d-grid gap-2">
-                        <a href="/admin/guide-step" class="btn btn-info text-white">
-                            Quản lý các bước
-                        </a>
-                        <a href="/admin/guide-step/create" class="btn btn-outline-info">
-                            + Thêm bước mới
-                        </a>
-                    </div>
-                </div>
+        <!-- Card 3 -->
+        <div class="admin-card">
+
+            <div class="admin-card-icon">📝</div>
+
+            <div class="admin-card-title">
+                Các Bước Chi Tiết
             </div>
+
+            <div class="admin-card-text">
+                Quản lý từng bước hướng dẫn, hình ảnh minh họa và quy trình thao tác cho mỗi bài viết.
+            </div>
+
+            <div class="admin-card-actions">
+
+                <a href="/admin/guide-step"
+                   class="btn btn-info text-white">
+                    📄 Quản lý Step
+                </a>
+
+                <a href="/admin/guide-step/create"
+                   class="btn btn-outline-info">
+                    ➕ Thêm Step
+                </a>
+
+            </div>
+
         </div>
+
     </div>
+
 </div>
+
 {% endblock %}

@@ -16,13 +16,15 @@
             color: #1e293b;
             background: #f8fafc;
             min-height: 100vh;
-            padding: 16px 12px;
+            padding: 12px 8px; /* Tối ưu padding gọn hơn cho màn hình di động nhỏ */
             box-sizing: border-box;
         }
 
         .container {
             max-width: 1000px;
             margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .glass-card {
@@ -30,56 +32,60 @@
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 16px; /* Giảm nhẹ padding trên mobile cho thoáng */
+            margin-bottom: 16px;
+            box-sizing: border-box;
         }
 
         /* =====================================================
-        HEADER BANNER (Canh giữa, tối ưu cho màn hình 5-7 inch)
+        HEADER BANNER (Tối ưu chống tràn cho màn hình 5.5 inch)
         ===================================================== */
         .navbar-banner {
             display: flex;
             justify-content: center;
             align-items: center;
             background: #fff;
-            padding: 16px 20px;
+            padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             box-sizing: border-box;
             width: 100%;
+            overflow: hidden; /* Ngăn chặn tuyệt đối việc tràn nội dung ra ngoài khung */
         }
 
         .brand-centered {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            text-decoration: none !important; /* Triệt tiêu hoàn toàn gạch chân liên kết */
+            gap: 8px;
+            text-decoration: none !important;
             transition: transform 0.25s ease;
+            max-width: 100%;
         }
 
         .brand-centered:hover {
             transform: translateY(-1px);
         }
 
-        /* Kích thước Logo cân đối, sắc nét */
+        /* Kích thước Logo tự động thu nhỏ vừa khít điện thoại 5.5 inch */
         .brand-logo {
-            height: 45px;
+            height: 34px; 
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.2));
             transition: transform 0.3s ease;
+            flex-shrink: 0;
         }
 
         .brand-centered:hover .brand-logo {
             transform: scale(1.05) rotate(-2deg);
         }
 
-        /* Tên thương hiệu hiệu ứng Gradient Đỏ - Cam - Vàng, chống rớt dòng */
+        /* Tên thương hiệu chống rớt dòng trên màn hình hẹp (5.5 inch) */
         .brand-centered span {
-            font-size: 2.4rem;
+            font-size: 1.5rem; /* Thu nhỏ hợp lý cho điện thoại nhỏ, không bị vỡ giao diện */
             font-weight: 800;
             letter-spacing: -0.02em;
             background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
@@ -94,10 +100,28 @@
             opacity: 0.9;
         }
 
-        /* Tự động phóng lớn hoành tráng hơn khi xem trên màn hình máy tính (Desktop) */
+        /* Tinh chỉnh riêng cho màn hình điện thoại tầm trung/lớn (từ 480px đến 767px) */
+        @media (min-width: 480px) {
+            .brand-logo {
+                height: 42px;
+            }
+            .brand-centered span {
+                font-size: 2rem;
+            }
+        }
+
+        /* Tự động phóng lớn hoành tráng khi xem trên màn hình máy tính (Desktop từ 768px trở lên) */
         @media (min-width: 768px) {
+            .modern-ui {
+                padding: 16px 12px;
+            }
+            .glass-card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
             .navbar-banner {
                 padding: 18px 24px;
+                margin-bottom: 20px;
             }
             .brand-logo {
                 height: 92px;
@@ -112,31 +136,35 @@
         ===================================================== */
         .hero {
             text-align: center;
-            padding: 30px 10px;
+            padding: 24px 12px;
             background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
             border-radius: 12px;
             border: 1px solid #dbeafe;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
         }
 
         .hero h1 {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 8px;
         }
 
         .hero p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #64748b;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            padding: 0 4px;
         }
 
         .search-box {
             display: flex;
             max-width: 500px;
+            width: 100%;
             margin: 0 auto;
             gap: 8px;
+            box-sizing: border-box;
         }
 
         .search-input {
@@ -146,6 +174,8 @@
             border-radius: 8px;
             font-size: 0.9rem;
             outline: none;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .search-input:focus {
@@ -161,6 +191,7 @@
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         /* =====================================================
@@ -179,7 +210,7 @@
         }
 
         .section-title {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 12px;
@@ -189,7 +220,7 @@
         }
 
         .card-list-item {
-            padding: 10px 12px;
+            padding: 10px 8px;
             border-bottom: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-between;
@@ -197,7 +228,8 @@
             text-decoration: none;
             color: #334155;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            word-break: break-word;
         }
 
         .card-list-item:hover {
@@ -239,7 +271,7 @@
             text-align: center;
             font-size: 0.75rem;
             color: #94a3b8;
-            margin-top: 30px;
+            margin-top: 24px;
             padding-top: 10px;
             border-top: 1px solid #e2e8f0;
         }
@@ -260,7 +292,7 @@
 
         <!-- Hero Section cho Khách hàng tra cứu -->
         <div class="hero">
-            <h1>Trung tâm Hướng dẫn & Sửa chữa Máy in</h1>
+            <h1>Hướng dẫn & Sửa chữa Máy in</h1>
             <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
             
             <!-- Chuyển thành thẻ form để truyền từ khóa tìm kiếm -->
@@ -280,15 +312,11 @@
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     {% if recent_guides %}
                         {% for guide in recent_guides %}
-                        <a href="/admin/guide-step?guide_id={{ guide.id }}" class="card-list-item">
+                        <a href="/guide/{{ guide.id }}" class="card-list-item">
                             <span>🔧 {{ guide.title }}</span>
                             <span style="font-size: 0.75rem; color: #94a3b8;">Xem chi tiết →</span>
                         </a>
                         {% endfor %}
-                    {% else %}
-                        <div style="text-align: center; padding: 16px; color: #94a3b8; font-size: 0.85rem;">
-                            Chưa có tài liệu hướng dẫn nào được cập nhật.
-                        </div>
                     {% endif %}
                 </div>
             </div>
