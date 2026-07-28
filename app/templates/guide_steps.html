@@ -335,26 +335,48 @@
                                 <!-- ================= KHU VỰC QUẢN LÝ BƯỚC CON (SUB-STEPS) ================= -->
                                 <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
                                     <div style="font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
-                                        📋 Các bước con chi tiết (Ý nhỏ):
+                                        📋 Các bước chi tiết (Ý nhỏ):
                                     </div>
 
                                     <!-- Danh sách các bước con hiện tại -->
                                     {% if step.sub_steps %}
                                     <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
                                         {% for sub in step.sub_steps %}
-                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.8rem;">
-                                            <div style="flex-grow: 1;">
-                                                <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.72rem; margin-right: 6px;">Ý {{ sub.sub_order }}</span>
-                                                <span style="color: #1e293b; line-height: 1.4;">{{ sub.content }}</span>
-                                                {% if sub.note %}
-                                                <span style="color: #d97706; font-size: 0.7rem; margin-left: 4px; background: #fffbeb; padding: 1px 5px; border-radius: 3px;">⚠️ {{ sub.note }}</span>
-                                                {% endif %}
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem;">
+                                            
+                                            <!-- Chế độ hiển thị (View Mode) -->
+                                            <div id="sub-step-view-{{ sub.id }}" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                                <div style="flex-grow: 1;">
+                                                    <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.72rem; margin-right: 6px;">Ý {{ sub.sub_order }}</span>
+                                                    <span style="color: #1e293b; line-height: 1.4;">{{ sub.content }}</span>
+                                                    {% if sub.note %}
+                                                    <span style="color: #d97706; font-size: 0.7rem; margin-left: 4px; background: #fffbeb; padding: 1px 5px; border-radius: 3px;">⚠️ {{ sub.note }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
+                                                    <!-- Nút Sửa bước con -->
+                                                    <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: none; border: none; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
+                                                    
+                                                    <!-- Nút xóa bước con -->
+                                                    <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
+                                                        <input type="hidden" name="guide_id" value="{{ guide.id }}">
+                                                        <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Xóa ý này">✕ Xóa</button>
+                                                    </form>
+                                                </div>
                                             </div>
-                                            <!-- Nút xóa bước con -->
-                                            <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
+
+                                            <!-- Chế độ chỉnh sửa (Edit Form Mode - Mặc định ẩn) -->
+                                            <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 6px; align-items: center; flex-wrap: wrap;">
                                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                                <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600; white-space: nowrap;" title="Xóa ý này">✕ Xóa</button>
+                                                <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 65px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" title="Thứ tự">
+                                                <input type="text" name="content" value="{{ sub.content }}" required style="flex: 1; min-width: 140px; padding: 5px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" placeholder="Nội dung thao tác chi tiết...">
+                                                <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="Lưu ý riêng" style="width: 110px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                                <div style="display: flex; gap: 4px;">
+                                                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Lưu</button>
+                                                    <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Hủy</button>
+                                                </div>
                                             </form>
+
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -526,6 +548,17 @@
             closeModal();
         }
     }
+    function toggleEditSubStep(subId) {
+    const viewEl = document.getElementById(`sub-step-view-${subId}`);
+    const editEl = document.getElementById(`sub-step-edit-${subId}`);
+    if (viewEl.style.display === 'none') {
+        viewEl.style.display = 'flex';
+        editEl.style.display = 'none';
+    } else {
+        viewEl.style.display = 'none';
+        editEl.style.display = 'flex';
+    }
+}
 </script>
 
 </body>

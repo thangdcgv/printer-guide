@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import admin, home, guide, guide_step, auth
 from app.routers import dashboard
 from fastapi.templating import Jinja2Templates
+from app.routers import library
 
 app = FastAPI(title="Thư viện hướng dẫn sử dụng máy in ", version="1.0.0")
 
@@ -15,3 +16,4 @@ app.include_router(guide.router)
 app.include_router(guide_step.router)
 app.include_router(auth.router)
 app.include_router(dashboard.router)
+app.include_router(library.router)

@@ -65,7 +65,60 @@ async def add_sub_step(
         return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Không thể thêm bước con: {str(e)}")
+# --- ROUTE THÊM BƯỚC CON ---
+@router.post("/{step_id}/sub-steps/add")
+async def add_sub_step(
+    step_id: int,
+    guide_id: int = Form(...),
+    sub_order: int = Form(...),
+    content: str = Form(...),
+    image_url: str = Form(None),
+    note: str = Form(None)
+):
+    try:
+        supabase.table("guide_sub_steps").insert({
+            "step_id": step_id,
+            "sub_order": sub_order,
+            "content": content,
+            "image_url": image_url if image_url else None,
+            "note": note if note else None
+        }).execute()
+        
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể thêm bước con: {str(e)}")
 
+# --- ROUTE CẬP NHẬT BƯỚC CON (Mới thêm) ---
+@router.post("/sub-steps/{sub_step_id}/update")
+async def update_sub_step(
+    sub_step_id: int,
+    guide_id: int = Form(...),
+    sub_order: int = Form(...),
+    content: str = Form(...),
+    note: str = Form(None)
+):
+    try:
+        supabase.table("guide_sub_steps").update({
+            "sub_order": sub_order,
+            "content": content,
+            "note": note if note else None
+        }).eq("id", sub_step_id).execute()
+        
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể cập nhật bước con: {str(e)}")
+
+# --- ROUTE XÓA BƯỚC CON ---
+@router.post("/sub-steps/{sub_step_id}/delete")
+async def delete_sub_step(
+    sub_step_id: int,
+    guide_id: int = Form(...)
+):
+    try:
+        supabase.table("guide_sub_steps").delete().eq("id", sub_step_id).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể xóa bước con: {str(e)}")
 # --- ROUTE XÓA BƯỚC CON ---
 @router.post("/sub-steps/{sub_step_id}/delete")
 async def delete_sub_step(

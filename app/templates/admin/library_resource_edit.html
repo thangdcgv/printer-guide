@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding: 20px 0; font-family: 'Inter', sans-serif;">
+    <a href="/admin/library?folder_id={{ resource.folder_id }}" style="color: #64748b; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 16px;">← Quay lại</a>
+    <div style="background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 8px rgba(0,0,0,.04);">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 20px;">✏️ Chỉnh Sửa Tài Nguyên</h2>
+        <form action="/admin/library/resource/edit/{{ resource.id }}" method="POST">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">Thuộc thư mục</label>
+                <select name="folder_id" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; background: white;">
+                    {% for f in folders %}
+                    <option value="{{ f.id }}" {% if resource.folder_id == f.id %}selected{% endif %}>📁 {{ f.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">Tiêu đề</label>
+                <input type="text" name="title" value="{{ resource.title }}" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">Loại tài nguyên</label>
+                <select name="resource_type" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; background: white;">
+                    <option value="onedrive_file" {% if resource.resource_type == 'onedrive_file' %}selected{% endif %}>📊 OneDrive File</option>
+                    <option value="onedrive_folder" {% if resource.resource_type == 'onedrive_folder' %}selected{% endif %}>🗂️ OneDrive Folder</option>
+                    <option value="driver" {% if resource.resource_type == 'driver' %}selected{% endif %}>🖨️ Driver Máy In</option>
+                    <option value="firmware" {% if resource.resource_type == 'firmware' %}selected{% endif %}>⚙️ Firmware / Reset Key</option>
+                    <option value="pdf" {% if resource.resource_type == 'pdf' %}selected{% endif %}>📄 Tài liệu PDF</option>
+                    <option value="video" {% if resource.resource_type == 'video' %}selected{% endif %}>🎥 Video hướng dẫn</option>
+                    <option value="zip" {% if resource.resource_type == 'zip' %}selected{% endif %}>🜜 Tệp nén (ZIP/RAR)</option>
+                    <option value="website" {% if resource.resource_type == 'website' %}selected{% endif %}>🌐 Website / Link liên kết</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">Đường dẫn URL</label>
+                <input type="url" name="url" value="{{ resource.url }}" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">Mô tả</label>
+                <textarea name="description" rows="3" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">{{ resource.description or '' }}</textarea>
+            </div>
+            <button type="submit" style="background: #059669; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; font-size: 0.95rem;">Lưu Thay Đổi</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
