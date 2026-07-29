@@ -285,19 +285,19 @@
                 <form method="GET" action="/admin/guide" class="row g-2 align-items-center m-0">
                     
                     <!-- 1. Ô Tìm kiếm -->
-                    <div class="col-lg-4 col-md-12 p-1">
+                    <div class="col-lg-5 col-md-12 p-1">
                         <div class="search-wrapper">
                             <!-- SVG Search Icon -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             <input type="text" name="search" class="form-control modern-input w-100" 
-                                   placeholder="Tìm tiêu đề, mã máy..." value="{{search or ''}}">
+                                   placeholder="Tìm kiếm theo tiêu đề, mô tả hoặc mã máy..." value="{{search or ''}}">
                         </div>
                     </div>
 
                     <!-- 2. Lọc theo Model máy in -->
                     <div class="col-lg-3 col-md-6 p-1">
                         <select name="printer_model_id" class="form-select modern-select w-100" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Model --</option>
+                            <option value="">-- Tất cả Model máy in --</option>
                             {% for p in printers %}
                             <option value="{{p.id}}" {% if selected_printer_id|string == p.id|string %}selected{% endif %}>
                                 {{p.brand}} - {{p.model}}
@@ -307,15 +307,15 @@
                     </div>
 
                     <!-- 3. Lọc theo Trạng thái -->
-                    <div class="col-lg-3 col-md-6 p-1">
+                    <div class="col-lg-2 col-md-6 p-1">
                         <select name="status" class="form-select modern-select w-100" onchange="this.form.submit()">
-                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="">-- Trạng thái --</option>
                             <option value="1" {% if status == '1' %}selected{% endif %}>Đang hiển thị</option>
                             <option value="0" {% if status == '0' %}selected{% endif %}>Đang ẩn</option>
                         </select>
                     </div>
 
-                    <!-- 4. Nút thao tác -->
+                    <!-- 4. Nút thao tác (Lọc / Xóa lọc) -->
                     <div class="col-lg-2 col-md-12 p-1 d-flex gap-2">
                         <button type="submit" class="btn-secondary-modern flex-grow-1 justify-content-center">
                             Lọc
@@ -369,6 +369,18 @@
                                 {% if g.description %}
                                     <div style="color: #64748b; font-size: 0.8rem; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         {{g.description}}
+                                    </div>
+                                {% endif %}
+                                <!-- Hiển thị danh sách Tag gắn kèm (Auto-Tagging) -->
+                                {% if g.guide_tags %}
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                                        {% for gt in g.guide_tags %}
+                                            {% if gt.tags %}
+                                                <span style="background: #e0f2fe; color: #0369a1; font-size: 0.68rem; padding: 1px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #bae6fd;">
+                                                    {{ gt.tags.name }}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>

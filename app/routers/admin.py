@@ -30,23 +30,49 @@ async def admin(request: Request):
 # Printer List
 # ==========================
 
-@router.get("/admin/printer")
-async def list_printer(request: Request):
-    result = (
-        supabase
-        .table("printer_model")
-        .select("*")
-        .order("brand")
-        .order("model")
-        .execute()
-    )
+# ==========================
+# Printer List
+# ==========================
 
+@router.get("/admin/printer")
+async def list_printer(
+    request: Request,
+    search: str = "",
+    brand: str = ""
+):
+    search = search.strip()
+    brand = brand.strip()
+
+    # 1. Khởi tạo query dữ liệu máy in
+    query = supabase.table("printer_model").select("*")
+
+    # 2. Lọc theo từ khóa tìm kiếm (tìm cả Brand hoặc Model)
+    if search:
+        query = query.or_(f"brand.ilike.%{search}%,model.ilike.%{search}%")
+
+    # 3. Lọc theo thương hiệu cụ thể
+    if brand:
+        query = query.eq("brand", brand)
+
+    # Thực thi lấy danh sách máy in đã lọc
+    result = query.order("brand").order("model").execute()
+
+    # 4. Lấy danh sách tất cả các hãng (dạng unique) để đổ vào dropdown lọc
+    brands_res = supabase.table("printer_model").select("brand").execute()
+    brands_list = sorted(list(set(
+        item["brand"] for item in (brands_res.data or []) if item.get("brand")
+    )))
+
+    # 5. Trả về giao diện kèm theo các biến dữ liệu
     return templates.TemplateResponse(
         "printer.html",
         {
             "request": request,
             "title": "Model máy in",
-            "printers": result.data or []
+            "printers": result.data or [],
+            "brands": brands_list,             # Danh sách hãng cho <select>
+            "search": search,                   # Từ khóa tìm kiếm hiện tại
+            "selected_brand": brand             # Hãng đang được chọn
         }
     )
 
