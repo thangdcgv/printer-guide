@@ -408,29 +408,44 @@
                                 <!-- ================= KHU VỰC QUẢN LÝ BƯỚC CON (SUB-STEPS) ================= -->
                                 <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
                                     <div style="font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
-                                        📋 Các bước chi tiết (Ý nhỏ):
+                                        📋 Các bước chi tiết (Ý nhỏ kèm hình ảnh):
                                     </div>
 
                                     <!-- Danh sách các bước con hiện tại -->
                                     {% if step.sub_steps %}
-                                    <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
                                         {% for sub in step.sub_steps %}
                                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem;">
                                             
-                                            <!-- Chế độ hiển thị (View Mode) -->
-                                            <div id="sub-step-view-{{ sub.id }}" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                            <!-- Chế độ hiển thị (View Mode) theo thứ tự: Ảnh -> Chi tiết -> Lưu ý -->
+                                            <div id="sub-step-view-{{ sub.id }}" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                                                 <div style="flex-grow: 1;">
-                                                    <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.72rem; margin-right: 6px;">Ý {{ sub.sub_order }}</span>
-                                                    <span style="color: #1e293b; line-height: 1.4;">{{ sub.content }}</span>
+                                                    <!-- 1. Link ảnh minh họa lên đầu -->
+                                                    {% if sub.image_url %}
+                                                    <div style="margin-bottom: 6px;">
+                                                        <a href="{{ sub.image_url }}" target="_blank" title="Xem ảnh lớn">
+                                                            <img src="{{ sub.image_url }}" alt="Ảnh ý {{ sub.sub_order }}" style="max-height: 90px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; display: block;">
+                                                        </a>
+                                                    </div>
+                                                    {% endif %}
+
+                                                    <!-- 2. Các bước chi tiết (Nội dung) -->
+                                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                                        <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">Ý {{ sub.sub_order }}</span>
+                                                        <span style="color: #1e293b; line-height: 1.4; font-weight: 500;">{{ sub.content }}</span>
+                                                    </div>
+                                                    
+                                                    <!-- 3. Lưu ý nếu có nằm ở cuối -->
                                                     {% if sub.note %}
-                                                    <span style="color: #d97706; font-size: 0.7rem; margin-left: 4px; background: #fffbeb; padding: 1px 5px; border-radius: 3px;">⚠️ {{ sub.note }}</span>
+                                                    <div style="color: #92400e; font-size: 0.72rem; margin-top: 4px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: 500;">
+                                                        ⚠️ <strong>Lưu ý:</strong> {{ sub.note }}
+                                                    </div>
                                                     {% endif %}
                                                 </div>
+
                                                 <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
-                                                    <!-- Nút Sửa bước con -->
                                                     <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: none; border: none; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
                                                     
-                                                    <!-- Nút xóa bước con -->
                                                     <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
                                                         <input type="hidden" name="guide_id" value="{{ guide.id }}">
                                                         <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Xóa ý này">✕ Xóa</button>
@@ -438,14 +453,15 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Chế độ chỉnh sửa (Edit Form Mode - Mặc định ẩn) -->
-                                            <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                            <!-- Chế độ chỉnh sửa (Edit Form Mode) theo đúng thứ tự: Ảnh -> Chi tiết -> Lưu ý -->
+                                            <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px;">
                                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
                                                 <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 65px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" title="Thứ tự">
-                                                <input type="text" name="content" value="{{ sub.content }}" required style="flex: 1; min-width: 140px; padding: 5px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" placeholder="Nội dung thao tác chi tiết...">
-                                                <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="Lưu ý riêng" style="width: 110px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                                <div style="display: flex; gap: 4px;">
-                                                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Lưu</button>
+                                                <input type="url" name="image_url" value="{{ sub.image_url or '' }}" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 160px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                                <input type="text" name="content" value="{{ sub.content }}" required style="width: 100%; padding: 5px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" placeholder="Nội dung các bước chi tiết...">
+                                                <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                                <div style="display: flex; gap: 4px; width: 100%; justify-content: flex-end;">
+                                                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Lưu lại</button>
                                                     <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Hủy</button>
                                                 </div>
                                             </form>
@@ -455,24 +471,30 @@
                                     </div>
                                     {% endif %}
 
-                                    <!-- Form thêm nhanh bước con -->
+                                    <!-- Form thêm nhanh bước con theo đúng thứ tự: Ảnh -> Chi tiết -> Lưu ý -->
                                     <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" class="sub-step-add-form" style="background: #f1f5f9; padding: 8px; border-radius: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                                         <input type="hidden" name="guide_id" value="{{ guide.id }}">
                                         <input type="number" name="sub_order" placeholder="Thứ tự" value="1" required style="width: 65px; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                        <input type="text" name="content" placeholder="Nhập nội dung thao tác chi tiết..." required style="flex: 1; min-width: 140px; padding: 6px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                        <input type="text" name="note" placeholder="Lưu ý riêng (tùy chọn)" style="width: 120px; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                        <button type="submit" style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600; white-space: nowrap;">+ Thêm ý</button>
+                                        <input type="url" name="image_url" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 160px; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                        <input type="text" name="content" placeholder="Nội dung các bước chi tiết..." required style="width: 100%; padding: 6px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                        <input type="text" name="note" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                        <button type="submit" style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600; width: 100%;">+ Thêm ý</button>
                                     </form>
                                 </div>
                                 <!-- ======================================================================= -->
                             </td>
                             <td style="vertical-align: top;">
                                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                    {% if step.image_url %}
-                                    <a href="{{ step.image_url }}" target="_blank" title="Xem ảnh" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #2563eb; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🖼️ Ảnh</a>
+                                    {% if step.image_urls %}
+                                        {% set img_list = step.image_urls.split(',') if step.image_urls is string else step.image_urls %}
+                                        {% for img in img_list %}
+                                            {% if img.strip() %}
+                                            <a href="{{ img.strip() }}" target="_blank" title="Xem ảnh {{ loop.index }}" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #2563eb; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🖼️ Ảnh {{ loop.index }}</a>
+                                            {% endif %}
+                                        {% endfor %}
                                     {% endif %}
-                                    {% if step.video_url %}
-                                    <a href="{{ step.video_url }}" target="_blank" title="Xem video" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #dc2626; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🎬 Video</a>
+                                    {% if step.video_urls %}
+                                    <a href="{{ step.video_urls }}" target="_blank" title="Xem video" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #dc2626; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🎬 Video</a>
                                     {% endif %}
                                 </div>
                             </td>
@@ -549,11 +571,18 @@
             </div>
 
             <!-- Ô nhập Đường dẫn Ảnh và Video cho từng bước -->
-            <div class="modal-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-                <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đường dẫn Ảnh (Image URL)</label>
-                    <input type="url" id="image_url" name="image_url" class="modern-input" placeholder="https://...">
+            <!-- Ô nhập Đường dẫn Ảnh (Hỗ trợ nhiều ảnh) -->
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Đường dẫn Ảnh (Có thể thêm nhiều ảnh)</label>
+                    <button type="button" onclick="addImageInput()" style="background: none; border: none; color: #2563eb; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Thêm ô ảnh</button>
                 </div>
+                <div id="imageInputsContainer" style="display: flex; flex-direction: column; gap: 6px;">
+                    <!-- Các ô input link ảnh sẽ được thêm tự động bằng JavaScript ở đây -->
+                </div>
+            </div>
+
+            <div class="modal-grid-2" style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đường dẫn Video (YouTube URL)</label>
                     <input type="url" id="video_url" name="video_url" class="modern-input" placeholder="https://youtube.com/...">
@@ -583,15 +612,30 @@
     const modal = document.getElementById('stepModal');
     const form = document.getElementById('stepForm');
     const modalTitle = document.getElementById('modalTitle');
+    const imageContainer = document.getElementById('imageInputsContainer');
+
+    // Hàm thêm 1 dòng input nhập link ảnh
+    function addImageInput(value = '') {
+        const div = document.createElement('div');
+        div.style.cssText = 'display: flex; gap: 6px; align-items: center;';
+        div.innerHTML = `
+            <input type="url" name="image_url" class="modern-input" placeholder="https://..." value="${value}" style="flex: 1;">
+            <button type="button" onclick="this.parentElement.remove()" style="background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; width: 36px; height: 38px; cursor: pointer; font-weight: bold; flex-shrink: 0;" title="Xóa ảnh này">✕</button>
+        `;
+        imageContainer.appendChild(div);
+    }
 
     function openAddModal(button) {
         modalTitle.innerText = "Thêm bước mới";
         form.action = "/admin/guide-step/add/{{ guide.id }}";
         form.reset();
         
-        // Nhận số thứ tự tự động từ thuộc tính data-next-step của nút
         document.getElementById('step_number').value = button ? button.getAttribute('data-next-step') : 1;
         document.getElementById('is_active').checked = true;
+        
+        imageContainer.innerHTML = '';
+        addImageInput(); // Tạo sẵn 1 ô trống khi thêm mới
+        
         modal.style.display = 'flex';
     }
 
@@ -604,11 +648,30 @@
         document.getElementById('title').value = step.title || '';
         document.getElementById('content').value = step.content || '';
         document.getElementById('note').value = step.note || '';
-        document.getElementById('image_url').value = step.image_url || '';
         document.getElementById('video_url').value = step.video_url || '';
         document.getElementById('download_url').value = step.download_url || '';
-        document.getElementById('is_active').checked = step.is_active;
+        document.getElementById('is_active').checked = step.is_active === true || step.is_active == 1;
+
+        // ĐÃ SỬA: Dùng step.image_urls (có 's') khớp với Backend
+        imageContainer.innerHTML = '';
+        if (step.image_urls) {
+            let urls = [];
+            if (typeof step.image_urls === 'string') {
+                urls = step.image_urls.includes(',') ? step.image_urls.split(',').map(s => s.trim()) : [step.image_urls.trim()];
+            } else if (Array.isArray(step.image_urls)) {
+                urls = step.image_urls;
+            }
+            
+            urls.forEach(url => {
+                if (url) addImageInput(url);
+            });
+        }
         
+        // Nếu không có ảnh nào thì hiện mặc định 1 ô trống
+        if (imageContainer.children.length === 0) {
+            addImageInput();
+        }
+
         modal.style.display = 'flex';
     }
 
@@ -616,24 +679,25 @@
         modal.style.display = 'none';
     }
 
+    function toggleEditSubStep(subId) {
+        const viewMode = document.getElementById('sub-step-view-' + subId);
+        const editMode = document.getElementById('sub-step-edit-' + subId);
+        
+        if (viewMode.style.display === 'none') {
+            viewMode.style.display = 'flex';
+            editMode.style.display = 'none';
+        } else {
+            viewMode.style.display = 'none';
+            editMode.style.display = 'flex';
+        }
+    }
+
+    // Đóng modal khi click ra vùng tối bên ngoài
     window.onclick = function(event) {
-        if (event.target == modal) {
+        if (event.target === modal) {
             closeModal();
         }
     }
-
-    function toggleEditSubStep(subId) {
-        const viewEl = document.getElementById(`sub-step-view-${subId}`);
-        const editEl = document.getElementById(`sub-step-edit-${subId}`);
-        if (viewEl.style.display === 'none') {
-            viewEl.style.display = 'flex';
-            editEl.style.display = 'none';
-        } else {
-            viewEl.style.display = 'none';
-            editEl.style.display = 'flex';
-        }
-    }
 </script>
-
 </body>
 </html>
