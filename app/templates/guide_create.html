@@ -64,7 +64,7 @@
 
 textarea.modern-control {
     height: auto;
-    min-height: 110px;
+    min-height: 90px;
     resize: vertical;
 }
 
@@ -215,6 +215,20 @@ textarea.modern-control {
                         <textarea name="description"
                                   class="form-control modern-control"
                                   placeholder="Mô tả các bước thực hiện hoặc lưu ý quan trọng..."></textarea>
+                    </div>
+
+                    <!-- 🖼️ IMAGE URL (ẢNH MINH HỌA / BANNER DÒNG MÁY) -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            🖼️ Đường dẫn Ảnh minh họa / Dòng máy (Image URL)
+                        </label>
+                        <input type="url"
+                               name="image_url"
+                               class="form-control modern-control"
+                               placeholder="https://example.com/anh-may-in-epson.jpg">
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic;">
+                            📌 Link ảnh đại diện sản phẩm hoặc hình tổng quan. Ảnh này sẽ xuất hiện ở đầu bài viết trước khi vào từng bước chi tiết.
+                        </div>
                     </div>
 
                     <!-- AUTO-TAG NOTICE -->

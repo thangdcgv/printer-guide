@@ -41,6 +41,42 @@
         }
 
         /* =====================================================
+        HEADER BANNER & MAIN IMAGE
+        ===================================================== */
+        .guide-header-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 1.2rem;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .guide-cover-wrapper {
+            flex-shrink: 0;
+            width: 160px;
+            height: 110px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 4px;
+        }
+
+        .guide-cover-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        /* =====================================================
         FORM CONTROL
         ===================================================== */
         .modern-input,
@@ -235,6 +271,16 @@
         @media(max-width: 480px) {
             .modern-ui { padding: 6px; }
             
+            /* Xếp chồng banner ảnh trên điện thoại */
+            .guide-header-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .guide-cover-wrapper {
+                width: 100%;
+                height: 160px;
+            }
+
             /* Tiêu đề & nút hành động đầu trang xếp dọc trên mobile nhỏ */
             .header-flex-box {
                 flex-direction: column;
@@ -271,8 +317,8 @@
     <div style="max-width: 1200px; margin: 0 auto;">
         
         <!-- Breadcrumb & Header -->
-        <div class="header-flex-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-        <div>
+        <div class="header-flex-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
                 <!-- Kiểm tra nếu có cookie user_session thì về trang quản trị, ngược lại về trang chủ -->
                 {% if request.cookies.get("user_session") %}
                     <a href="/admin/guide" style="color: #64748b; font-size: clamp(0.75rem, 1.8vw, 0.8rem); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px;">
@@ -297,6 +343,33 @@
             </button>
             {% endif %}
         </div>
+
+        <!-- 🖼️ KHU VỰC HIỂN THỊ ẢNH ĐẦU BÀI (GUIDE IMAGE / COVER) -->
+        {% if guide.image_url or guide.description %}
+        <div class="guide-header-card">
+            {% if guide.image_url %}
+            <div class="guide-cover-wrapper">
+                <a href="{{ guide.image_url }}" target="_blank" title="Xem ảnh phóng to">
+                    <img src="{{ guide.image_url }}" alt="{{ guide.title }}" class="guide-cover-img">
+                </a>
+            </div>
+            {% endif %}
+            <div style="flex: 1; min-width: 200px;">
+                <div style="font-size: 0.72rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                    🖼️ Ảnh đại diện / Dòng máy
+                </div>
+                {% if guide.description %}
+                <div style="color: #475569; font-size: clamp(0.82rem, 1.8vw, 0.88rem); line-height: 1.5; margin: 0;">
+                    {{ guide.description }}
+                </div>
+                {% else %}
+                <div style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">
+                    Chưa có mô tả tóm tắt cho bài viết này.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Bảng danh sách các bước -->
         <div class="glass-card">
@@ -475,7 +548,7 @@
                 <input type="text" id="note" name="note" class="modern-input" placeholder="Ví dụ: nên sử dụng trình duyệt gg chrome">
             </div>
 
-            <!-- Ô nhập Đường dẫn Ảnh và Video -->
+            <!-- Ô nhập Đường dẫn Ảnh và Video cho từng bước -->
             <div class="modal-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đường dẫn Ảnh (Image URL)</label>
@@ -533,7 +606,7 @@
         document.getElementById('note').value = step.note || '';
         document.getElementById('image_url').value = step.image_url || '';
         document.getElementById('video_url').value = step.video_url || '';
-        document.getElementById('download_url').value = step.download_url || ''; // <--- Bổ sung dòng này để load link tải cũ lên form
+        document.getElementById('download_url').value = step.download_url || '';
         document.getElementById('is_active').checked = step.is_active;
         
         modal.style.display = 'flex';
@@ -548,17 +621,18 @@
             closeModal();
         }
     }
+
     function toggleEditSubStep(subId) {
-    const viewEl = document.getElementById(`sub-step-view-${subId}`);
-    const editEl = document.getElementById(`sub-step-edit-${subId}`);
-    if (viewEl.style.display === 'none') {
-        viewEl.style.display = 'flex';
-        editEl.style.display = 'none';
-    } else {
-        viewEl.style.display = 'none';
-        editEl.style.display = 'flex';
+        const viewEl = document.getElementById(`sub-step-view-${subId}`);
+        const editEl = document.getElementById(`sub-step-edit-${subId}`);
+        if (viewEl.style.display === 'none') {
+            viewEl.style.display = 'flex';
+            editEl.style.display = 'none';
+        } else {
+            viewEl.style.display = 'none';
+            editEl.style.display = 'flex';
+        }
     }
-}
 </script>
 
 </body>

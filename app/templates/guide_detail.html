@@ -3,135 +3,249 @@
 {% block content %}
 <style>
 /* =====================================================
-   TỐI ƯU RESPONSIVE TRANG CHI TIẾT BÀI HƯỚNG DẪN
+   TỐI ƯU CO GIÃN TỰ ĐỘNG (FLUID RESPONSIVE) CHUẨN MOBILE-FIRST
 ===================================================== */
-.guide-detail-wrapper {
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: clamp(8px, 2vw, 20px) 0;
+:root {
+    --guide-bg-card: #ffffff;
+    --guide-border: #e2e8f0;
+    --guide-text-main: #0f172a;
+    --guide-text-sub: #475569;
+    --guide-accent: #2563eb;
 }
 
-/* Nút quay lại */
+/* Chống phình ngang toàn bộ trang */
+.guide-detail-wrapper * {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* Khung bọc tổng thể */
+.guide-detail-wrapper {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: clamp(8px, 2vw, 20px) clamp(8px, 2.5vw, 16px);
+    overflow-x: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* Nút quay lại (Mở rộng vùng chạm ngón tay) */
 .guide-back-link {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: #64748b;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-bottom: 12px;
-    transition: color 0.2s;
+    gap: 6px;
+    padding: 6px 0;
+    margin-bottom: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 .guide-back-link:hover {
-    color: #2563eb;
+    color: var(--guide-accent);
+    transform: translateX(-2px);
 }
 
-/* Header bài hướng dẫn */
-.guide-main-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: clamp(14px, 3vw, 24px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    margin-bottom: 16px;
-}
-
-.guide-main-title {
-    font-size: clamp(1.2rem, 3.5vw, 1.65rem);
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.35;
-    margin-bottom: 10px;
-}
-
-.guide-main-desc {
-    font-size: clamp(0.9rem, 2vw, 1rem);
-    color: #475569;
-    line-height: 1.6;
-    margin-bottom: 0;
-}
-
-/* Khung từng bước lớn */
+/* Card chính (Header & Bước) */
+.guide-main-card, 
 .step-item-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: clamp(14px, 3vw, 22px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    margin-bottom: 16px;
+    background: var(--guide-bg-card);
+    border: 1px solid var(--guide-border);
+    border-radius: 12px;
+    padding: clamp(12px, 3vw, 24px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 14px;
+    width: 100%;
 }
 
-.step-item-title {
-    font-size: clamp(1.05rem, 2.5vw, 1.2rem);
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 0;
-}
-
-.step-item-content {
-    font-size: clamp(0.88rem, 2vw, 0.95rem);
-    color: #475569;
-    line-height: 1.6;
-    margin-bottom: 12px;
-}
-
-/* Khung chứa hình ảnh */
-.step-image-container {
-    margin: 14px 0;
+/* 🖼️ KHUNG ẢNH BANNER SẢN PHẨM Ở ĐẦU BÀI */
+.guide-main-banner {
+    width: 100%;
     background: #f8fafc;
-    padding: 10px;
+    border: 1px solid var(--guide-border);
     border-radius: 10px;
-    border: 1px solid #e2e8f0;
+    padding: 10px;
+    margin-top: 14px;
     text-align: center;
 }
 
-.step-image-container img {
-    max-width: 100%;
-    max-height: 400px;
+.guide-main-banner img {
+    width: 100%;
+    height: auto;
+    max-height: 380px;
     object-fit: contain;
+    border-radius: 6px;
+    display: block;
+    margin: 0 auto;
+    background: #fff;
+}
+
+/* Tiêu đề chính */
+.guide-main-title {
+    font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+    font-weight: 700;
+    color: var(--guide-text-main);
+    line-height: 1.35;
+    margin-bottom: 8px;
+}
+
+.guide-main-desc {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    color: var(--guide-text-sub);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Layout Tiêu đề từng bước */
+.step-header-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.step-item-title {
+    font-size: clamp(1rem, 3.8vw, 1.25rem);
+    font-weight: 700;
+    color: var(--guide-text-main);
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 200px;
+}
+
+.step-item-content {
+    font-size: clamp(0.875rem, 2.2vw, 0.975rem);
+    color: var(--guide-text-sub);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+/* Khung Lưu ý & Chú ý */
+.guide-note-box {
+    background-color: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-left: 4px solid #f59e0b !important;
     border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: clamp(0.825rem, 2.2vw, 0.9rem);
+    color: #92400e;
+    line-height: 1.5;
+    display: block !important;
+}
+
+.guide-sub-note-box {
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-left: 3px solid #ef4444 !important;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    font-size: clamp(0.8rem, 2vw, 0.85rem);
+    color: #991b1b;
+    line-height: 1.4;
+    display: block !important;
+}
+
+/* Hình ảnh responsive */
+.step-image-container {
+    margin: 12px 0;
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--guide-border);
+    text-align: center;
+    width: 100%;
+}
+
+.step-image-container img {
+    width: 100%;
+    height: auto;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 6px;
     display: block;
     margin: 0 auto;
 }
 
-/* Các ý nhỏ (Sub-steps) */
+/* Ý nhỏ (Sub-steps) */
 .sub-steps-container {
     border-left: 3px solid #cbd5e1;
-    padding-left: 12px;
-    margin-top: 14px;
+    padding-left: clamp(6px, 2vw, 12px);
+    margin-top: 12px;
 }
 
 .sub-step-box {
     background: #f8fafc;
     border: 1px solid #f1f5f9;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
 }
 
-/* Tinh chỉnh riêng cho Mobile <= 480px (Điện thoại nhỏ từ 5.5 inch) */
-@media (max-width: 480px) {
-    .guide-main-card, .step-item-card {
-        padding: 12px;
-        border-radius: 12px;
-    }
-    
-    /* Nhóm nút video & tải xuống tự dàn full chiều ngang để dễ bấm bằng ngón tay cái */
+/* Nút bấm tự dàn hàng */
+.step-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+/* =====================================================
+   TỐI ƯU ĐẶC BIỆT CHO MÀN HÌNH ĐIỆN THOẠI (< 480px & < 600px)
+===================================================== */
+@media (max-width: 600px) {
     .step-action-buttons {
         flex-direction: column;
-        gap: 8px !important;
     }
-    
+
     .step-action-buttons .btn {
         width: 100%;
         justify-content: center;
+        padding: 10px 12px;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .guide-detail-wrapper {
+        padding: 6px 6px;
+    }
+
+    .guide-main-card, 
+    .step-item-card {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+
+    .guide-main-banner {
+        padding: 6px;
+        margin-top: 10px;
+    }
+
+    .guide-main-banner img,
+    .step-image-container img {
+        max-height: 260px;
+    }
+
+    .sub-steps-container {
+        border-left-width: 2px;
+        padding-left: 6px;
+    }
+
+    .sub-step-box {
+        padding: 8px 6px;
     }
 }
 </style>
 
 <div class="guide-detail-wrapper">
-    <!-- Nút quay lại trang trước / trang chủ -->
+    <!-- Nút quay lại -->
     <div>
         <a href="/" class="guide-back-link">
             ← Quay lại trang chủ
@@ -140,13 +254,13 @@
 
     <!-- HEADER BÀI HƯỚNG DẪN -->
     <div class="guide-main-card">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            {% if guide.printer_model %}
-            <span class="badge bg-primary text-uppercase px-2 py-1" style="font-size: 0.75rem;">
+        {% if guide.printer_model %}
+        <div class="mb-2">
+            <span class="badge bg-primary text-uppercase px-2 py-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">
                 {{ guide.printer_model.brand }} - {{ guide.printer_model.model }}
             </span>
-            {% endif %}
         </div>
+        {% endif %}
         
         <h1 class="guide-main-title">{{ guide.title }}</h1>
         
@@ -155,16 +269,28 @@
             {{ guide.description }}
         </p>
         {% endif %}
+
+        <!-- 🖼️ HIỂN THỊ ẢNH BANNER/MINH HỌA DÒNG MÁY Ở ĐẦU BÀI (NẾU CÓ) -->
+        {% if guide.image_url and guide.image_url != 'https://...' %}
+        <div class="guide-main-banner">
+            <a href="{{ guide.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
+                <img src="{{ guide.image_url }}" alt="Ảnh minh họa {{ guide.title }}">
+            </a>
+            <div style="font-size: 0.7rem; color: #64748b; margin-top: 6px; font-style: italic;">
+                🔍 Bấm vào ảnh để xem kích thước lớn hơn
+            </div>
+        </div>
+        {% endif %}
     </div>
 
-    <!-- DANH SÁCH CÁC BƯỚC HƯỚNG DẪN CHI TIẾT (READ-ONLY) -->
+    <!-- DANH SÁCH BƯỚC HƯỚNG DẪN -->
     <div class="guide-steps-container">
         {% if steps %}
             {% for step in steps %}
             <div class="step-item-card">
-                <!-- Tiêu đề bước lớn -->
-                <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
-                    <span class="badge bg-dark text-white p-2" style="font-size: 0.85rem;">
+                <!-- Tiêu đề bước -->
+                <div class="step-header-wrap">
+                    <span class="badge bg-dark text-white px-2 py-1" style="font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;">
                         Bước #{{ step.step_number }}
                     </span>
                     <h4 class="step-item-title">
@@ -172,76 +298,76 @@
                     </h4>
                 </div>
 
-                <!-- Nội dung mô tả chung của bước lớn -->
+                <!-- Mô tả chung -->
                 {% if step.content %}
                 <p class="step-item-content">
                     {{ step.content }}
                 </p>
                 {% endif %}
 
-                <!-- Lưu ý quan trọng của bước lớn -->
+                <!-- Lưu ý của bước lớn -->
                 {% if step.note %}
-                <div class="alert alert-warning py-2 px-3 mb-3 border-0 border-start border-warning border-4 bg-light" style="font-size: 0.88rem;">
+                <div class="guide-note-box">
                     ⚠️ <strong>Lưu ý:</strong> {{ step.note }}
                 </div>
                 {% endif %}
 
-                <!-- Hiển thị ảnh trực tiếp -->
+                <!-- Ảnh hướng dẫn bước -->
                 {% if step.image_url and step.image_url != 'https://...' %}
                 <div class="step-image-container">
                     <a href="{{ step.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
                         <img src="{{ step.image_url }}" alt="Ảnh hướng dẫn bước {{ step.step_number }}">
                     </a>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; font-style: italic;">
+                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px; font-style: italic;">
                         🔍 Bấm vào ảnh để xem kích thước lớn hơn
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- Nhóm nút thao tác: Xem video và Tải xuống -->
-                <div class="d-flex flex-wrap gap-2 mb-3 step-action-buttons">
+                <!-- Nhóm nút hành động -->
+                <div class="step-action-buttons">
                     {% if step.video_url %}
-                    <a href="{{ step.video_url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                    <a href="{{ step.video_url }}" target="_blank" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
                         🎬 Xem Video hướng dẫn
                     </a>
                     {% endif %}
 
                     {% if step.download_url and step.download_url != 'https://...' %}
-                    <a href="{{ step.download_url }}" target="_blank" class="btn btn-sm btn-success text-white text-decoration-none d-inline-flex align-items-center gap-1 justify-content-center">
+                    <a href="{{ step.download_url }}" target="_blank" class="btn btn-sm btn-success text-white text-decoration-none d-inline-flex align-items-center gap-1">
                         📥 Tải xuống bộ cài / File
                     </a>
                     {% endif %}
                 </div>
 
-                <!-- ================= CÁC BƯỚC CON CHI TIẾT (Ý NHỎ) ================= -->
+                <!-- CÁC BƯỚC CON CHI TIẾT (SUB-STEPS) -->
                 {% if step.sub_steps %}
                 <div class="sub-steps-container">
                     {% for sub in step.sub_steps %}
                     <div class="sub-step-box">
-                        <div class="d-flex align-items-start">
-                            <span class="badge bg-secondary text-white me-2 mt-1" style="font-size: 0.75rem;">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="badge bg-secondary text-white mt-1" style="font-size: 0.675rem; flex-shrink: 0;">
                                 Ý {{ sub.sub_order }}
                             </span>
-                            <div class="flex-grow-1">
-                                <span class="text-dark fw-medium" style="font-size: 0.88rem; line-height: 1.5; display: inline-block;">
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <span class="text-dark fw-medium" style="font-size: 0.85rem; line-height: 1.5; display: block; word-break: break-word;">
                                     {{ sub.content }}
                                 </span>
                                 
-                                <!-- Lưu ý riêng của bước con -->
+                                <!-- Chú ý của ý nhỏ -->
                                 {% if sub.note %}
-                                <div class="text-danger small mt-1" style="font-size: 0.82rem;">
+                                <div class="guide-sub-note-box">
                                     ⚠️ <strong>Chú ý:</strong> {{ sub.note }}
                                 </div>
                                 {% endif %}
 
-                                <!-- Ảnh minh họa riêng của bước con -->
+                                <!-- Ảnh của ý nhỏ -->
                                 {% if sub.image_url and sub.image_url != 'https://...' %}
-                                <div class="mt-2 text-center bg-white p-2 rounded border" style="display: block;">
+                                <div class="mt-2 text-center bg-white p-1 rounded border">
                                     <a href="{{ sub.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
-                                        <img src="{{ sub.image_url }}" alt="Minh họa ý nhỏ" class="img-fluid rounded" style="max-height: 200px; display: block; margin: 0 auto;">
+                                        <img src="{{ sub.image_url }}" alt="Minh họa ý nhỏ" class="img-fluid rounded" style="max-height: 180px; display: block; margin: 0 auto;">
                                     </a>
-                                    <span style="font-size: 0.7rem; color: #64748b; margin-top: 4px; display: block; font-style: italic;">
-                                        🔍 Bấm để phóng to ảnh
+                                    <span style="font-size: 0.675rem; color: #64748b; margin-top: 4px; display: block; font-style: italic;">
+                                        🔍 Bấm để phóng to
                                     </span>
                                 </div>
                                 {% endif %}
@@ -251,11 +377,10 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                <!-- =============================================================== -->
             </div>
             {% endfor %}
         {% else %}
-            <div class="text-center py-5 text-muted bg-white rounded-3 shadow-sm p-4 border">
+            <div class="text-center py-4 text-muted bg-white rounded-3 shadow-sm p-3 border">
                 <p class="mb-0">Bài viết này đang được cập nhật chi tiết các bước thực hiện.</p>
             </div>
         {% endif %}

@@ -52,7 +52,7 @@
 
     .modern-textarea {
         height: auto;
-        min-height: 110px;
+        min-height: 90px;
         resize: vertical;
     }
 
@@ -188,6 +188,33 @@
                         <textarea name="description" id="description" class="form-control modern-textarea" placeholder="Mô tả các bước thực hiện hoặc lưu ý quan trọng...">{{ guide.description or '' }}</textarea>
                     </div>
 
+                    <!-- 🖼️ 4. BỔ SUNG: ĐƯỜNG DẪN ẢNH MINH HỌA / BANNER DÒNG MÁY -->
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label form-label-custom">
+                            🖼️ Đường dẫn Ảnh minh họa / Dòng máy (Image URL)
+                        </label>
+                        <input type="url"
+                               name="image_url"
+                               id="image_url"
+                               class="form-control modern-input"
+                               placeholder="https://example.com/anh-may-in-epson.jpg"
+                               value="{{ guide.image_url or '' }}">
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic;">
+                            📌 Link ảnh đại diện sản phẩm hoặc hình tổng quan. Ảnh này sẽ xuất hiện ở đầu bài viết trước khi vào từng bước chi tiết.
+                        </div>
+
+                        <!-- XEM TRƯỚC ẢNH ĐÃ CÓ -->
+                        {% if guide.image_url %}
+                        <div class="mt-2 p-2 rounded d-flex align-items-center gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0; max-width: 300px;">
+                            <img src="{{ guide.image_url }}" alt="Preview" style="height: 48px; width: 48px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; border: 1px solid #cbd5e1;">
+                            <div class="small text-truncate" style="color: #475569; font-size: 0.75rem;">
+                                <span class="fw-semibold d-block">Ảnh đang sử dụng</span>
+                                <a href="{{ guide.image_url }}" target="_blank" class="text-primary text-decoration-none" style="font-size: 0.72rem;">Xem ảnh gốc ↗</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <!-- AUTO-TAG NOTICE -->
                     <div class="auto-tag-notice">
                         <span style="font-size: 1.1rem;">🏷️</span>
@@ -196,7 +223,7 @@
                         </span>
                     </div>
 
-                    <!-- 4. Thứ tự & Trạng thái -->
+                    <!-- 5. Thứ tự & Trạng thái -->
                     <div class="row g-3 mb-4 align-items-center">
                         <div class="col-md-6">
                             <label for="sort_order" class="form-label form-label-custom">Thứ tự hiển thị</label>
@@ -211,7 +238,7 @@
                         </div>
                     </div>
 
-                    <!-- 5. Nút điều hướng -->
+                    <!-- 6. Nút điều hướng -->
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top action-buttons-area" style="border-color: #f1f5f9 !important;">
                         <a href="/admin/guide" class="btn-secondary-modern">
                             <!-- SVG Arrow Left -->
@@ -229,5 +256,12 @@
         </div>
     </div>
 </div>
-
+<script>
+    document.getElementById('image_url').addEventListener('input', function(e) {
+        const previewImg = document.querySelector('.mb-3 img[alt="Preview"]');
+        if (previewImg) {
+            previewImg.src = e.target.value.trim() || '{{ guide.image_url or "" }}';
+        }
+    });
+</script>
 {% endblock %}

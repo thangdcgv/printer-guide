@@ -232,7 +232,7 @@
 }
 
 /* =================================================
-   RESPONSIVE CHO ĐIỆN THOẠI NHỎ & MÁY TÍNH BẢNG
+   RESPONSIVE
 ================================================= */
 @media(max-width: 768px) {
     .header-box {
@@ -247,12 +247,12 @@
 
 @media(max-width: 600px) {
     .modern-table th:nth-child(4),
-    .modern-table td:nth-child(4) { display: none; } /* Ẩn cột Order trên màn hình nhỏ */
+    .modern-table td:nth-child(4) { display: none; }
 }
 
 @media(max-width: 480px) {
     .modern-table th:nth-child(5),
-    .modern-table td:nth-child(5) { display: none; } /* Ẩn cột Trạng thái trên màn hình rất nhỏ */
+    .modern-table td:nth-child(5) { display: none; }
 }
 </style>
 
@@ -263,7 +263,6 @@
         <div class="header-box d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h3 class="mb-1 d-flex align-items-center gap-2">
-                    <!-- SVG Book Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                     Quản lý Hướng dẫn
                 </h3>
@@ -273,7 +272,6 @@
             </div>
             
             <a href="/admin/guide/create" class="btn-primary-modern shadow-sm">
-                <!-- SVG Plus Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Thêm bài mới
             </a>
@@ -287,7 +285,6 @@
                     <!-- 1. Ô Tìm kiếm -->
                     <div class="col-lg-5 col-md-12 p-1">
                         <div class="search-wrapper">
-                            <!-- SVG Search Icon -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             <input type="text" name="search" class="form-control modern-input w-100" 
                                    placeholder="Tìm kiếm theo tiêu đề, mô tả hoặc mã máy..." value="{{search or ''}}">
@@ -306,16 +303,16 @@
                         </select>
                     </div>
 
-                    <!-- 3. Lọc theo Trạng thái -->
+                    <!-- 3. Lọc theo Trạng thái (Đã sửa name="guide_status" khớp với backend) -->
                     <div class="col-lg-2 col-md-6 p-1">
-                        <select name="status" class="form-select modern-select w-100" onchange="this.form.submit()">
+                        <select name="guide_status" class="form-select modern-select w-100" onchange="this.form.submit()">
                             <option value="">-- Trạng thái --</option>
                             <option value="1" {% if status == '1' %}selected{% endif %}>Đang hiển thị</option>
                             <option value="0" {% if status == '0' %}selected{% endif %}>Đang ẩn</option>
                         </select>
                     </div>
 
-                    <!-- 4. Nút thao tác (Lọc / Xóa lọc) -->
+                    <!-- 4. Nút thao tác -->
                     <div class="col-lg-2 col-md-12 p-1 d-flex gap-2">
                         <button type="submit" class="btn-secondary-modern flex-grow-1 justify-content-center">
                             Lọc
@@ -323,7 +320,6 @@
                         
                         {% if search or selected_printer_id or status != None %}
                         <a href="/admin/guide" class="btn-secondary-modern px-3" title="Xóa bộ lọc" style="color: #ef4444; border-color: #fecaca; background-color: #fef2f2;">
-                            <!-- SVG X Icon -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                         </a>
                         {% endif %}
@@ -347,7 +343,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for g in guide %}
+                        <!-- [ĐÃ SỬA] Thay 'guide' thành 'guides' khớp với biến backend -->
+                        {% for g in guides %}
                         <tr>
                             <td class="text-center" style="color: #94a3b8; font-weight: 500;">
                                 {{loop.index}}
@@ -371,7 +368,6 @@
                                         {{g.description}}
                                     </div>
                                 {% endif %}
-                                <!-- Hiển thị danh sách Tag gắn kèm (Auto-Tagging) -->
                                 {% if g.guide_tags %}
                                     <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
                                         {% for gt in g.guide_tags %}
@@ -408,20 +404,16 @@
                             <!-- Thao tác -->
                             <td>
                                 <div class="d-flex justify-content-center gap-1">
-                                    <!-- Nút truy cập Quản lý Steps -->
                                     <a href="/admin/guide-step?guide_id={{g.id}}" class="action-icon-btn" title="Các bước (Steps)">
-                                        <!-- SVG List Icon -->
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                                     </a>
                                     
                                     <a href="/admin/guide/edit/{{g.id}}" class="action-icon-btn" title="Chỉnh sửa">
-                                        <!-- SVG Edit Icon -->
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </a>
 
                                     <form action="/admin/guide/delete/{{g.id}}" method="POST" class="m-0" onsubmit="return confirm('Xóa bài hướng dẫn này?')">
                                         <button class="action-icon-btn btn-delete" title="Xóa">
-                                            <!-- SVG Trash Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </form>
