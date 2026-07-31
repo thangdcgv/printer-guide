@@ -3,981 +3,338 @@
 {% block content %}
 
 <style>
-
 :root {
     --primary:#2563eb;
     --success:#059669;
     --danger:#dc2626;
-
     --bg:#f8fafc;
     --card:#ffffff;
-
     --text:#0f172a;
     --muted:#64748b;
-
     --border:#e2e8f0;
-
 }
-
-
-/* =====================
-   CONTAINER
-===================== */
 
 .lib-container {
-
     max-width:1300px;
-
     margin:auto;
-
     padding:18px 12px;
-
-    font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    sans-serif;
-
+    font-family: Inter, system-ui, -apple-system, sans-serif;
 }
-
-
-
-/* =====================
- HEADER
-===================== */
-
 
 .lib-header {
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
     gap:15px;
-
     margin-bottom:20px;
-
 }
-
 
 .lib-header h2 {
-
     margin:0;
-
     color:var(--text);
-
     font-size:1.4rem;
-
     font-weight:800;
-
 }
-
-
-
-/* =====================
- BUTTON
-===================== */
-
 
 .action-buttons {
-
     display:flex;
-
     gap:10px;
-
 }
-
-
 
 .btn-action {
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     gap:6px;
-
-
     padding:11px 16px;
-
-
     border-radius:14px;
-
-
     color:white;
-
-
     background:var(--primary);
-
-
     font-size:.85rem;
-
-
     font-weight:700;
-
-
     text-decoration:none;
-
-
-    box-shadow:
-    0 6px 15px rgba(37,99,235,.18);
-
-
+    box-shadow: 0 6px 15px rgba(37,99,235,.18);
     transition:.25s;
-
 }
-
-
 
 .btn-action:hover {
-
-    transform:
-    translateY(-3px);
-
+    transform: translateY(-3px);
 }
-
-
 
 .btn-resource {
-
     background:var(--success);
-
 }
-
-
-
-
-/* =====================
- BREADCRUMB
-===================== */
-
 
 .breadcrumb-nav {
-
-
     display:flex;
-
     align-items:center;
-
     gap:8px;
-
-
     padding:12px 15px;
-
-
     background:white;
-
-
     border:1px solid var(--border);
-
-
     border-radius:14px;
-
-
     color:var(--muted);
-
-
     font-size:.85rem;
-
-
     margin-bottom:25px;
-
-
 }
-
 
 .breadcrumb-nav a {
-
-
     color:var(--primary);
-
     font-weight:600;
-
     text-decoration:none;
-
 }
-
-
-
-/* =====================
- SECTION TITLE
-===================== */
-
 
 .lib-section-title {
-
-
     display:flex;
-
-
     align-items:center;
-
-
     gap:8px;
-
-
-    margin:
-
-    24px 0 14px;
-
-
+    margin: 24px 0 14px;
     font-size:1rem;
-
-
     font-weight:800;
-
-
     color:var(--text);
-
-
 }
-
-
-
-/* =====================
- GRID
-===================== */
-
 
 .lib-grid {
-
-
     display:grid;
-
-
-    grid-template-columns:
-
-    repeat(auto-fill,minmax(190px,1fr));
-
-
+    grid-template-columns: repeat(auto-fill,minmax(190px,1fr));
     gap:16px;
-
-
 }
-
-
-
-/* =====================
- CARD
-===================== */
-
 
 .lib-card {
-
-
     background:white;
-
-
-    border:
-
-    1px solid var(--border);
-
-
+    border: 1px solid var(--border);
     border-radius:18px;
-
-
     overflow:hidden;
-
-
     transition:.25s;
-
-
     position:relative;
-
-
 }
-
-
 
 .lib-card:hover {
-
-
-    transform:
-    translateY(-5px);
-
-
-    box-shadow:
-
-    0 15px 35px rgba(15,23,42,.10);
-
-
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(15,23,42,.10);
 }
-
-
-
-/* =====================
- MAIN CARD
-===================== */
-
 
 .lib-card-main {
-
-
     min-height:125px;
-
-
     padding:18px 15px;
-
-
     display:flex;
-
-
     flex-direction:column;
-
-
     align-items:center;
-
-
     justify-content:center;
-
-
     text-align:center;
-
-
     text-decoration:none;
-
-
     color:var(--text);
-
-
 }
-
-
-
-
-/* ICON */
 
 .lib-icon {
-
-
     width:58px;
-
     height:58px;
-
-
     border-radius:18px;
-
-
     display:flex;
-
-
     justify-content:center;
-
-
     align-items:center;
-
-
     font-size:30px;
-
-
     margin-bottom:12px;
-
-
     background:#eff6ff;
-
-
 }
 
-
-
-/* ICON COLORS */
-
-
-.folder-icon {
-
-    background:#fef3c7;
-
-}
-
-
-.pdf-icon {
-
-    background:#fee2e2;
-
-}
-
-
-.video-icon {
-
-    background:#ede9fe;
-
-}
-
-
-.web-icon {
-
-    background:#dcfce7;
-
-}
-
-
-.driver-icon {
-
-    background:#cffafe;
-
-}
-
-
-
-/* INFO */
-
+.folder-icon { background:#fef3c7; }
+.pdf-icon { background:#fee2e2; }
+.video-icon { background:#ede9fe; }
+.web-icon { background:#dcfce7; }
+.driver-icon { background:#cffafe; }
 
 .lib-info {
-
-
     width:100%;
-
-
     overflow:hidden;
-
-
 }
-
-
 
 .lib-name {
-
-
     display:block;
-
-
     font-weight:700;
-
-
     font-size:.9rem;
-
-
     white-space:nowrap;
-
-
     overflow:hidden;
-
-
     text-overflow:ellipsis;
-
-
 }
-
-
 
 .lib-type {
-
-
     display:inline-block;
-
-
     margin-top:6px;
-
-
     padding:3px 10px;
-
-
     border-radius:30px;
-
-
     background:#f1f5f9;
-
-
     color:var(--muted);
-
-
     font-size:.7rem;
-
-
     text-transform:uppercase;
-
-
 }
-
-
-
-
-/* =====================
- FOOTER
-===================== */
-
 
 .lib-card-footer {
-
-
     display:flex;
-
-
-    border-top:
-
-    1px solid var(--border);
-
-
+    border-top: 1px solid var(--border);
     background:#fafafa;
-
-
 }
-
-
 
 .lib-card-footer a {
-
-
     flex:1;
-
-
     padding:10px 5px;
-
-
     text-align:center;
-
-
     text-decoration:none;
-
-
     font-size:.78rem;
-
-
     font-weight:700;
-
-
     transition:.2s;
-
-
 }
-
-
 
 .btn-edit {
-
     color:#4f46e5;
-
     border-right:1px solid var(--border);
-
 }
-
-
 
 .btn-delete {
-
     color:#dc2626;
-
 }
 
-
-
-.btn-edit:hover,
-.btn-delete:hover {
-
-
+.btn-edit:hover, .btn-delete:hover {
     background:#f1f5f9;
-
 }
-
-
-
-/* =====================
- EMPTY
-===================== */
-
 
 .empty-state {
-
-
     grid-column:1/-1;
-
-
     padding:35px;
-
-
     text-align:center;
-
-
     color:var(--muted);
-
-
     background:white;
-
-
     border-radius:18px;
-
-
     border:1px dashed var(--border);
-
-
 }
-
-
-
-/* =====================
- RESPONSIVE
-===================== */
-
 
 @media(max-width:700px){
-
-
     .lib-header {
-
         flex-direction:column;
-
         align-items:stretch;
-
     }
-
-
     .action-buttons {
-
         width:100%;
-
     }
-
-
     .btn-action {
-
         flex:1;
-
     }
-
-
 }
-
-
 
 @media(min-width:900px){
-
-
     .lib-card-footer {
-
-
         opacity:0;
-
-
         transition:.25s;
-
-
     }
-
-
-    .lib-card:hover
-    .lib-card-footer {
-
-
+    .lib-card:hover .lib-card-footer {
         opacity:1;
-
-
     }
-
-
 }
-
-
-
 </style>
-
-
 
 <div class="lib-container">
 
-
 <!-- HEADER -->
-
 <div class="lib-header">
+    <h2>📁 Thư Viện Tài Nguyên</h2>
 
+    <div class="action-buttons">
+        <!-- Nút thêm thư mục (Luôn xuất hiện để có thể tạo cây thư mục từ gốc hoặc trong thư mục con) -->
+        <a class="btn-action" href="/admin/library/folder/create{% if folder_id %}?parent_id={{ folder_id }}{% endif %}">
+            📁 Thêm thư mục
+        </a>
 
-<h2>
-📁 Thư Viện Tài Nguyên
-</h2>
-
-
-<div class="action-buttons">
-
-
-<a class="btn-action"
-href="/admin/library/folder/create{% if folder_id %}?parent_id={{ folder_id }}{% endif %}">
-📁 Thêm thư mục
-</a>
-
-
-<a class="btn-action btn-resource"
-href="/admin/library/resource/create{% if folder_id %}?folder_id={{ folder_id }}{% endif %}">
-🔗 Thêm tài nguyên
-</a>
-
-
+        <!-- Nút thêm tài nguyên: CHỈ HIỂN THỊ KHI ĐANG Ở BÊN TRONG THƯ MỤC CON -->
+        {% if current_folder %}
+        <a class="btn-action btn-resource" href="/admin/library/resource/create?folder_id={{ folder_id }}">
+            🔗 Thêm tài nguyên
+        </a>
+        {% endif %}
+    </div>
 </div>
-
-
-</div>
-
-
-
 
 <!-- BREADCRUMB -->
-
-
 <div class="breadcrumb-nav">
-
-
-<a href="/admin/library">
-🏠 Thư viện gốc
-</a>
-
-
-{% if current_folder %}
-
-<span>/</span>
-
-<strong>
-{{ current_folder.name }}
-</strong>
-
-{% endif %}
-
-
+    <a href="/admin/library">🏠 Thư viện gốc</a>
+    {% if current_folder %}
+    <span>/</span>
+    <strong>{{ current_folder.name }}</strong>
+    {% endif %}
 </div>
 
-
-
-
-
-<!-- FOLDER -->
-
+<!-- FOLDER SECTION -->
 {% if sub_folders %}
-
-
 <div class="lib-section-title">
-
-📂 Thư mục con
-
+    📂 Thư mục con
 </div>
-
-
 
 <div class="lib-grid">
-
-
-{% for folder in sub_folders %}
-
-
-<div class="lib-card">
-
-
-<a class="lib-card-main"
-href="/admin/library?folder_id={{ folder.id }}">
-
-
-<div class="lib-icon folder-icon">
-📁
+    {% for folder in sub_folders %}
+    <div class="lib-card">
+        <a class="lib-card-main" href="/admin/library?folder_id={{ folder.id }}">
+            <div class="lib-icon folder-icon">📁</div>
+            <div class="lib-info">
+                <span class="lib-name">{{ folder.name }}</span>
+                <span class="lib-type">Folder</span>
+            </div>
+        </a>
+        <div class="lib-card-footer">
+            <a class="btn-edit" href="/admin/library/folder/edit/{{ folder.id }}">✏️ Sửa</a>
+            <a class="btn-delete" onclick="return confirm('Bạn có chắc muốn xóa thư mục này?')" href="/admin/library/folder/delete/{{ folder.id }}">🗑 Xóa</a>
+        </div>
+    </div>
+    {% endfor %}
 </div>
-
-
-<div class="lib-info">
-
-
-<span class="lib-name">
-{{ folder.name }}
-</span>
-
-
-<span class="lib-type">
-Folder
-</span>
-
-
-</div>
-
-
-</a>
-
-
-
-<div class="lib-card-footer">
-
-
-<a class="btn-edit"
-href="/admin/library/folder/edit/{{ folder.id }}">
-✏️ Sửa
-</a>
-
-
-<a class="btn-delete"
-onclick="return confirm('Bạn có chắc muốn xóa thư mục này?')"
-href="/admin/library/folder/delete/{{ folder.id }}">
-🗑 Xóa
-</a>
-
-
-</div>
-
-
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
 {% endif %}
 
-
-
-
-
-
-
-<!-- RESOURCE -->
-
-
+<!-- RESOURCE SECTION: CHỈ HIỂN THỊ KHI ĐANG Ở TRONG THƯ MỤC CON -->
+{% if current_folder %}
+<div class="lib-section-title">
+    🔗 Tài nguyên trong thư mục
+</div>
 
 <div class="lib-grid">
-
-
-
-{% if resources %}
-
-
-{% for res in resources %}
-
-
-<div class="lib-card">
-
-
-<a class="lib-card-main"
-href="{{res.url}}"
-target="_blank">
-
-
-
-<div class="lib-icon
-
-{% if res.resource_type=='pdf' %}
-pdf-icon
-
-{% elif res.resource_type=='video' %}
-video-icon
-
-{% elif res.resource_type=='website' %}
-web-icon
-
-{% elif res.resource_type=='driver' %}
-driver-icon
-
-{% endif %}
-">
-
-
-{% if res.resource_type == 'onedrive_file' %}
-📊
-
-{% elif res.resource_type == 'onedrive_folder' %}
-🗂️
-
-{% elif res.resource_type == 'website' %}
-🌐
-
-{% elif res.resource_type == 'pdf' %}
-📄
-
-{% elif res.resource_type == 'video' %}
-🎥
-
-{% elif res.resource_type == 'zip' %}
-📦
-
-{% elif res.resource_type == 'firmware' %}
-⚙️
-
-{% elif res.resource_type == 'driver' %}
-🖨️
-
-{% else %}
-📎
-
+    {% if resources %}
+        {% for res in resources %}
+        <div class="lib-card">
+            <a class="lib-card-main" href="{{res.url}}" target="_blank">
+                <div class="lib-icon
+                    {% if res.resource_type=='pdf' %}pdf-icon
+                    {% elif res.resource_type=='video' %}video-icon
+                    {% elif res.resource_type=='website' %}web-icon
+                    {% elif res.resource_type=='driver' %}driver-icon
+                    {% endif %}
+                ">
+                    {% if res.resource_type == 'onedrive_file' %}📊
+                    {% elif res.resource_type == 'onedrive_folder' %}🗂️
+                    {% elif res.resource_type == 'website' %}🌐
+                    {% elif res.resource_type == 'pdf' %}📄
+                    {% elif res.resource_type == 'video' %}🎥
+                    {% elif res.resource_type == 'zip' %}📦
+                    {% elif res.resource_type == 'firmware' %}⚙️
+                    {% elif res.resource_type == 'driver' %}🖨️
+                    {% else %}📎
+                    {% endif %}
+                </div>
+                <div class="lib-info">
+                    <span class="lib-name">{{res.title}}</span>
+                    <span class="lib-type">{{res.resource_type | replace('_',' ')}}</span>
+                </div>
+            </a>
+            <div class="lib-card-footer">
+                <a class="btn-edit" href="/admin/library/resource/edit/{{res.id}}">✏️ Sửa</a>
+                <a class="btn-delete" onclick="return confirm('Bạn có chắc muốn xóa tài nguyên này?')" href="/admin/library/resource/delete/{{res.id}}">🗑 Xóa</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            📭<br>Chưa có tài nguyên nào trong thư mục này.
+        </div>
+    {% endif %}
+</div>
 {% endif %}
 
-
 </div>
-
-
-
-
-<div class="lib-info">
-
-
-<span class="lib-name">
-{{res.title}}
-</span>
-
-
-<span class="lib-type">
-{{res.resource_type | replace('_',' ')}}
-</span>
-
-
-
-</div>
-
-
-
-</a>
-
-
-
-
-<div class="lib-card-footer">
-
-
-<a class="btn-edit"
-href="/admin/library/resource/edit/{{res.id}}">
-✏️ Sửa
-</a>
-
-
-<a class="btn-delete"
-onclick="return confirm('Bạn có chắc muốn xóa tài nguyên này?')"
-href="/admin/library/resource/delete/{{res.id}}">
-🗑 Xóa
-</a>
-
-
-</div>
-
-
-</div>
-
-
-{% endfor %}
-
-
-
-{% else %}
-
-
-<div class="empty-state">
-
-
-📭
-
-<br>
-
-Chưa có tài nguyên nào trong thư mục này.
-
-
-</div>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-</div>
-
 
 {% endblock %}

@@ -314,23 +314,24 @@
 
                 <!-- BỘ SƯU TẬP ẢNH HƯỚNG DẪN CỦA BƯỚC (Đã bọc xử lý an toàn chống lỗi kiểu dữ liệu) -->
                 {% if step.image_urls %}
-                <div class="step-gallery-grid my-3">
-                    <div class="row g-2 justify-content-center">
+                <div class="step-gallery-stack my-3">
+                    <!-- Đổi từ lưới Bootstrap sang khối flex xếp dọc -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
                         {% set img_list = step.image_urls.split(',') if step.image_urls is string else step.image_urls %}
                         {% for img_url in img_list %}
                             {% set clean_url = img_url.strip() if img_url is string else img_url %}
                             {% if clean_url and clean_url != 'https://...' %}
-                            <div class="col-12 col-sm-6 col-md-4">
+                            <div style="width: 100%; max-width: 700px; text-align: center;">
                                 <div class="step-image-container m-0">
-                                    <a href="{{ clean_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
-                                        <img src="{{ clean_url }}" alt="Ảnh bước {{ step.step_number }}" class="img-fluid rounded">
+                                    <a href="{{ clean_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn" style="display: block;">
+                                        <img src="{{ clean_url }}" alt="Ảnh bước {{ step.step_number }}" class="img-fluid rounded" style="width: 100%; height: auto; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                                     </a>
                                 </div>
                             </div>
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 6px; font-style: italic; text-align: center;">
+                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">
                         🔍 Bấm vào ảnh để xem kích thước lớn hơn
                     </div>
                 </div>

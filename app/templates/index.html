@@ -38,66 +38,73 @@
         }
 
         /* =====================================================
-        HEADER BANNER (Tối ưu chống tràn cho màn hình 5.5 inch)
+        HEADER BANNER (Đã tối ưu hóa với clamp() & hiệu ứng mượt)
         ===================================================== */
         .navbar-banner {
             display: flex;
             justify-content: center;
             align-items: center;
             background: #fff;
-            padding: 12px 14px;
+            padding: clamp(12px, 2vw, 20px) clamp(14px, 3vw, 24px);
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             box-sizing: border-box;
             width: 100%;
-            overflow: hidden; /* Ngăn chặn tuyệt đối việc tràn nội dung ra ngoài khung */
+            overflow: hidden;
+            transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt khi hover cả khung */
+        }
+
+        .navbar-banner:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.08); /* Tạo bóng hắt nhẹ mang màu nhận diện */
         }
 
         .brand-centered {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             text-decoration: none !important;
-            transition: transform 0.25s ease;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             max-width: 100%;
         }
 
         .brand-centered:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
-        /* Kích thước Logo tự động thu nhỏ vừa khít điện thoại 5.5 inch */
+        /* Kích thước Logo linh hoạt bằng clamp() - Không cần viết nhiều media query */
         .brand-logo {
-            height: 34px; 
+            height: clamp(34px, 8vw, 88px); 
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.2));
+            filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.15));
             transition: transform 0.3s ease;
             flex-shrink: 0;
         }
 
         .brand-centered:hover .brand-logo {
-            transform: scale(1.05) rotate(-2deg);
+            transform: scale(1.06) rotate(-2deg);
         }
 
-        /* Tên thương hiệu chống rớt dòng trên màn hình hẹp (5.5 inch) */
+        /* Tên thương hiệu co giãn mượt mà theo màn hình */
         .brand-centered span {
-            font-size: 1.5rem; /* Thu nhỏ hợp lý cho điện thoại nhỏ, không bị vỡ giao diện */
+            font-size: clamp(1.3rem, 4.5vw, 3.5rem); /* Tự động co giãn hoàn hảo từ điện thoại nhỏ đến Desktop */
             font-weight: 800;
             letter-spacing: -0.02em;
+            color: #dc2626; /* Fallback an toàn cho trình duyệt cũ */
             background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 2px 10px rgba(220, 38, 38, 0.15);
+            text-shadow: 0 2px 10px rgba(220, 38, 38, 0.1);
             white-space: nowrap;
         }
 
         .brand-centered:hover span {
-            opacity: 0.9;
+            filter: brightness(1.1);
         }
 
         /* Tinh chỉnh riêng cho màn hình điện thoại tầm trung/lớn (từ 480px đến 767px) */

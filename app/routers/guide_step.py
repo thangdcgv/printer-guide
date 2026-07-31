@@ -5,7 +5,12 @@ from urllib.parse import urlparse
 from app.routers.auth import require_admin
 from app.database import supabase
 from app.config import templates
+import re
+from pydantic import BaseModel
+from typing import List
 
+class ReorderRequest(BaseModel):
+    ordered_ids: List[int]
 
 # Khởi tạo router kèm theo điều kiện bắt buộc phải đăng nhập
 router = APIRouter(
@@ -14,6 +19,21 @@ router = APIRouter(
     dependencies=[Depends(require_admin)] # Khóa toàn bộ các route trong file này
 )
 
+#HÀM TỰ ĐỘNG NHẬN BIẾT LINK VÀ CHUYỂN THÀNH THẺ <a> CÓ THỂ CLICK ĐƯỢC
+def auto_linkify(text: Optional[str]) -> str:
+    if not text:
+        return ""
+    
+    # Biểu thức chính quy (Regex) tìm các chuỗi bắt đầu bằng http:// hoặc https://
+    url_pattern = re.compile(r'(https?://[^\s<>]+)')
+    
+    # Thay thế các link tìm được bằng thẻ HTML <a> chuyên nghiệp
+    def replace_url(match):
+        url = match.group(0)
+        # Cắt gọn link hiển thị nếu quá dài (tùy chọn) hoặc giữ nguyên full link
+        return f'<a href="{url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;" title="{url}">🔗 {url}</a>'
+    
+    return url_pattern.sub(replace_url, text)
 # Hàm hỗ trợ kiểm tra tính hợp lệ của từng URL trong danh sách
 def validate_url_list(urls_raw: Optional[str]) -> list[str]:
     if not urls_raw:
@@ -110,7 +130,7 @@ async def add_sub_step(
         "image_url": validated_image_url
     }
 
-    supabase.table("guide_sub_step").insert(sub_data).execute()
+    supabase.table("guide_sub_steps").insert(sub_data).execute()
     return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
 
 
@@ -136,7 +156,7 @@ async def update_sub_step(
         "image_url": validated_image_url
     }
 
-    supabase.table("guide_sub_step").update(sub_data).eq("id", sub_id).execute()
+    supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
     return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
 
 # --- ROUTE XÓA BƯỚC CON ---
@@ -150,6 +170,16 @@ async def delete_sub_step(
         return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Không thể xóa bước con: {str(e)}")
+
+# Hàm tự động nhận dạng link và biến thành thẻ a HTML có thể bấm được
+def auto_linkify(text: Optional[str]) -> str:
+    if not text:
+        return ""
+    url_pattern = re.compile(r'(https?://[^\s<>]+)')
+    def replace_url(match):
+        url = match.group(0)
+        return f'<a href="{url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;" title="{url}">🔗 {url}</a>'
+    return url_pattern.sub(replace_url, text)
 
 
 @router.get("/guide-step", response_class=HTMLResponse)
@@ -171,9 +201,19 @@ async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
         .order("step_number")
         .execute()
     )
-    for step in steps_res.data:
-        step["sub_steps"] = get_sub_steps(step["id"])
+    
     steps = steps_res.data or []
+    for step in steps:
+        step["sub_steps"] = get_sub_steps(step["id"])
+        
+        # Tự động nhận dạng link cho nội dung và lưu ý của bước lớn
+        step["content"] = auto_linkify(step.get("content"))
+        step["note"] = auto_linkify(step.get("note"))
+        
+        # Tự động nhận dạng link luôn cho cả các bước con (sub_steps) nếu có
+        for sub in step.get("sub_steps", []):
+            sub["content"] = auto_linkify(sub.get("content"))
+            sub["note"] = auto_linkify(sub.get("note"))
 
     return templates.TemplateResponse(
         "guide_steps.html",
@@ -183,8 +223,19 @@ async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
             "steps": steps
         }
     )
-
-
+@router.post("/guide-step/reorder")
+async def reorder_guide_steps(payload: ReorderRequest):
+    try:
+        # Duyệt qua mảng ID nhận được, index chạy từ 0 -> gán step_number từ 1 trở đi
+        for index, step_id in enumerate(payload.ordered_ids, start=1):
+            supabase.table("guide_step").update({
+                "step_number": index
+            }).eq("id", step_id).execute()
+            
+        return {"success": True, "message": "Cập nhật thứ tự thành công"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi sắp xếp: {str(e)}")
+#Thêm bước lớn
 @router.post("/guide-step/add/{guide_id}")
 async def add_guide_step(
     request: Request, # Thêm request để lấy danh sách form nhiều giá trị
@@ -221,20 +272,40 @@ async def add_guide_step(
     validated_video_url = validate_url(video_url, "Đường dẫn Video")
     validated_download_url = validate_url(download_url, "Đường dẫn Tải xuống")
 
-    step_data = {
-        "guide_id": guide_id,
-        "step_number": step_number,
-        "title": clean_title,
-        "content": content.strip() if content else None,
-        "note": note.strip() if note else None,
-        "image_urls": validated_image_urls, # Lưu mảng lên Supabase (kiểu jsonb/array)
-        "video_url": validated_video_url,
-        "download_url": validated_download_url,
-        "is_active": True if is_active else False
-    }
+    try:
+        # 1. TỰ ĐỘNG ĐẨY LÙI CÁC BƯỚC CŨ (Nếu chèn vào vị trí đã tồn tại, ví dụ chèn vào bước 1)
+        existing_steps = (
+            supabase.table("guide_step")
+            .select("id, step_number")
+            .eq("guide_id", guide_id)
+            .gte("step_number", step_number)
+            .order("step_number", desc=True) # Sắp xếp từ lớn xuống nhỏ để tránh xung đột unique key
+            .execute()
+        )
 
-    supabase.table("guide_step").insert(step_data).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+        if existing_steps.data:
+            for s in existing_steps.data:
+                supabase.table("guide_step").update({
+                    "step_number": s["step_number"] + 1
+                }).eq("id", s["id"]).execute()
+
+        # 2. THÊM BƯỚC MỚI VÀO VỊ TRÍ ĐÃ CHỌN
+        step_data = {
+            "guide_id": guide_id,
+            "step_number": step_number,
+            "title": clean_title,
+            "content": content.strip() if content else None,
+            "note": note.strip() if note else None,
+            "image_urls": validated_image_urls, # Lưu mảng lên Supabase (kiểu jsonb/array)
+            "video_url": validated_video_url,
+            "download_url": validated_download_url,
+            "is_active": True if is_active else False
+        }
+
+        supabase.table("guide_step").insert(step_data).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể thêm bước lớn: {str(e)}")
 
 
 # === ROUTE DỰ PHÒNG BẮT TRƯỜNG HỢP URL BỊ THIẾU ID ===
@@ -262,7 +333,7 @@ async def add_guide_step_fallback(
         is_active=is_active
     )
 
-
+#CẬP NHẬT BƯỚC LỚN
 @router.post("/guide-step/{step_id}/update/{guide_id}")
 async def update_guide_step(
     request: Request,
@@ -312,3 +383,23 @@ async def update_guide_step(
 
     supabase.table("guide_step").update(step_data).eq("id", step_id).execute()
     return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+# --- XÓA BƯỚC LỚN ---
+@router.post("/guide-step/{step_id}/delete")
+async def delete_guide_step(
+    step_id: int,
+    guide_id: int = Form(...)
+):
+    try:
+        # 1. Xóa tất cả các bước con liên quan trước (bảng guide_sub_steps)
+        supabase.table("guide_sub_steps").delete().eq("step_id", step_id).execute()
+        
+        # 2. Xóa bước lớn (bảng guide_step)
+        supabase.table("guide_step").delete().eq("id", step_id).execute()
+        
+        # 3. Chuyển hướng về trang danh sách bước lớn
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Không thể xóa bước lớn: {str(e)}"
+        )
