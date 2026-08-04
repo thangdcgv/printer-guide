@@ -1,7 +1,9 @@
 import os
 import uuid
 import re
-from typing import Optional, List
+import logging
+from typing import Optional, List, Dict, Any
+
 from fastapi import APIRouter, Request, Form, UploadFile, File, status, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -9,146 +11,145 @@ from fastapi.templating import Jinja2Templates
 from app.routers.auth import require_admin
 from app.database import supabase
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/admin/guide",
     tags=["guide"],
-    dependencies=[Depends(require_admin)] # <--- Khóa toàn bộ các route quản lý bài viết lớn
+    dependencies=[Depends(require_admin)]  # Khóa toàn bộ các route quản lý bài viết
 )
 
-templates = Jinja2Templates(
-    directory="app/templates"
-)
-
+templates = Jinja2Templates(directory="app/templates")
 
 UPLOAD_DIR = "app/static/images"
-
-ALLOWED_EXTENSIONS = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".webp"
-]
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+KNOWN_BRANDS = ["brother", "canon", "epson", "hp"]
+STOP_WORDS = {
+    'cách', 'hướng', 'dẫn', 'làm', 'sao', 'để', 'và', 'của', 'cho', 'trong', 
+    'ngoài', 'khi', 'bị', 'lỗi', 'trên', 'dưới', 'với', 'từ', 'đến', 'này', 
+    'kia', 'các', 'những', 'một', 'có', 'không', 'được', 'bằng', 'về', 'thế'
+}
 
 
 # =====================================================
-# IMAGE FUNCTIONS
+# HELPER FUNCTIONS
 # =====================================================
 
-async def save_image(image: UploadFile):
+async def save_image(image: UploadFile) -> Optional[str]:
+    """Lưu file ảnh tải lên cục bộ nếu sử dụng upload trực tiếp."""
     if not image or not image.filename:
         return None
 
     ext = os.path.splitext(image.filename)[1].lower()
-
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Chỉ cho phép file jpg, jpeg, png, webp"
         )
 
     filename = f"{uuid.uuid4().hex}{ext}"
-
-    os.makedirs(
-        UPLOAD_DIR,
-        exist_ok=True
-    )
-
-    filepath = os.path.join(
-        UPLOAD_DIR,
-        filename
-    )
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    filepath = os.path.join(UPLOAD_DIR, filename)
 
     content = await image.read()
-
     with open(filepath, "wb") as f:
         f.write(content)
 
     return f"/static/images/{filename}"
 
 
-# =====================================================
-# AUTO-TAGGING HELPER FUNCTION
-# =====================================================
+def _get_brand_class(brand_name: str) -> str:
+    """Xác định class CSS hiển thị theo hãng máy in."""
+    brand_lower = (brand_name or "").strip().lower()
+    for kb in KNOWN_BRANDS:
+        if kb in brand_lower:
+            return f"brand-{kb}"
+    return "brand-other"
 
-async def auto_generate_and_link_tags(guide_id: int, printer_model_id: int, title: str):
+
+async def auto_generate_and_link_tags(guide_id: int, printer_model_id: int, title: str) -> None:
     """
     Tự động phân tích Model máy in và Tiêu đề bài viết để sinh thẻ tag, 
-    sau đó liên kết vào bảng guide_tags.
+    sau đó liên kết vào bảng guide_tags (Tối ưu hóa Batch Query).
     """
     tag_names_to_add = set()
 
     # 1. Lấy thông tin Hãng và Model từ bảng printer_model
-    printer_res = supabase.table("printer_model").select("brand, model").eq("id", printer_model_id).execute()
-    if printer_res.data:
-        p = printer_res.data[0]
-        brand = p.get("brand", "").strip()
-        model = p.get("model", "").strip()
-        
-        if brand:
-            tag_names_to_add.add(brand)
-        if model:
-            tag_names_to_add.add(model)
-        if brand and model:
-            tag_names_to_add.add(f"{brand} {model}")
+    try:
+        printer_res = supabase.table("printer_model").select("brand, model").eq("id", printer_model_id).execute()
+        if printer_res.data:
+            p = printer_res.data[0]
+            brand = (p.get("brand") or "").strip()
+            model = (p.get("model") or "").strip()
+            
+            if brand:
+                tag_names_to_add.add(brand)
+            if model:
+                tag_names_to_add.add(model)
+            if brand and model:
+                tag_names_to_add.add(f"{brand} {model}")
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy printer_model #{printer_model_id}: {e}")
 
-    # 2. Bóc tách các từ khóa/cụm từ có ý nghĩa kỹ thuật từ tiêu đề (title)
+    # 2. Bóc tách các từ khóa từ tiêu đề (title)
     if title:
-        # Chuẩn hóa tiêu đề, loại bỏ các ký tự đặc biệt thừa nhưng giữ lại chữ cái, số, tiếng Việt
-        clean_title = re.sub(r'[^\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]', ' ', title.lower())
-        
-        # Danh sách các từ dừng (stop words) thông thường cần lọc bỏ để tránh tạo các tag vô nghĩa
-        stop_words = {
-            'cách', 'hướng', 'dẫn', 'làm', 'sao', 'để', 'và', 'của', 'cho', 'trong', 
-            'ngoài', 'khi', 'bị', 'lỗi', 'trên', 'dưới', 'với', 'từ', 'đến', 'này', 
-            'kia', 'các', 'những', 'một', 'có', 'không', 'được', 'bằng', 'về', 'thế'
-        }
-        
+        clean_title = re.sub(
+            r'[^\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]',
+            ' ',
+            title.lower()
+        )
         words = clean_title.split()
         
-        # Thêm các từ đơn có ý nghĩa kỹ thuật (>= 3 ký tự và không nằm trong stop_words)
+        # Từ đơn
         for w in words:
-            if len(w) >= 3 and w not in stop_words:
+            if len(w) >= 3 and w not in STOP_WORDS:
                 tag_names_to_add.add(w.capitalize())
 
-        # Tạo thêm các cụm từ đôi liên tiếp (ví dụ: "kẹt giấy", "reset mực", "lỗi đầu") để làm tag phong phú hơn
+        # Cụm từ đôi
         for i in range(len(words) - 1):
-            w1, w2 = words[i], words[i+1]
-            if w1 not in stop_words and w2 not in stop_words:
+            w1, w2 = words[i], words[i + 1]
+            if w1 not in STOP_WORDS and w2 not in STOP_WORDS:
                 phrase = f"{w1} {w2}"
                 if len(phrase) >= 5:
                     tag_names_to_add.add(phrase.capitalize())
 
-    # 3. Đồng bộ danh sách tag vào Database (bảng tags và guide_tags)
-    tag_ids = []
-    for name in tag_names_to_add:
-        # Kiểm tra xem tag đã tồn tại chưa
-        existing = supabase.table("tags").select("id").eq("name", name).execute()
-        
-        if existing.data:
-            tag_id = existing.data[0]["id"]
-        else:
-            # Nếu chưa có, tự động tạo mới tag với màu mặc định
-            new_tag = supabase.table("tags").insert({"name": name, "color": "blue"}).execute()
-            if new_tag.data:
-                tag_id = new_tag.data[0]["id"]
-            else:
-                continue
-        tag_ids.append(tag_id)
+    if not tag_names_to_add:
+        supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
+        return
 
-    # 4. Xóa liên kết tag cũ (nếu là cập nhật) và thêm mới liên kết vào guide_tags
-    supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
-    
-    if tag_ids:
-        tag_links = [{"guide_id": guide_id, "tag_id": tid} for tid in tag_ids]
-        try:
+    # 3. Batch Query & Insert đồng bộ Tags vào Database (Tránh N+1 query)
+    try:
+        tag_names_list = list(tag_names_to_add)
+        
+        # Tìm danh sách tag đã tồn tại
+        existing_tags_res = supabase.table("tags").select("id, name").in_("name", tag_names_list).execute()
+        existing_tags = existing_tags_res.data or []
+        
+        tag_map = {t["name"]: t["id"] for t in existing_tags}
+        
+        # Tạo mới các tag chưa có
+        missing_names = [name for name in tag_names_list if name not in tag_map]
+        if missing_names:
+            new_tags_payload = [{"name": name, "color": "blue"} for name in missing_names]
+            new_tags_res = supabase.table("tags").insert(new_tags_payload).execute()
+            if new_tags_res.data:
+                for t in new_tags_res.data:
+                    tag_map[t["name"]] = t["id"]
+
+        tag_ids = list(tag_map.values())
+
+        # 4. Làm sạch liên kết cũ và thêm mới vào guide_tags
+        supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
+        if tag_ids:
+            tag_links = [{"guide_id": guide_id, "tag_id": tid} for tid in tag_ids]
             supabase.table("guide_tags").insert(tag_links).execute()
-        except Exception:
-            pass
+
+    except Exception as e:
+        logger.error(f"Lỗi khi đồng bộ tags cho guide #{guide_id}: {e}")
 
 
 # =====================================================
-# LIST (Cập nhật lấy danh sách Tags & Lọc theo Tag)
+# LIST
 # =====================================================
 
 @router.get("/", response_class=HTMLResponse)
@@ -159,29 +160,23 @@ async def list_guides(
     guide_status: Optional[str] = None,
     tag_id: Optional[int] = None
 ):
-    # Thử truy vấn kèm Quan hệ Tags, nếu lỗi DB thì fallback về query thường
-    try:
-        query = supabase.table("guide").select("*, guide_tags(tag_id, tags(*))")
-        if search:
+    def build_query(select_fields: str):
+        query = supabase.table("guide").select(select_fields)
+        if search and search.strip():
             query = query.ilike("title", f"%{search.strip()}%")
         if printer_model_id and printer_model_id.isdigit():
             query = query.eq("printer_model_id", int(printer_model_id))
         if guide_status in ["0", "1"]:
             query = query.eq("is_active", guide_status == "1")
+        return query.order("sort_order").order("id", desc=True)
 
-        guides_res = query.order("sort_order").order("id", desc=True).execute()
+    # Lấy danh sách bài viết (Có fallback nếu chưa tạo quan hệ tags)
+    try:
+        guides_res = build_query("*, guide_tags(tag_id, tags(*))").execute()
         guides = guides_res.data or []
     except Exception as e:
-        # Fallback an toàn nếu chưa tạo bảng tags/guide_tags
-        query = supabase.table("guide").select("*")
-        if search:
-            query = query.ilike("title", f"%{search.strip()}%")
-        if printer_model_id and printer_model_id.isdigit():
-            query = query.eq("printer_model_id", int(printer_model_id))
-        if guide_status in ["0", "1"]:
-            query = query.eq("is_active", guide_status == "1")
-
-        guides_res = query.order("sort_order").order("id", desc=True).execute()
+        logger.warning(f"Không thể load quan hệ guide_tags, fallback về query thường: {e}")
+        guides_res = build_query("*").execute()
         guides = guides_res.data or []
 
     # Lọc theo tag_id nếu có
@@ -191,13 +186,15 @@ async def list_guides(
             if any(gt.get("tag_id") == tag_id for gt in g.get("guide_tags", []))
         ]
 
-    # Lấy danh sách tags (có try-except tránh lỗi)
+    # Lấy danh sách tags phục vụ bộ lọc
     try:
         tags_res = supabase.table("tags").select("*").order("name").execute()
         all_tags = tags_res.data or []
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Chưa thể lấy danh sách tags: {e}")
         all_tags = []
 
+    # Lấy danh sách printer models
     printers_res = (
         supabase
         .table("printer_model")
@@ -209,20 +206,12 @@ async def list_guides(
     printers = printers_res.data or []
     printer_map = {p["id"]: p for p in printers}
 
-    known_brands = ["brother", "canon", "epson", "hp"]
-
+    # Đóng gói thông tin printer_model cho từng guide
     for g in guides:
-        p_id = g.get("printer_model_id")
-        p = printer_map.get(p_id)
+        p = printer_map.get(g.get("printer_model_id"))
         if p:
             p_data = p.copy()
-            brand_lower = p_data.get("brand", "").strip().lower()
-            matched_class = "other"
-            for kb in known_brands:
-                if kb in brand_lower:
-                    matched_class = kb
-                    break
-            p_data["brand_class"] = f"brand-{matched_class}"
+            p_data["brand_class"] = _get_brand_class(p_data.get("brand", ""))
             g["printer_model"] = p_data
         else:
             g["printer_model"] = None
@@ -242,26 +231,19 @@ async def list_guides(
     )
 
 
-
 # =====================================================
-# CREATE FORM
+# CREATE
 # =====================================================
 
-@router.get(
-    "/create",
-    response_class=HTMLResponse
-)
+@router.get("/create", response_class=HTMLResponse)
 async def create_form(request: Request):
     printers = (
         supabase
         .table("printer_model")
-        .select(
-            "id, brand, model"
-        )
+        .select("id, brand, model")
         .order("brand")
         .execute()
-        .data
-        or []
+        .data or []
     )
 
     return templates.TemplateResponse(
@@ -273,22 +255,18 @@ async def create_form(request: Request):
     )
 
 
-
-# =====================================================
-# CREATE (Chỉ dùng Link URL)
-# =====================================================
 @router.post("/create")
 async def create_submit(
     title: str = Form(...),
     printer_model_id: int = Form(...),
     description: Optional[str] = Form(""),
-    image_url: Optional[str] = Form(None), # <--- Khớp 100% với name="image_url" từ HTML
+    image_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
     sort_order: Optional[str] = Form("1")
 ):
     try:
-        sort = int(sort_order)
-    except Exception:
+        sort = int(sort_order) if sort_order and sort_order.isdigit() else 1
+    except ValueError:
         sort = 1
 
     clean_image_url = image_url.strip() if image_url and image_url.strip() else None
@@ -297,18 +275,16 @@ async def create_submit(
         "title": title.strip(),
         "printer_model_id": printer_model_id,
         "description": description.strip() if description else "",
-        "image_url": clean_image_url, # <--- Lưu trực tiếp link URL xuống Supabase
+        "image_url": clean_image_url,
         "is_active": is_active in ["true", "on", "1"],
         "sort_order": sort,
     }
 
-    # 1. Thêm hướng dẫn và lấy ID vừa tạo
     res = supabase.table("guide").insert(data).execute()
     
     if res.data:
         new_guide_id = res.data[0]["id"]
-        # 2. Tự động sinh và gắn thẻ tag
-        await auto_generate_and_link_tags(new_guide_id, printer_model_id, title)
+        await auto_generate_and_link_tags(new_guide_id, printer_model_id, title.strip())
 
     return RedirectResponse(
         "/admin/guide",
@@ -317,49 +293,11 @@ async def create_submit(
 
 
 # =====================================================
-# EDIT (Chỉ dùng Link URL)
-# =====================================================
-@router.post("/edit/{guide_id}")
-async def edit_submit(
-    guide_id: int,
-    title: str = Form(...),
-    printer_model_id: int = Form(...),
-    description: Optional[str] = Form(""),
-    image_url: Optional[str] = Form(None), # <--- Khớp 100% với name="image_url" từ HTML
-    is_active: Optional[str] = Form(None),
-    sort_order: Optional[str] = Form("1")
-):
-    clean_image_url = image_url.strip() if image_url and image_url.strip() else None
-
-    update = {
-        "title": title.strip(),
-        "printer_model_id": printer_model_id,
-        "description": description.strip() if description else "",
-        "image_url": clean_image_url, # <--- Cập nhật link URL xuống Supabase
-        "is_active": is_active in ["true", "on", "1"],
-        "sort_order": int(sort_order) if sort_order.isdigit() else 1
-    }
-
-    # Cập nhật DB
-    supabase.table("guide").update(update).eq("id", guide_id).execute()
-    await auto_generate_and_link_tags(guide_id, printer_model_id, title)
-
-    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
-
-
-
-# =====================================================
-# EDIT FORM
+# EDIT
 # =====================================================
 
-@router.get(
-    "/edit/{guide_id}",
-    response_class=HTMLResponse
-)
-async def edit_form(
-    request: Request,
-    guide_id: int
-):
+@router.get("/edit/{guide_id}", response_class=HTMLResponse)
+async def edit_form(request: Request, guide_id: int):
     guide_res = (
         supabase
         .table("guide")
@@ -369,19 +307,14 @@ async def edit_form(
     )
 
     if not guide_res.data:
-        return RedirectResponse(
-            "/admin/guide"
-        )
+        return RedirectResponse("/admin/guide")
 
     printers = (
         supabase
         .table("printer_model")
-        .select(
-            "id, brand, model"
-        )
+        .select("id, brand, model")
         .execute()
-        .data
-        or []
+        .data or []
     )
 
     return templates.TemplateResponse(
@@ -394,63 +327,67 @@ async def edit_form(
     )
 
 
+@router.post("/edit/{guide_id}")
+async def edit_submit(
+    guide_id: int,
+    title: str = Form(...),
+    printer_model_id: int = Form(...),
+    description: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(None),
+    is_active: Optional[str] = Form(None),
+    sort_order: Optional[str] = Form("1")
+):
+    clean_image_url = image_url.strip() if image_url and image_url.strip() else None
+
+    update = {
+        "title": title.strip(),
+        "printer_model_id": printer_model_id,
+        "description": description.strip() if description else "",
+        "image_url": clean_image_url,
+        "is_active": is_active in ["true", "on", "1"],
+        "sort_order": int(sort_order) if sort_order and sort_order.isdigit() else 1
+    }
+
+    supabase.table("guide").update(update).eq("id", guide_id).execute()
+    await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
+
+    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+
 # =====================================================
 # DELETE
 # =====================================================
 
-@router.post(
-    "/delete/{guide_id}"
-)
-async def delete_guide(
-    guide_id: int
-):
-    # Do cấu hình bảng database có ON DELETE CASCADE nên khi xóa guide, bảng guide_tags sẽ tự động xóa theo
+@router.post("/delete/{guide_id}")
+async def delete_guide(guide_id: int):
     supabase.table("guide").delete().eq("id", guide_id).execute()
-
-    return RedirectResponse(
-        "/admin/guide",
-        status_code=status.HTTP_303_SEE_OTHER
-    )
-
+    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # =====================================================
 # DETAIL
 # =====================================================
 
-@router.get(
-    "/{guide_id}",
-    response_class=HTMLResponse
-)
-async def view_guide(
-    request: Request,
-    guide_id: int
-):
+@router.get("/{guide_id}", response_class=HTMLResponse)
+async def view_guide(request: Request, guide_id: int):
     res = (
         supabase
         .table("guide")
-        .select("*, guide_tags(tag_id, tags(*))") # Lấy kèm thông tin tag khi xem chi tiết bài viết
+        .select("*, guide_tags(tag_id, tags(*))")
         .eq("id", guide_id)
         .execute()
     )
 
     if not res.data:
-        return RedirectResponse(
-            "/admin/guide"
-        )
+        return RedirectResponse("/admin/guide")
 
     guide = res.data[0]
 
     printer = (
         supabase
         .table("printer_model")
-        .select(
-            "brand, model"
-        )
-        .eq(
-            "id",
-            guide["printer_model_id"]
-        )
+        .select("brand, model")
+        .eq("id", guide["printer_model_id"])
         .execute()
     )
 

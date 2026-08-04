@@ -1,60 +1,44 @@
-from fastapi import APIRouter, Request, Form, HTTPException, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
-from typing import Optional
-from urllib.parse import urlparse
-from app.routers.auth import require_admin
-from app.database import supabase
-from app.config import templates
+import logging
 import re
+from typing import List, Optional
+from urllib.parse import urlparse
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-from typing import List
+
+from app.config import templates
+from app.database import supabase
+from app.routers.auth import require_admin
+
+logger = logging.getLogger(__name__)
 
 class ReorderRequest(BaseModel):
     ordered_ids: List[int]
 
-# Khởi tạo router kèm theo điều kiện bắt buộc phải đăng nhập
 router = APIRouter(
     prefix="/admin", 
     tags=["Guide Steps"],
-    dependencies=[Depends(require_admin)] # Khóa toàn bộ các route trong file này
+    dependencies=[Depends(require_admin)]
 )
 
-#HÀM TỰ ĐỘNG NHẬN BIẾT LINK VÀ CHUYỂN THÀNH THẺ <a> CÓ THỂ CLICK ĐƯỢC
+# =====================================================
+# HELPER FUNCTIONS
+# =====================================================
+
 def auto_linkify(text: Optional[str]) -> str:
+    """Tự động chuyển các chuỗi link (http/https) thành thẻ <a> có thể nhấp được."""
     if not text:
         return ""
-    
-    # Biểu thức chính quy (Regex) tìm các chuỗi bắt đầu bằng http:// hoặc https://
     url_pattern = re.compile(r'(https?://[^\s<>]+)')
-    
-    # Thay thế các link tìm được bằng thẻ HTML <a> chuyên nghiệp
     def replace_url(match):
         url = match.group(0)
-        # Cắt gọn link hiển thị nếu quá dài (tùy chọn) hoặc giữ nguyên full link
         return f'<a href="{url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;" title="{url}">🔗 {url}</a>'
-    
     return url_pattern.sub(replace_url, text)
-# Hàm hỗ trợ kiểm tra tính hợp lệ của từng URL trong danh sách
-def validate_url_list(urls_raw: Optional[str]) -> list[str]:
-    if not urls_raw:
-        return []
-    
-    cleaned_urls = []
-    for line in urls_raw.splitlines():
-        url = line.strip()
-        if not url:
-            continue
-        parsed = urlparse(url)
-        if parsed.scheme not in ("http", "https") or not parsed.netloc:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Đường dẫn ảnh không hợp lệ: '{url}'. URL phải bắt đầu bằng http:// hoặc https://"
-            )
-        cleaned_urls.append(url)
-    return cleaned_urls
 
-# Hàm hỗ trợ kiểm tra tính hợp lệ của URL đơn (cho Video, Download...)
+
 def validate_url(url: Optional[str], field_name: str) -> Optional[str]:
+    """Kiểm tra tính hợp lệ của 1 URL đơn."""
     if not url:
         return None
     cleaned_url = url.strip()
@@ -64,48 +48,56 @@ def validate_url(url: Optional[str], field_name: str) -> Optional[str]:
     parsed = urlparse(cleaned_url)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         raise HTTPException(
-            status_code=400, 
+            status_code=status.HTTP_400_BAD_REQUEST, 
             detail=f"Trường '{field_name}' không hợp lệ. URL phải bắt đầu bằng http:// hoặc https://"
         )
     return cleaned_url
 
-# Hàm lấy danh sách các bước con dựa vào step_id
-def get_sub_steps(step_id: int):
+
+def validate_url_list(urls: List[str], field_name: str = "Đường dẫn ảnh") -> List[str]:
+    """Kiểm tra tính hợp lệ của một danh sách URL."""
+    validated_urls = []
+    for url in urls:
+        cleaned = url.strip()
+        if not cleaned:
+            continue
+        parsed = urlparse(cleaned)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail=f"{field_name} không hợp lệ: '{cleaned}'. URL phải bắt đầu bằng http:// hoặc https://"
+            )
+        validated_urls.append(cleaned)
+    return validated_urls
+
+
+def get_sub_steps_batch(step_ids: List[int]) -> dict:
+    """
+    Tối ưu hóa: Lấy tất cả sub-steps cho danh sách step_ids trong 1 truy vấn duy nhất (Tránh N+1).
+    """
+    if not step_ids:
+        return {}
     try:
-        response = supabase.table("guide_sub_steps") \
-            .select("*") \
-            .eq("step_id", step_id) \
-            .order("sub_order", desc=False) \
+        response = (
+            supabase.table("guide_sub_steps")
+            .select("*")
+            .in_("step_id", step_ids)
+            .order("sub_order", desc=False)
             .execute()
-        return response.data if response.data else []
+        )
+        sub_steps_map = {sid: [] for sid in step_ids}
+        for sub in (response.data or []):
+            sub_steps_map[sub["step_id"]].append(sub)
+        return sub_steps_map
     except Exception as e:
-        print(f"Lỗi lấy bước con: {e}")
-        return []
+        logger.error(f"Lỗi lấy danh sách bước con batch: {e}")
+        return {}
 
-# --- ROUTE THÊM BƯỚC CON ---
-@router.post("/{step_id}/sub-steps/add")
-async def add_sub_step(
-    step_id: int,
-    guide_id: int = Form(...),
-    sub_order: int = Form(...),
-    content: str = Form(...),
-    image_url: str = Form(None),
-    note: str = Form(None)
-):
-    try:
-        supabase.table("guide_sub_steps").insert({
-            "step_id": step_id,
-            "sub_order": sub_order,
-            "content": content,
-            "image_url": image_url if image_url else None,
-            "note": note if note else None
-        }).execute()
-        
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Không thể thêm bước con: {str(e)}")
 
-# --- ROUTE CẬP NHẬT BƯỚC CON ---
+# =====================================================
+# BƯỚC CON (SUB-STEPS)
+# =====================================================
+
 @router.post("/{step_id}/sub-steps/add")
 async def add_sub_step(
     step_id: int,
@@ -113,13 +105,12 @@ async def add_sub_step(
     sub_order: int = Form(...),
     content: str = Form(...),
     note: Optional[str] = Form(None),
-    image_url: Optional[str] = Form(None) # Thêm nhận link ảnh
+    image_url: Optional[str] = Form(None)
 ):
     clean_content = content.strip()
     if not clean_content:
-        raise HTTPException(status_code=400, detail="Nội dung ý nhỏ không được để trống.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
 
-    # Validate URL ảnh nếu có nhập
     validated_image_url = validate_url(image_url, "Đường dẫn ảnh ý nhỏ")
 
     sub_data = {
@@ -130,8 +121,12 @@ async def add_sub_step(
         "image_url": validated_image_url
     }
 
-    supabase.table("guide_sub_steps").insert(sub_data).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    try:
+        supabase.table("guide_sub_steps").insert(sub_data).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi thêm bước con: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể thêm bước con: {str(e)}")
 
 
 @router.post("/sub-steps/{sub_id}/update")
@@ -141,11 +136,11 @@ async def update_sub_step(
     sub_order: int = Form(...),
     content: str = Form(...),
     note: Optional[str] = Form(None),
-    image_url: Optional[str] = Form(None) # Thêm nhận link ảnh
+    image_url: Optional[str] = Form(None)
 ):
     clean_content = content.strip()
     if not clean_content:
-        raise HTTPException(status_code=400, detail="Nội dung ý nhỏ không được để trống.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
 
     validated_image_url = validate_url(image_url, "Đường dẫn ảnh ý nhỏ")
 
@@ -157,9 +152,9 @@ async def update_sub_step(
     }
 
     supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
 
-# --- ROUTE XÓA BƯỚC CON ---
+
 @router.post("/sub-steps/{sub_step_id}/delete")
 async def delete_sub_step(
     sub_step_id: int,
@@ -167,33 +162,28 @@ async def delete_sub_step(
 ):
     try:
         supabase.table("guide_sub_steps").delete().eq("id", sub_step_id).execute()
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Không thể xóa bước con: {str(e)}")
+        logger.error(f"Lỗi xóa bước con: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước con: {str(e)}")
 
-# Hàm tự động nhận dạng link và biến thành thẻ a HTML có thể bấm được
-def auto_linkify(text: Optional[str]) -> str:
-    if not text:
-        return ""
-    url_pattern = re.compile(r'(https?://[^\s<>]+)')
-    def replace_url(match):
-        url = match.group(0)
-        return f'<a href="{url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;" title="{url}">🔗 {url}</a>'
-    return url_pattern.sub(replace_url, text)
 
+# =====================================================
+# BƯỚC LỚN (GUIDE STEPS)
+# =====================================================
 
 @router.get("/guide-step", response_class=HTMLResponse)
 async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
     if not guide_id:
-        return RedirectResponse(url="/admin/guide", status_code=303)
+        return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
     # 1. Lấy thông tin bài hướng dẫn chính
     guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
     if not guide_res.data:
-        raise HTTPException(status_code=404, detail="Không tìm thấy bài hướng dẫn")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy bài hướng dẫn")
     guide = guide_res.data[0]
 
-    # 2. Lấy danh sách các bước thuộc bài hướng dẫn này
+    # 2. Lấy danh sách các bước thuộc bài hướng dẫn
     steps_res = (
         supabase.table("guide_step")
         .select("*")
@@ -203,15 +193,19 @@ async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
     )
     
     steps = steps_res.data or []
+    
+    # 3. Lấy tập trung sub_steps cho toàn bộ các steps trong 1 query duy nhất
+    step_ids = [step["id"] for step in steps]
+    sub_steps_map = get_sub_steps_batch(step_ids)
+    
     for step in steps:
-        step["sub_steps"] = get_sub_steps(step["id"])
+        step["sub_steps"] = sub_steps_map.get(step["id"], [])
         
-        # Tự động nhận dạng link cho nội dung và lưu ý của bước lớn
+        # Tự động nhận dạng link cho nội dung và lưu ý
         step["content"] = auto_linkify(step.get("content"))
         step["note"] = auto_linkify(step.get("note"))
         
-        # Tự động nhận dạng link luôn cho cả các bước con (sub_steps) nếu có
-        for sub in step.get("sub_steps", []):
+        for sub in step["sub_steps"]:
             sub["content"] = auto_linkify(sub.get("content"))
             sub["note"] = auto_linkify(sub.get("note"))
 
@@ -223,10 +217,11 @@ async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
             "steps": steps
         }
     )
+
+
 @router.post("/guide-step/reorder")
 async def reorder_guide_steps(payload: ReorderRequest):
     try:
-        # Duyệt qua mảng ID nhận được, index chạy từ 0 -> gán step_number từ 1 trở đi
         for index, step_id in enumerate(payload.ordered_ids, start=1):
             supabase.table("guide_step").update({
                 "step_number": index
@@ -234,11 +229,13 @@ async def reorder_guide_steps(payload: ReorderRequest):
             
         return {"success": True, "message": "Cập nhật thứ tự thành công"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi sắp xếp: {str(e)}")
-#Thêm bước lớn
+        logger.error(f"Lỗi sắp xếp các bước: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Lỗi sắp xếp: {str(e)}")
+
+
 @router.post("/guide-step/add/{guide_id}")
 async def add_guide_step(
-    request: Request, # Thêm request để lấy danh sách form nhiều giá trị
+    request: Request,
     guide_id: int,
     step_number: int = Form(..., ge=1),
     title: str = Form(..., min_length=2, max_length=255),
@@ -249,37 +246,24 @@ async def add_guide_step(
     is_active: Optional[str] = Form(None)
 ):
     form_data = await request.form()
-    image_urls = form_data.getlist("image_url") # Lấy tất cả các ô nhập link ảnh
+    image_urls = form_data.getlist("image_url")
     
     clean_title = title.strip()
     if not clean_title:
-        raise HTTPException(status_code=400, detail="Tiêu đề không được để trống.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tiêu đề không được để trống.")
 
-    # Validate từng URL trong danh sách nhận được từ form
-    validated_image_urls = []
-    for url in image_urls:
-        cleaned = url.strip()
-        if not cleaned:
-            continue
-        parsed = urlparse(cleaned)
-        if parsed.scheme not in ("http", "https") or not parsed.netloc:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Đường dẫn ảnh không hợp lệ: '{cleaned}'. URL phải bắt đầu bằng http:// hoặc https://"
-            )
-        validated_image_urls.append(cleaned)
-
+    validated_image_urls = validate_url_list(image_urls, "Đường dẫn ảnh")
     validated_video_url = validate_url(video_url, "Đường dẫn Video")
     validated_download_url = validate_url(download_url, "Đường dẫn Tải xuống")
 
     try:
-        # 1. TỰ ĐỘNG ĐẨY LÙI CÁC BƯỚC CŨ (Nếu chèn vào vị trí đã tồn tại, ví dụ chèn vào bước 1)
+        # Tự động đẩy lùi các bước cũ nếu trùng step_number
         existing_steps = (
             supabase.table("guide_step")
             .select("id, step_number")
             .eq("guide_id", guide_id)
             .gte("step_number", step_number)
-            .order("step_number", desc=True) # Sắp xếp từ lớn xuống nhỏ để tránh xung đột unique key
+            .order("step_number", desc=True)
             .execute()
         )
 
@@ -289,26 +273,25 @@ async def add_guide_step(
                     "step_number": s["step_number"] + 1
                 }).eq("id", s["id"]).execute()
 
-        # 2. THÊM BƯỚC MỚI VÀO VỊ TRÍ ĐÃ CHỌN
         step_data = {
             "guide_id": guide_id,
             "step_number": step_number,
             "title": clean_title,
             "content": content.strip() if content else None,
             "note": note.strip() if note else None,
-            "image_urls": validated_image_urls, # Lưu mảng lên Supabase (kiểu jsonb/array)
+            "image_urls": validated_image_urls,
             "video_url": validated_video_url,
             "download_url": validated_download_url,
-            "is_active": True if is_active else False
+            "is_active": is_active in ["true", "on", "1"]
         }
 
         supabase.table("guide_step").insert(step_data).execute()
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Không thể thêm bước lớn: {str(e)}")
+        logger.error(f"Lỗi thêm bước lớn: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể thêm bước lớn: {str(e)}")
 
 
-# === ROUTE DỰ PHÒNG BẮT TRƯỜNG HỢP URL BỊ THIẾU ID ===
 @router.post("/guide-step/add")
 async def add_guide_step_fallback(
     request: Request,
@@ -333,7 +316,7 @@ async def add_guide_step_fallback(
         is_active=is_active
     )
 
-#CẬP NHẬT BƯỚC LỚN
+
 @router.post("/guide-step/{step_id}/update/{guide_id}")
 async def update_guide_step(
     request: Request,
@@ -352,21 +335,9 @@ async def update_guide_step(
 
     clean_title = title.strip()
     if not clean_title:
-        raise HTTPException(status_code=400, detail="Tiêu đề không được để trống.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tiêu đề không được để trống.")
 
-    validated_image_urls = []
-    for url in image_urls:
-        cleaned = url.strip()
-        if not cleaned:
-            continue
-        parsed = urlparse(cleaned)
-        if parsed.scheme not in ("http", "https") or not parsed.netloc:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Đường dẫn ảnh không hợp lệ: '{cleaned}'. URL phải bắt đầu bằng http:// hoặc https://"
-            )
-        validated_image_urls.append(cleaned)
-
+    validated_image_urls = validate_url_list(image_urls, "Đường dẫn ảnh")
     validated_video_url = validate_url(video_url, "Đường dẫn Video")
     validated_download_url = validate_url(download_url, "Đường dẫn Tải xuống")
 
@@ -378,28 +349,22 @@ async def update_guide_step(
         "image_urls": validated_image_urls,
         "video_url": validated_video_url,
         "download_url": validated_download_url,
-        "is_active": True if is_active else False
+        "is_active": is_active in ["true", "on", "1"]
     }
 
     supabase.table("guide_step").update(step_data).eq("id", step_id).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
-# --- XÓA BƯỚC LỚN ---
+    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+
+
 @router.post("/guide-step/{step_id}/delete")
 async def delete_guide_step(
     step_id: int,
     guide_id: int = Form(...)
 ):
     try:
-        # 1. Xóa tất cả các bước con liên quan trước (bảng guide_sub_steps)
         supabase.table("guide_sub_steps").delete().eq("step_id", step_id).execute()
-        
-        # 2. Xóa bước lớn (bảng guide_step)
         supabase.table("guide_step").delete().eq("id", step_id).execute()
-        
-        # 3. Chuyển hướng về trang danh sách bước lớn
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=303)
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Không thể xóa bước lớn: {str(e)}"
-        )
+        logger.error(f"Lỗi xóa bước lớn: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước lớn: {str(e)}")

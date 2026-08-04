@@ -60,6 +60,65 @@
     width: 100%;
 }
 
+/* 🔒 CARD CHẶN TRUY CẬP (ACCESS DENIED CARD) */
+.access-denied-card {
+    background: #ffffff;
+    border: 1px solid #fee2e2;
+    border-radius: 16px;
+    padding: clamp(24px, 5vw, 48px) 20px;
+    text-align: center;
+    box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.08);
+    margin: 20px 0;
+}
+
+.access-denied-icon {
+    width: 64px;
+    height: 64px;
+    background: #fef2f2;
+    color: #dc2626;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+    border: 1px solid #fecaca;
+}
+
+.access-denied-title {
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.access-denied-desc {
+    color: #64748b;
+    font-size: 0.925rem;
+    max-width: 480px;
+    margin: 0 auto 24px auto;
+    line-height: 1.6;
+}
+
+.btn-login-now {
+    background: #2563eb;
+    color: #ffffff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s;
+}
+.btn-login-now:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
 /* 🖼️ KHUNG ẢNH BANNER SẢN PHẨM Ở ĐẦU BÀI */
 .guide-main-banner {
     width: 100%;
@@ -195,8 +254,18 @@
     margin-bottom: 12px;
 }
 
+.badge-admin {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    font-size: 0.725rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
 /* =====================================================
-   TỐI ƯU ĐẶC BIỆT CHO MÀN HÌNH ĐIỆN THOẠI (< 480px & < 600px)
+   TỐI ƯU ĐẶC BIỆT CHO MÀN HÌNH ĐIỆN THOẠI (< 600px)
 ===================================================== */
 @media (max-width: 600px) {
     .step-action-buttons {
@@ -245,158 +314,200 @@
 </style>
 
 <div class="guide-detail-wrapper">
-    <!-- Nút quay lại -->
+    <!-- Nút quay lại trang chủ -->
     <div>
         <a href="/" class="guide-back-link">
             ← Quay lại trang chủ
         </a>
     </div>
 
-    <!-- HEADER BÀI HƯỚNG DẪN -->
-    <div class="guide-main-card">
-        {% if guide.printer_model %}
-        <div class="mb-2">
-            <span class="badge bg-primary text-uppercase px-2 py-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">
-                {{ guide.printer_model.brand }} - {{ guide.printer_model.model }}
-            </span>
-        </div>
-        {% endif %}
-        
-        <h1 class="guide-main-title">{{ guide.title }}</h1>
-        
-        {% if guide.description %}
-        <p class="guide-main-desc">
-            {{ guide.description }}
-        </p>
-        {% endif %}
+    {# LOGIC BẢO MẬT: Chặn khách xem bài Ẩn hoặc bài Nội bộ #}
+    {% set is_admin_user = user and user.is_admin %}
+    {% set is_unauthorized = (not is_admin_user) and (guide.is_admin_only or (guide.is_active is defined and not guide.is_active)) %}
 
-        <!-- 🖼️ HIỂN THỊ ẢNH BANNER/MINH HỌA DÒNG MÁY Ở ĐẦU BÀI (NẾU CÓ) -->
-        {% if guide.image_url and guide.image_url != 'https://...' %}
-        <div class="guide-main-banner">
-            <a href="{{ guide.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
-                <img src="{{ guide.image_url }}" alt="Ảnh minh họa {{ guide.title }}">
-            </a>
-            <div style="font-size: 0.7rem; color: #64748b; margin-top: 6px; font-style: italic;">
-                🔍 Bấm vào ảnh để xem kích thước lớn hơn
+    <!-- KHỐI KIỂM TRA QUYỀN TRUY CẬP -->
+    {% if access_denied or is_unauthorized %}
+        <!-- 🔒 HIỂN THỊ THÔNG BÁO CHẶN TRUY CẬP CHO KHÁCH -->
+        <div class="access-denied-card">
+            <div class="access-denied-icon">
+                🔒
+            </div>
+            <h2 class="access-denied-title">Tài liệu Nội bộ / Giới hạn truy cập</h2>
+            <p class="access-denied-desc">
+                Tài liệu <strong>"{{ guide.title }}"</strong> dành riêng cho kỹ thuật viên nội bộ hoặc đang tạm ẩn. Vui lòng đăng nhập tài khoản Quản trị để xem chi tiết.
+            </p>
+            <div>
+                <a href="/login?next=/guide/{{ guide.id }}" class="btn-login-now">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    Đăng nhập Quản trị
+                </a>
             </div>
         </div>
-        {% endif %}
-    </div>
 
-    <!-- DANH SÁCH BƯỚC HƯỚNG DẪN -->
-    <div class="guide-steps-container">
-        {% if steps %}
-            {% for step in steps %}
-            <div class="step-item-card">
-                <!-- Tiêu đề bước -->
-                <div class="step-header-wrap">
-                    <span class="badge bg-dark text-white px-2 py-1" style="font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;">
-                        Bước #{{ step.step_number }}
+    {% else %}
+
+        <!-- HEADER BÀI HƯỚNG DẪN (DÀNH CHO KHÁCH HÀNG & ADMIN) -->
+        <div class="guide-main-card">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap">
+                {% if guide.printer_model %}
+                <div>
+                    <span class="badge bg-primary text-uppercase px-2 py-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">
+                        {{ guide.printer_model.brand }} - {{ guide.printer_model.model }}
                     </span>
-                    <h4 class="step-item-title">
-                        {{ step.title }}
-                    </h4>
-                </div>
-
-                <!-- Mô tả chung -->
-                {% if step.content %}
-                <p class="step-item-content">
-                    {{ step.content }}
-                </p>
-                {% endif %}
-
-                <!-- Lưu ý của bước lớn -->
-                {% if step.note %}
-                <div class="guide-note-box">
-                    ⚠️ <strong>Lưu ý:</strong> {{ step.note }}
                 </div>
                 {% endif %}
 
-                <!-- BỘ SƯU TẬP ẢNH HƯỚNG DẪN CỦA BƯỚC (Đã bọc xử lý an toàn chống lỗi kiểu dữ liệu) -->
-                {% if step.image_urls %}
-                <div class="step-gallery-stack my-3">
-                    <!-- Đổi từ lưới Bootstrap sang khối flex xếp dọc -->
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
-                        {% set img_list = step.image_urls.split(',') if step.image_urls is string else step.image_urls %}
-                        {% for img_url in img_list %}
-                            {% set clean_url = img_url.strip() if img_url is string else img_url %}
-                            {% if clean_url and clean_url != 'https://...' %}
-                            <div style="width: 100%; max-width: 700px; text-align: center;">
-                                <div class="step-image-container m-0">
-                                    <a href="{{ clean_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn" style="display: block;">
-                                        <img src="{{ clean_url }}" alt="Ảnh bước {{ step.step_number }}" class="img-fluid rounded" style="width: 100%; height: auto; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                    </a>
-                                </div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">
-                        🔍 Bấm vào ảnh để xem kích thước lớn hơn
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Nhóm nút hành động -->
-                <div class="step-action-buttons">
-                    {% if step.video_url %}
-                    <a href="{{ step.video_url }}" target="_blank" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
-                        🎬 Xem Video hướng dẫn
+                {# NÚT QUẢN TRỊ & BADGE: CHỈ HIỂN THỊ KHI LÀ ADMIN ĐĂNG NHẬP #}
+                {% if is_admin_user %}
+                <div class="d-flex align-items-center gap-2">
+                    {% if guide.is_admin_only %}
+                        <span class="badge-admin">🔒 Bài Nội bộ</span>
+                    {% endif %}
+                    {% if guide.is_active is defined and not guide.is_active %}
+                        <span class="badge-admin">👁️ Đang Ẩn</span>
+                    {% endif %}
+                    <a href="/admin/guide-step?guide_id={{ guide.id }}" class="btn btn-sm btn-dark d-inline-flex align-items-center gap-1" style="font-size: 0.775rem;">
+                        ⚙️ Sửa các bước
                     </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <h1 class="guide-main-title">{{ guide.title }}</h1>
+            
+            {% if guide.description %}
+            <p class="guide-main-desc">
+                {{ guide.description }}
+            </p>
+            {% endif %}
+
+            <!-- 🖼️ HIỂN THỊ ẢNH BANNER/MINH HỌA DÒNG MÁY Ở ĐẦU BÀI -->
+            {% if guide.image_url and guide.image_url != 'https://...' %}
+            <div class="guide-main-banner">
+                <a href="{{ guide.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
+                    <img src="{{ guide.image_url }}" alt="Ảnh minh họa {{ guide.title }}">
+                </a>
+                <div style="font-size: 0.7rem; color: #64748b; margin-top: 6px; font-style: italic;">
+                    🔍 Bấm vào ảnh để xem kích thước lớn hơn
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- DANH SÁCH BƯỚC HƯỚNG DẪN -->
+        <div class="guide-steps-container">
+            {% if steps %}
+                {% for step in steps %}
+                <div class="step-item-card">
+                    <!-- Tiêu đề bước -->
+                    <div class="step-header-wrap">
+                        <span class="badge bg-dark text-white px-2 py-1" style="font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;">
+                            Bước #{{ step.step_number }}
+                        </span>
+                        <h4 class="step-item-title">
+                            {{ step.title }}
+                        </h4>
+                    </div>
+
+                    <!-- Mô tả chung (Sử dụng | safe để nhận diện các liên kết HTML nếu có) -->
+                    {% if step.content %}
+                    <p class="step-item-content">
+                        {{ step.content | safe }}
+                    </p>
                     {% endif %}
 
-                    {% if step.download_url and step.download_url != 'https://...' %}
-                    <a href="{{ step.download_url }}" target="_blank" class="btn btn-sm btn-success text-white text-decoration-none d-inline-flex align-items-center gap-1">
-                        📥 Tải xuống bộ cài / File
-                    </a>
+                    <!-- Lưu ý của bước lớn -->
+                    {% if step.note %}
+                    <div class="guide-note-box">
+                        ⚠️ <strong>Lưu ý:</strong> {{ step.note | safe }}
+                    </div>
                     {% endif %}
-                </div>
 
-                <!-- CÁC BƯỚC CON CHI TIẾT (SUB-STEPS) -->
-                {% if step.sub_steps %}
-                <div class="sub-steps-container">
-                    {% for sub in step.sub_steps %}
-                    <div class="sub-step-box">
-                        <div class="d-flex align-items-start gap-2">
-                            <span class="badge bg-secondary text-white mt-1" style="font-size: 0.675rem; flex-shrink: 0;">
-                                Ý {{ sub.sub_order }}
-                            </span>
-                            <div class="flex-grow-1" style="min-width: 0;">
-                                <span class="text-dark fw-medium" style="font-size: 0.85rem; line-height: 1.5; display: block; word-break: break-word;">
-                                    {{ sub.content }}
-                                </span>
-                                
-                                <!-- Chú ý của ý nhỏ -->
-                                {% if sub.note %}
-                                <div class="guide-sub-note-box">
-                                    ⚠️ <strong>Chú ý:</strong> {{ sub.note }}
+                    <!-- BỘ SƯU TẬP ẢNH HƯỚNG DẪN CỦA BƯỚC -->
+                    {% if step.image_urls %}
+                    <div class="step-gallery-stack my-3">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                            {% set img_list = step.image_urls.split(',') if step.image_urls is string else step.image_urls %}
+                            {% for img_url in img_list %}
+                                {% set clean_url = img_url.strip() if img_url is string else img_url %}
+                                {% if clean_url and clean_url != 'https://...' %}
+                                <div style="width: 100%; max-width: 700px; text-align: center;">
+                                    <div class="step-image-container m-0">
+                                        <a href="{{ clean_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn" style="display: block;">
+                                            <img src="{{ clean_url }}" alt="Ảnh bước {{ step.step_number }}" class="img-fluid rounded" style="width: 100%; height: auto; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                        </a>
+                                    </div>
                                 </div>
                                 {% endif %}
-
-                                <!-- Ảnh của ý nhỏ -->
-                                {% if sub.image_url and sub.image_url != 'https://...' %}
-                                <div class="mt-2 text-center bg-white p-1 rounded border">
-                                    <a href="{{ sub.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
-                                        <img src="{{ sub.image_url }}" alt="Minh họa ý nhỏ" class="img-fluid rounded" style="max-height: 180px; display: block; margin: 0 auto;">
-                                    </a>
-                                    <span style="font-size: 0.675rem; color: #64748b; margin-top: 4px; display: block; font-style: italic;">
-                                        🔍 Bấm để phóng to
-                                    </span>
-                                </div>
-                                {% endif %}
-                            </div>
+                            {% endfor %}
+                        </div>
+                        <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">
+                            🔍 Bấm vào ảnh để xem kích thước lớn hơn
                         </div>
                     </div>
-                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Nhóm nút hành động dành cho khách (Tải bộ cài / xem video) -->
+                    <div class="step-action-buttons">
+                        {% if step.video_url %}
+                        <a href="{{ step.video_url }}" target="_blank" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
+                            🎬 Xem Video hướng dẫn
+                        </a>
+                        {% endif %}
+
+                        {% if step.download_url and step.download_url != 'https://...' %}
+                        <a href="{{ step.download_url }}" target="_blank" class="btn btn-sm btn-success text-white text-decoration-none d-inline-flex align-items-center gap-1">
+                            📥 Tải xuống bộ cài / File
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- CÁC BƯỚC CON CHI TIẾT (SUB-STEPS) -->
+                    {% if step.sub_steps %}
+                    <div class="sub-steps-container">
+                        {% for sub in step.sub_steps %}
+                        <div class="sub-step-box">
+                            <div class="d-flex align-items-start gap-2">
+                                <span class="badge bg-secondary text-white mt-1" style="font-size: 0.675rem; flex-shrink: 0;">
+                                    Ý {{ sub.sub_order }}
+                                </span>
+                                <div class="flex-grow-1" style="min-width: 0;">
+                                    <span class="text-dark fw-medium" style="font-size: 0.85rem; line-height: 1.5; display: block; word-break: break-word;">
+                                        {{ sub.content | safe }}
+                                    </span>
+                                    
+                                    <!-- Chú ý của ý nhỏ -->
+                                    {% if sub.note %}
+                                    <div class="guide-sub-note-box">
+                                        ⚠️ <strong>Chú ý:</strong> {{ sub.note | safe }}
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Ảnh của ý nhỏ -->
+                                    {% if sub.image_url and sub.image_url != 'https://...' %}
+                                    <div class="mt-2 text-center bg-white p-1 rounded border">
+                                        <a href="{{ sub.image_url }}" target="_blank" title="Bấm vào ảnh để xem kích thước lớn">
+                                            <img src="{{ sub.image_url }}" alt="Minh họa ý nhỏ" class="img-fluid rounded" style="max-height: 180px; display: block; margin: 0 auto;">
+                                        </a>
+                                        <span style="font-size: 0.675rem; color: #64748b; margin-top: 4px; display: block; font-style: italic;">
+                                            🔍 Bấm để phóng to
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="text-center py-4 text-muted bg-white rounded-3 shadow-sm p-3 border">
-                <p class="mb-0">Bài viết này đang được cập nhật chi tiết các bước thực hiện.</p>
-            </div>
-        {% endif %}
-    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-muted bg-white rounded-3 shadow-sm p-3 border">
+                    <p class="mb-0">Bài viết này đang được cập nhật chi tiết các bước thực hiện.</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
