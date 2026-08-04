@@ -3,241 +3,211 @@
 {% block content %}
 
 <style>
-:root{
-    --card-bg:#fff;
-    --border:#e2e8f0;
-    --text:#1e293b;
-    --text-light:#64748b;
+/* =========================
+   VARIABLES & CONTAINER
+========================= */
+:root {
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
 }
 
-/* =========================
-   CONTAINER QUẢN TRỊ
-========================= */
-
-.admin-dashboard-container{
+.admin-dashboard-container {
     width: 100%;
     margin: 0 auto;
-    padding: clamp(4px, 1vw, 16px) 0;
+    padding: clamp(8px, 1.5vw, 20px) 0;
 }
 
-.admin-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:16px;
-    flex-wrap:wrap;
-    gap:10px;
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.admin-dashboard-container h2{
-    margin:0;
-    color:#0f172a;
-    font-weight:700;
-    font-size:clamp(1.25rem, 3vw, 1.75rem);
-}
-
-/* =========================
-   GRID TỰ CO GIÃN
-========================= */
-
-.admin-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
-    gap:16px;
+.admin-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
 }
 
 /* =========================
-   CARD
+   GRID HỆ THỐNG (LINH HOẠT TỰ CO GIÃN)
 ========================= */
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
 
-.admin-card{
+/* =========================
+   CARD BẢNG ĐIỀU KHIỂN
+========================= */
+.admin-card {
     background: var(--card-bg);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-color);
     border-radius: 14px;
-    padding: clamp(14px, 2vw, 22px);
+    padding: clamp(16px, 2.5vw, 24px);
     display: flex;
     flex-direction: column;
     height: 100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.admin-card:hover{
+.admin-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     border-color: #cbd5e1;
 }
 
-.admin-card-icon{
-    font-size: clamp(2rem, 5vw, 2.5rem);
-    margin-bottom: 10px;
+.admin-card-icon {
+    font-size: clamp(2.2rem, 4vw, 2.75rem);
+    margin-bottom: 12px;
     line-height: 1;
 }
 
-.admin-card-title{
-    font-size: clamp(1rem, 2vw, 1.15rem);
+.admin-card-title {
+    font-size: clamp(1.05rem, 2vw, 1.2rem);
     font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
 }
 
-.admin-card-text{
-    font-size: clamp(0.85rem, 2vw, 0.92rem);
-    color: var(--text-light);
-    line-height: 1.5;
+.admin-card-text {
+    font-size: clamp(0.875rem, 1.8vw, 0.935rem);
+    color: var(--text-secondary);
+    line-height: 1.55;
     flex: 1;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 /* =========================
-   BUTTONS
+   NÚT THAO TÁC (BUTTONS)
 ========================= */
-
-.admin-card-actions{
+.admin-card-actions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
-.admin-card-actions .btn{
+.admin-card-actions .btn {
     width: 100%;
-    min-height: 40px;
-    display: flex;
+    min-height: 42px;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
     border-radius: 10px;
-    font-size: clamp(0.82rem, 2vw, 0.9rem);
+    font-size: 0.9rem;
     font-weight: 600;
+    gap: 6px;
 }
 
-/* =========================
-   MOBILE (<= 480px)
-========================= */
+/* Tùy chỉnh màu nút thư viện để đảm bảo độ tương phản */
+.btn-outline-amber {
+    color: #b45309;
+    border-color: #fcd34d;
+    background-color: #fffbeb;
+}
+.btn-outline-amber:hover {
+    color: #ffffff;
+    background-color: #d97706;
+    border-color: #d97706;
+}
 
-@media (max-width: 480px){
-    .admin-dashboard-container{
-        padding: 0;
-    }
-    .admin-grid{
+/* Responsive cho điện thoại nhỏ */
+@media (max-width: 480px) {
+    .admin-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
-    }
-}
-
-/* =========================
-   TABLET & DESKTOP
-========================= */
-
-@media (min-width: 768px){
-    .admin-grid{
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px){
-    .admin-grid{
-        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
     }
 }
 </style>
 
+{% if user %}
+
+<!-- KHỐI HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP ADMIM -->
 <div class="admin-dashboard-container">
 
     <div class="admin-header">
-        <h2>🛠️ Trang Quản Trị</h2>
+        <h2>🛠️ Trang Quản Trị Hệ Thống</h2>
     </div>
 
     <div class="admin-grid">
 
-        <!-- Card 1 -->
+        <!-- Card 1: Model Máy In -->
         <div class="admin-card">
-
             <div class="admin-card-icon">🖨️</div>
-
-            <div class="admin-card-title">
-                Model Máy In
-            </div>
-
+            <div class="admin-card-title">Model Máy In</div>
             <div class="admin-card-text">
-                Quản lý thương hiệu, hãng sản xuất và danh sách model máy in như Canon, Epson, HP, Brother...
+                Quản lý thương hiệu, hãng sản xuất và danh sách các dòng máy in Canon, Epson, HP, Brother...
             </div>
-
             <div class="admin-card-actions">
-
-                <a href="/admin/printer"
-                   class="btn btn-primary">
+                <a href="/admin/printer" class="btn btn-primary">
                     📋 Xem danh sách
                 </a>
-
-                <a href="/admin/printer/create"
-                   class="btn btn-outline-primary">
+                <a href="/admin/printer/create" class="btn btn-outline-primary">
                     ➕ Thêm Model
                 </a>
-
             </div>
-
         </div>
 
-        <!-- Card 2 -->
+        <!-- Card 2: Bài Hướng Dẫn -->
         <div class="admin-card">
-
             <div class="admin-card-icon">📖</div>
-
-            <div class="admin-card-title">
-                Bài Hướng Dẫn
-            </div>
-
+            <div class="admin-card-title">Bài Hướng Dẫn</div>
             <div class="admin-card-text">
-                Tạo và chỉnh sửa các bài viết hướng dẫn xử lý lỗi, bảo trì và sửa chữa máy in.
+                Tạo và chỉnh sửa các bài viết hướng dẫn xử lý lỗi, quy trình bảo trì và sửa chữa máy in.
             </div>
-
             <div class="admin-card-actions">
-
-                <a href="/admin/guide"
-                   class="btn btn-success">
+                <a href="/admin/guide" class="btn btn-success">
                     📚 Danh sách bài viết
                 </a>
-
-                <a href="/admin/guide/create"
-                   class="btn btn-outline-success">
+                <a href="/admin/guide/create" class="btn btn-outline-success">
                     ➕ Thêm bài viết
                 </a>
-
             </div>
-
         </div>
 
-        <!-- Card 3 -->
+        <!-- Card 3: Thư Viện Tệp -->
         <div class="admin-card">
-
             <div class="admin-card-icon">📁</div>
-
-            <div class="admin-card-title">
-                Thư Viện
-            </div>
-
+            <div class="admin-card-title">Thư Viện Tệp</div>
             <div class="admin-card-text">
-                Quản lý hình ảnh, video, tài liệu PDF, driver và các tệp đính kèm để sử dụng trong các bài hướng dẫn.
+                Quản lý hình ảnh, video, tài liệu PDF, bộ cài driver và các tệp đính kèm bài hướng dẫn.
             </div>
-
             <div class="admin-card-actions">
-
-                <a href="/admin/library"
-                class="btn btn-warning text-dark">
+                <a href="/admin/library" class="btn btn-warning text-dark fw-bold">
                     📂 Mở thư viện
                 </a>
-
-                <a href="/admin/library/upload"
-                class="btn btn-outline-warning">
+                <a href="/admin/library/upload" class="btn btn-outline-amber">
                     ⬆️ Tải tệp lên
                 </a>
-
             </div>
-
         </div>
 
     </div>
 
 </div>
+
+{% else %}
+
+<!-- KHỐI HIỂN THỊ KHI CHƯA ĐĂNG NHẬP -->
+<div class="card text-center my-4 my-md-5 p-3 p-md-4 mx-auto shadow-sm" style="max-width: 440px; border-radius: 16px; border: 1px solid #fecaca; background: #ffffff;">
+    <div class="card-body">
+        <div style="font-size: 3rem; line-height: 1;" class="mb-3">🔒</div>
+        <h3 class="card-title fw-bold text-dark mb-2" style="font-size: 1.3rem;">Yêu Cầu Đăng Nhập</h3>
+        <p class="card-text text-muted mb-4" style="font-size: 0.9rem; line-height: 1.5;">
+            Bạn cần đăng nhập tài khoản quản trị để truy cập vào Bảng điều khiển (Dashboard) và sử dụng các tính năng này.
+        </p>
+        <a href="/admin/login" class="btn btn-primary w-100 py-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-2" style="border-radius: 10px;">
+            🔑 Đăng nhập ngay
+        </a>
+    </div>
+</div>
+
+{% endif %}
 
 {% endblock %}

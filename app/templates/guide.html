@@ -2,7 +2,6 @@
 
 {% block content %}
 
-<!-- Tích hợp Font Inter từ Google Fonts -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -10,59 +9,55 @@
    GLOBAL & LAYOUT RESPONSIVE
 ================================================= */
 .modern-ui {
-    font-family: 'Inter', 'Roboto', Arial, sans-serif;
-    color: #1e293b;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #0f172a;
     background-color: #f8fafc;
     min-height: calc(100vh - 60px);
-    padding: clamp(10px, 2vw, 24px) clamp(8px, 1.5vw, 16px);
+    padding: clamp(1rem, 2vw, 2rem) 0;
     box-sizing: border-box;
 }
 
-.modern-ui h3 {
-    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: #0f172a;
-    line-height: 1.3;
-}
-
-.modern-ui p {
-    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
 }
 
 .glass-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
     overflow: hidden;
 }
 
 /* =================================================
-   INPUT & SEARCH
+   INPUT, SELECT & SEARCH
 ================================================= */
 .modern-input,
 .modern-select {
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: .45rem .8rem;
-    font-size: clamp(0.8rem, 1.8vw, 0.85rem);
-    color: #334155;
-    height: 40px;
-    background-color: #fff;
     width: 100%;
-    box-sizing: border-box;
+    height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.15s ease-in-out;
 }
 
 .modern-input:focus,
 .modern-select:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     outline: none;
+    background-color: #ffffff;
 }
 
 .search-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .search-wrapper svg {
@@ -70,64 +65,77 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     color: #94a3b8;
+    pointer-events: none;
 }
 
 .search-wrapper input {
-    padding-left: 2.2rem;
+    padding-left: 2.375rem;
 }
 
 /* =================================================
    BUTTONS
 ================================================= */
 .btn-primary-modern {
-    background: #2563eb;
-    color: white;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff !important;
     border: none;
-    border-radius: 8px;
-    font-size: clamp(0.8rem, 1.8vw, 0.85rem);
-    font-weight: 500;
-    padding: .45rem 1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 0.5rem;
     white-space: nowrap;
     text-decoration: none;
     cursor: pointer;
+    transition: all 0.15s ease-in-out;
 }
 
 .btn-primary-modern:hover {
-    background: #1d4ed8;
-    color: white;
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .btn-secondary-modern {
     background: #f1f5f9;
     color: #475569;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: clamp(0.78rem, 1.8vw, 0.8rem);
-    padding: .4rem .8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    height: 42px;
+    padding: 0 1rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     white-space: nowrap;
     cursor: pointer;
     text-decoration: none;
+    transition: all 0.15s ease-in-out;
 }
+
 .btn-secondary-modern:hover {
     background: #e2e8f0;
-    color: #1e293b;
+    color: #0f172a;
 }
 
 /* =================================================
-   TABLE
+   TABLE STYLING
 ================================================= */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
 .modern-table {
     width: 100%;
+    min-width: 850px;
     border-collapse: separate;
     border-spacing: 0;
 }
@@ -135,105 +143,139 @@
 .modern-table th {
     background: #f8fafc;
     color: #64748b;
-    font-size: clamp(0.6rem, 1.5vw, 0.7rem);
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    padding: .8rem 1rem;
+    letter-spacing: 0.05em;
+    padding: 0.875rem 1rem;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
 }
 
 .modern-table td {
-    padding: .9rem 1rem;
+    padding: 1rem;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
-    font-size: clamp(0.78rem, 1.8vw, 0.85rem);
+    font-size: 0.875rem;
+    transition: background 0.15s;
 }
 
-.modern-table tbody tr:hover {
-    background: #fdfdfd;
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover td {
+    background: #f8fafc;
 }
 
 /* =================================================
-   BRAND TAG
+   BRAND TAG & STATUS
 ================================================= */
 .brand-tag {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     padding: 2px 8px;
     border-radius: 6px;
     font-weight: 700;
-    letter-spacing: 0.03em;
     display: inline-block;
     margin-bottom: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     text-transform: uppercase;
-    background: #e2e8f0;
-    color: #0f172a;
+    background: #f1f5f9;
+    color: #334155;
     border: 1px solid #cbd5e1;
+    letter-spacing: 0.02em;
 }
 
-/* =================================================
-   STATUS
-================================================= */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 8px;
+    gap: 6px;
+    padding: 4px 10px;
     border-radius: 999px;
-    font-size: clamp(0.68rem, 1.5vw, 0.7rem);
+    font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
 }
 
 .status-active {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.status-inactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 .status-dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: currentColor;
 }
 
 /* =================================================
-   ACTION BUTTON
+   ACTION BUTTONS
 ================================================= */
+.action-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
 .action-icon-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     display: inline-flex;
     justify-content: center;
     align-items: center;
     border-radius: 8px;
-    color: #64748b;
-    background: transparent;
-    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
     cursor: pointer;
-    transition: all 0.2s;
-}
-
-.action-icon-btn svg {
-    width: 17px;
-    height: 17px;
 }
 
 .action-icon-btn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    transform: translateY(-1px);
 }
 
-.btn-delete:hover {
+/* Nút Steps */
+.btn-steps {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+.btn-steps:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+/* Nút Sửa */
+.btn-edit {
+    color: #d97706;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.btn-edit:hover {
+    background: #d97706;
+    color: #ffffff;
+}
+
+/* Nút Xóa */
+.btn-delete {
+    color: #dc2626;
     background: #fef2f2;
-    color: #ef4444;
+    border-color: #fecaca;
+}
+.btn-delete:hover {
+    background: #dc2626;
+    color: #ffffff;
 }
 
-/* =================================================
-   RESPONSIVE
-================================================= */
 @media(max-width: 768px) {
     .header-box {
         flex-direction: column;
@@ -244,41 +286,31 @@
         width: 100%;
     }
 }
-
-@media(max-width: 600px) {
-    .modern-table th:nth-child(4),
-    .modern-table td:nth-child(4) { display: none; }
-}
-
-@media(max-width: 480px) {
-    .modern-table th:nth-child(5),
-    .modern-table td:nth-child(5) { display: none; }
-}
 </style>
 
 <div class="modern-ui">
-    <div class="container-fluid p-0" style="max-width: 1200px; margin: 0 auto;">
+    <div class="admin-container">
         
         <!-- HEADER -->
-        <div class="header-box d-flex justify-content-between align-items-center mb-3">
+        <div class="header-box d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h3 class="mb-1 d-flex align-items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                <h3 class="mb-1 d-flex align-items-center gap-2" style="font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                     Quản lý Hướng dẫn
                 </h3>
-                <p class="text-muted small mb-0" style="color: #64748b !important;">
+                <p class="text-muted small mb-0" style="color: #64748b;">
                     Tổ chức và quản lý tài liệu kỹ thuật, hướng dẫn cho các dòng máy in
                 </p>
             </div>
             
             <a href="/admin/guide/create" class="btn-primary-modern shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Thêm bài mới
             </a>
         </div>
 
-        <!-- FILTER -->
-        <div class="glass-card mb-3">
+        <!-- FILTER BAR -->
+        <div class="glass-card mb-4">
             <div class="card-body p-3">
                 <form method="GET" action="/admin/guide" class="row g-2 align-items-center m-0">
                     
@@ -303,7 +335,7 @@
                         </select>
                     </div>
 
-                    <!-- 3. Lọc theo Trạng thái (Đã sửa name="guide_status" khớp với backend) -->
+                    <!-- 3. Lọc theo Trạng thái -->
                     <div class="col-lg-2 col-md-6 p-1">
                         <select name="guide_status" class="form-select modern-select w-100" onchange="this.form.submit()">
                             <option value="">-- Trạng thái --</option>
@@ -312,7 +344,7 @@
                         </select>
                     </div>
 
-                    <!-- 4. Nút thao tác -->
+                    <!-- 4. Nút thao tác lọc -->
                     <div class="col-lg-2 col-md-12 p-1 d-flex gap-2">
                         <button type="submit" class="btn-secondary-modern flex-grow-1 justify-content-center">
                             Lọc
@@ -328,25 +360,24 @@
             </div>
         </div>
 
-        <!-- TABLE -->
+        <!-- TABLE DATA -->
         <div class="glass-card">
             <div class="table-responsive">
                 <table class="modern-table">
                     <thead>
                         <tr>
                             <th class="text-center" style="width: 50px;">#</th>
-                            <th style="width: 25%;">Máy in</th>
-                            <th style="width: 35%;">Bài hướng dẫn</th>
-                            <th class="text-center" style="width: 80px;">Order</th>
+                            <th style="width: 22%;">Máy in</th>
+                            <th style="width: 38%;">Bài hướng dẫn</th>
+                            <th class="text-center" style="width: 80px;">Thứ tự</th>
                             <th class="text-center" style="width: 110px;">Trạng thái</th>
-                            <th class="text-center" style="width: 130px;">Thao tác</th>
+                            <th class="text-center" style="width: 140px;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- [ĐÃ SỬA] Thay 'guide' thành 'guides' khớp với biến backend -->
                         {% for g in guides %}
                         <tr>
-                            <td class="text-center" style="color: #94a3b8; font-weight: 500;">
+                            <td class="text-center text-muted fw-bold" style="color: #94a3b8;">
                                 {{loop.index}}
                             </td>
                             
@@ -354,25 +385,25 @@
                             <td>
                                 {% if g.printer_model %}
                                     <span class="brand-tag">{{ g.printer_model.brand }}</span>
-                                    <div style="font-weight: 600; color: #334155;">{{ g.printer_model.model }}</div>
+                                    <div class="fw-semibold text-dark" style="color: #0f172a; font-size: 0.9rem;">{{ g.printer_model.model }}</div>
                                 {% else %}
-                                    <span style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">Chưa gán</span>
+                                    <span class="text-muted fs-7 opacity-75" style="font-style: italic;">Chưa gán</span>
                                 {% endif %}
                             </td>
 
                             <!-- Bài Hướng Dẫn -->
                             <td>
-                                <div style="font-weight: 600; color: #0f172a; margin-bottom: 2px;">{{g.title}}</div>
+                                <div class="fw-bold text-dark mb-1" style="color: #0f172a; font-size: 0.925rem; line-height: 1.4;">{{g.title}}</div>
                                 {% if g.description %}
-                                    <div style="color: #64748b; font-size: 0.8rem; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <div class="text-muted small text-truncate" style="max-width: 320px; color: #64748b; font-size: 0.8125rem;">
                                         {{g.description}}
                                     </div>
                                 {% endif %}
                                 {% if g.guide_tags %}
-                                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                                    <div class="d-flex gap-1 flex-wrap mt-1">
                                         {% for gt in g.guide_tags %}
                                             {% if gt.tags %}
-                                                <span style="background: #e0f2fe; color: #0369a1; font-size: 0.68rem; padding: 1px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #bae6fd;">
+                                                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 6px;">
                                                     {{ gt.tags.name }}
                                                 </span>
                                             {% endif %}
@@ -381,9 +412,9 @@
                                 {% endif %}
                             </td>
 
-                            <!-- Order -->
+                            <!-- Thứ tự -->
                             <td class="text-center">
-                                <span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; border: 1px solid #e2e8f0;">
+                                <span class="badge" style="background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 8px;">
                                     {{g.sort_order or 1}}
                                 </span>
                             </td>
@@ -395,26 +426,26 @@
                                         <span class="status-dot"></span> Hiển thị
                                     </span>
                                 {% else %}
-                                    <span class="status-badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
+                                    <span class="status-badge status-inactive">
                                         <span class="status-dot"></span> Đang ẩn
                                     </span>
                                 {% endif %}
                             </td>
 
                             <!-- Thao tác -->
-                            <td>
-                                <div class="d-flex justify-content-center gap-1">
-                                    <a href="/admin/guide-step?guide_id={{g.id}}" class="action-icon-btn" title="Các bước (Steps)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                            <td class="text-center">
+                                <div class="action-btn-group">
+                                    <a href="/admin/guide-step?guide_id={{g.id}}" class="action-icon-btn btn-steps" title="Các bước (Steps)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                                     </a>
                                     
-                                    <a href="/admin/guide/edit/{{g.id}}" class="action-icon-btn" title="Chỉnh sửa">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    <a href="/admin/guide/edit/{{g.id}}" class="action-icon-btn btn-edit" title="Chỉnh sửa">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </a>
 
                                     <form action="/admin/guide/delete/{{g.id}}" method="POST" class="m-0" onsubmit="return confirm('Xóa bài hướng dẫn này?')">
-                                        <button class="action-icon-btn btn-delete" title="Xóa">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        <button type="submit" class="action-icon-btn btn-delete" title="Xóa">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </form>
                                 </div>
@@ -423,10 +454,10 @@
                         {% else %}
                         <tr>
                             <td colspan="6" class="text-center py-5">
-                                <div style="color: #94a3b8; display: flex; flex-direction: column; align-items: center;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-                                    <h6 style="font-weight: 600; color: #475569;">Chưa có dữ liệu</h6>
-                                    <p class="small mb-0">Thử thay đổi bộ lọc hoặc thêm bài hướng dẫn mới.</p>
+                                <div class="text-muted d-flex flex-column align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#94a3b8" stroke-width="1.2" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                    <h6 class="fw-semibold" style="color: #334155;">Chưa có dữ liệu</h6>
+                                    <p class="small mb-0" style="color: #94a3b8;">Thử thay đổi bộ lọc hoặc thêm bài hướng dẫn mới.</p>
                                 </div>
                             </td>
                         </tr>
@@ -435,6 +466,7 @@
                 </table>
             </div>
         </div>
+
     </div>
 </div>
 

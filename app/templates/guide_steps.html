@@ -1,345 +1,187 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý các bước - {{ guide.title }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <style>
-       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+{% extends "base.html" %}
 
-        /* =====================================================
-        GLOBAL - MOBILE FIRST RESPONSIVE 5-7 INCH
-        ===================================================== */
-        .modern-ui {
-            font-family: 'Inter', Arial, sans-serif;
-            color: #1e293b;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding: clamp(8px, 2vw, 20px);
-            font-size: clamp(13px, 1.5vw, 14px);
-            box-sizing: border-box;
-        }
+{% block title %}Quản lý các bước - {{ guide.title }}{% endblock %}
 
-        .glass-card {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.04);
-            overflow: hidden;
-        }
+{% block content %}
+<style>
+    /* Styling tối ưu giao diện mượt mà & chuyên nghiệp */
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem;
+    }
 
-        .modern-ui h3 {
-            font-size: clamp(1.1rem, 3vw, 1.35rem);
-            font-weight: 700;
-            color: #0f172a;
-            line-height: 1.3;
-        }
+    .glass-card-header {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        margin-bottom: 1.5rem;
+    }
 
-        .modern-ui p {
-            font-size: clamp(0.75rem, 1.8vw, 0.78rem);
-        }
+    .step-card-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
 
-        /* =====================================================
-        HEADER BANNER & MAIN IMAGE
-        ===================================================== */
-        .guide-header-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 1.2rem;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-        }
+    .step-card-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
 
-        .guide-cover-wrapper {
-            flex-shrink: 0;
-            width: 160px;
-            height: 110px;
-            border-radius: 10px;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 4px;
-        }
+    .drag-handle {
+        cursor: grab;
+        color: #94a3b8;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
+    }
 
-        .guide-cover-img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 6px;
-        }
+    .drag-handle:hover {
+        background: #f1f5f9;
+        color: #475569;
+    }
 
-        /* =====================================================
-        FORM CONTROL
-        ===================================================== */
-        .modern-input,
-        .modern-select,
-        .modern-textarea {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 10px 12px;
-            min-height: 42px;
-            font-size: clamp(0.85rem, 2vw, 0.9rem);
-            color: #334155;
-            background-color: #fff;
-        }
+    .drag-handle:active {
+        cursor: grabbing;
+    }
 
-        .modern-textarea {
-            min-height: 90px;
-            resize: vertical;
-        }
+    /* Modal Overlay & Card Styling */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
 
-        .modern-input:focus,
-        .modern-select:focus,
-        .modern-textarea:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-            outline: none;
-        }
+    .modal-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 650px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 20px;
+        padding: 1.75rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-        /* =====================================================
-        BUTTON - TOUCH FRIENDLY
-        ===================================================== */
-        .btn-primary-modern {
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: clamp(0.8rem, 2vw, 0.85rem);
-            font-weight: 600;
-            min-height: 40px;
-            padding: 8px 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            text-decoration: none;
-            cursor: pointer;
-            white-space: nowrap;
-        }
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: scale(0.96) translateY(8px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
 
-        .btn-primary-modern:hover {
-            background: #1d4ed8;
-        }
+    .modern-input, .modern-textarea {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #0f172a;
+        transition: all 0.15s ease-in-out;
+    }
 
-        .btn-secondary-modern {
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            min-height: 40px;
-            padding: 8px 14px;
-            font-size: clamp(0.78rem, 2vw, 0.8rem);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .btn-secondary-modern:hover {
-            background: #e2e8f0;
-            color: #1e293b;
-        }
+    .modern-input:focus, .modern-textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
 
-        /* =====================================================
-        TABLE
-        ===================================================== */
-        .modern-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff;
+        border: none;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease-in-out;
+    }
 
-        .modern-table th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: clamp(0.6rem, 1.5vw, 0.65rem);
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 10px 8px;
-            border-bottom: 1px solid #e2e8f0;
-            white-space: nowrap;
-        }
+    .btn-primary-modern:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
 
-        .modern-table td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-            font-size: clamp(0.78rem, 1.8vw, 0.8rem);
-        }
+    .btn-secondary-modern {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
 
-        .modern-table tbody tr:hover {
-            background: #f8fafc;
-        }
+    .btn-secondary-modern:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
 
-        /* =====================================================
-        STATUS
-        ===================================================== */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: clamp(0.65rem, 1.5vw, 0.7rem);
-            font-weight: 600;
-            white-space: nowrap;
-        }
+    .action-icon-btn {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-        .status-active {
-            background: #ecfdf5;
-            color: #059669;
-            border: 1px solid #a7f3d0;
-        }
-
-        .status-inactive {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        /* =====================================================
-        ACTION BUTTON
-        ===================================================== */
-        .action-icon-btn {
-            width: 36px;
-            height: 36px;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 8px;
-            color: #64748b;
-            background: transparent;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-icon-btn svg {
-            width: 17px;
-            height: 17px;
-        }
-
-        .action-icon-btn:hover {
-            background: #f1f5f9;
-        }
-
-        .btn-delete:hover {
-            background: #fef2f2;
-            color: #ef4444;
-        }
-
-        /* =====================================================
-        MODAL
-        ===================================================== */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15,23,42,.55);
-            backdrop-filter: blur(3px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 12px;
-        }
-
-        .modal-card {
-            background: #fff;
-            width: 100%;
-            max-width: 600px;
-            border-radius: 12px;
-            padding: clamp(14px, 3vw, 20px);
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        /* =====================================================
-        RESPONSIVE CHO ĐIỆN THOẠI NHỎ & MÁY TÍNH BẢNG
-        ===================================================== */
-        @media(max-width: 480px) {
-            .modern-ui { padding: 6px; }
-            
-            /* Xếp chồng banner ảnh trên điện thoại */
-            .guide-header-card {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .guide-cover-wrapper {
-                width: 100%;
-                height: 160px;
-            }
-
-            /* Tiêu đề & nút hành động đầu trang xếp dọc trên mobile nhỏ */
-            .header-flex-box {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 10px;
-            }
-            .header-flex-box .btn-primary-modern {
-                width: 100%;
-            }
-
-            /* Các lưới form trong modal dàn full 1 cột trên điện thoại nhỏ */
-            .modal-grid-2 {
-                grid-template-columns: 1fr !important;
-            }
-            .modal-grid-step {
-                grid-template-columns: 80px 1fr !important;
-            }
-            
-            /* Tinh chỉnh phần form thêm nhanh bước con ôm trọn màn hình điện thoại */
-            .sub-step-add-form {
-                flex-direction: column;
-                align-items: stretch !important;
-            }
-            .sub-step-add-form input, 
-            .sub-step-add-form button {
-                width: 100% !important;
-            }
-        }
-    </style>
-</head>
-<body>
+    .action-icon-btn:hover {
+        background: #f1f5f9;
+        transform: translateY(-1px);
+    }
+</style>
 
 <div class="modern-ui">
-    <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="admin-container">
         
         <!-- Breadcrumb & Header -->
-        <div class="header-flex-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div class="header-flex-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
             <div>
                 <!-- Kiểm tra nếu có cookie user_session thì về trang quản trị, ngược lại về trang chủ -->
                 {% if request.cookies.get("user_session") %}
-                    <a href="/admin/guide" style="color: #64748b; font-size: clamp(0.75rem, 1.8vw, 0.8rem); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+                    <a href="/admin/guide" style="color: #64748b; font-size: 0.8125rem; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; transition: color 0.15s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">
                         ← Quay lại trang quản trị
                     </a>
                 {% else %}
-                    <a href="/" style="color: #64748b; font-size: clamp(0.75rem, 1.8vw, 0.8rem); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+                    <a href="/" style="color: #64748b; font-size: 0.8125rem; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; transition: color 0.15s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">
                         ← Quay lại trang chủ
                     </a>
                 {% endif %}
 
-                <h3 style="margin: 0;">
+                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
                     Các bước thực hiện: <span style="color: #2563eb;">{{ guide.title }}</span>
-                </h3>
+                </h2>
             </div>
             
             <!-- Chỉ hiển thị nút Thêm bước mới nếu người dùng là Admin/KTV đã đăng nhập -->
             {% if request.cookies.get("user_session") %}
             <button type="button" data-next-step="{{ steps | length + 1 }}" onclick="openAddModal(this)" class="btn-primary-modern shadow-sm">
-                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Thêm bước mới
             </button>
             {% endif %}
@@ -347,24 +189,24 @@
 
         <!-- 🖼️ KHU VỰC HIỂN THỊ ẢNH ĐẦU BÀI (GUIDE IMAGE / COVER) -->
         {% if guide.image_url or guide.description %}
-        <div class="guide-header-card">
+        <div class="glass-card-header" style="display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap;">
             {% if guide.image_url %}
-            <div class="guide-cover-wrapper">
+            <div class="guide-cover-wrapper" style="flex-shrink: 0;">
                 <a href="{{ guide.image_url }}" target="_blank" title="Xem ảnh phóng to">
-                    <img src="{{ guide.image_url }}" alt="{{ guide.title }}" class="guide-cover-img">
+                    <img src="{{ guide.image_url }}" alt="{{ guide.title }}" class="guide-cover-img" style="max-height: 110px; border-radius: 10px; border: 1px solid #e2e8f0; object-fit: cover;">
                 </a>
             </div>
             {% endif %}
-            <div style="flex: 1; min-width: 200px;">
-                <div style="font-size: 0.72rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <div style="flex: 1; min-width: 240px;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                     🖼️ Ảnh đại diện / Dòng máy
                 </div>
                 {% if guide.description %}
-                <div style="color: #475569; font-size: clamp(0.82rem, 1.8vw, 0.88rem); line-height: 1.5; margin: 0;">
+                <div style="color: #475569; font-size: 0.88rem; line-height: 1.6; margin: 0;">
                     {{ guide.description }}
                 </div>
                 {% else %}
-                <div style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">
+                <div style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">
                     Chưa có mô tả tóm tắt cho bài viết này.
                 </div>
                 {% endif %}
@@ -372,133 +214,132 @@
         </div>
         {% endif %}
 
-        <!-- Bảng danh sách các bước -->
         <!-- Khung danh sách các bước (Dạng Card - Đã tích hợp kéo thả SortableJS) -->
         <div class="glass-card" style="background: transparent; border: none; padding: 0;">
             <div id="steps-container">
                 {% for step in steps %}
                 <!-- Thêm class và data-id để SortableJS nhận diện kéo thả -->
-                <div class="step-card-item bg-white mb-4 shadow-sm" data-id="{{ step.id }}" style="border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="step-card-item" data-id="{{ step.id }}">
                     
                     <!-- HEADER CỦA BƯỚC: Số thứ tự, Tiêu đề, Trạng thái, Thao tác -->
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">
                             <!-- 🖐️ Tay cầm kéo thả -->
-                            <span class="drag-handle cursor-grab text-slate-400 hover:text-slate-600 font-bold" title="Kéo để đổi vị trí" style="cursor: grab; font-size: 1.2rem; user-select: none;">⋮⋮</span>
+                            <span class="drag-handle" title="Kéo để đổi vị trí" style="font-size: 1.25rem; user-select: none;">⋮⋮</span>
                             
-                            <span style="background: #e2e8f0; color: #1e293b; font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.78rem;">
-                                #{{ step.step_number }}
+                            <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700; padding: 3px 10px; border-radius: 8px; font-size: 0.8rem;">
+                                Bước {{ step.step_number }}
                             </span>
                             
-                            <h3 style="font-weight: 600; color: #0f172a; margin: 0; font-size: clamp(0.9rem, 2vw, 1rem);">{{ step.title }}</h3>
+                            <h3 style="font-weight: 700; color: #0f172a; margin: 0; font-size: 1rem; letter-spacing: -0.01em;">{{ step.title }}</h3>
                             
                             {% if step.is_active %}
-                            <span class="status-badge status-active" style="font-size: 0.7rem; padding: 2px 6px; background: #dcfce7; color: #166534; border-radius: 4px; font-weight: 600;">Hiển thị</span>
+                            <span class="status-badge status-active" style="font-size: 0.72rem; padding: 3px 8px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; border-radius: 20px; font-weight: 600;">Hiển thị</span>
                             {% else %}
-                            <span class="status-badge status-inactive" style="font-size: 0.7rem; padding: 2px 6px; background: #fee2e2; color: #991b1b; border-radius: 4px; font-weight: 600;">Ẩn</span>
+                            <span class="status-badge status-inactive" style="font-size: 0.72rem; padding: 3px 8px; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 20px; font-weight: 600;">Ẩn</span>
                             {% endif %}
                         </div>
 
                         <!-- Các nút thao tác Sửa/Xóa Bước lớn -->
-                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
-                            <button type="button" class="action-icon-btn" title="Sửa bước" data-step='{{ step | tojson | safe }}' onclick="openEditModal(this)" style="background: none; border: 1px solid #cbd5e1; padding: 6px; border-radius: 6px; cursor: pointer; color: #2563eb;">
-                                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Zm0 0L19.5 7.125"/></svg>
+                        <div style="display: flex; gap: 6px; align-items: center; white-space: nowrap;">
+                            <button type="button" class="action-icon-btn" title="Sửa bước" data-step='{{ step | tojson | safe }}' onclick="openEditModal(this)" style="color: #2563eb;">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Zm0 0L19.5 7.125"/></svg>
                             </button>
                             <form action="/admin/guide-step/{{ step.id }}/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bước lớn này? (Toàn bộ bước con bên trong cũng sẽ bị xóa)');" style="display: inline; margin: 0;">
                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                <button type="submit" class="action-icon-btn btn-delete" title="Xóa bước" style="background: none; border: 1px solid #cbd5e1; padding: 6px; border-radius: 6px; cursor: pointer; color: #ef4444;">
-                                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                                <button type="submit" class="action-icon-btn btn-delete" title="Xóa bước" style="color: #ef4444;">
+                                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                                 </button>
                             </form>
                         </div>
                     </div>
 
                     <!-- BODY CỦA BƯỚC: Thụt lề vào một chút cho đẹp -->
-                    <div style="padding-left: 28px;">
+                    <div style="padding-left: 20px;">
                         
                         <!-- Nội dung chính -->
                         {% if step.content %}
-                        <div style="color: #64748b; font-size: clamp(0.78rem, 1.8vw, 0.84rem); margin-bottom: 6px; line-height: 1.5;">
+                        <div style="color: #475569; font-size: 0.88rem; margin-bottom: 8px; line-height: 1.6;">
                             {{ step.content | safe }}
                         </div>
                         {% endif %}
 
                         <!-- Lưu ý của bước lớn -->
                         {% if step.note %}
-                        <div style="color: #d97706; font-size: clamp(0.72rem, 1.5vw, 0.75rem); margin-bottom: 8px; background: #fffbeb; padding: 3px 8px; border-radius: 6px; display: inline-block; border: 1px solid #fef3c7;">
+                        <div style="color: #b45309; font-size: 0.8rem; margin-bottom: 10px; background: #fffbeb; padding: 6px 12px; border-radius: 8px; display: inline-block; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b;">
                             ⚠️ <strong>Lưu ý:</strong> {{ step.note | safe }}
                         </div>
                         {% endif %}
 
                         <!-- Media đính kèm -->
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
                             {% if step.image_urls %}
                                 {% set img_list = step.image_urls.split(',') if step.image_urls is string else step.image_urls %}
                                 {% for img in img_list %}
                                     {% if img.strip() %}
-                                    <a href="{{ img.strip() }}" target="_blank" title="Xem ảnh {{ loop.index }}" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #2563eb; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🖼️ Ảnh {{ loop.index }}</a>
+                                    <a href="{{ img.strip() }}" target="_blank" title="Xem ảnh {{ loop.index }}" style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; color: #2563eb; font-weight: 500; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap; transition: background 0.15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">🖼️ Ảnh {{ loop.index }}</a>
                                     {% endif %}
                                 {% endfor %}
                             {% endif %}
                             {% if step.video_urls %}
-                            <a href="{{ step.video_urls }}" target="_blank" title="Xem video" style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #dc2626; text-decoration: none; border: 1px solid #e2e8f0; white-space: nowrap;">🎬 Video</a>
+                            <a href="{{ step.video_urls }}" target="_blank" title="Xem video" style="background: #fef2f2; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; color: #dc2626; font-weight: 500; text-decoration: none; border: 1px solid #fecaca; white-space: nowrap; transition: background 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">🎬 Video</a>
                             {% endif %}
                         </div>
 
-                        <!-- ================= KHU VỰC QUẢN LÝ BƯỚC CON (SUB-STEPS) GIỮ NGUYÊN ================= -->
-                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
-                            <div style="font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
+                        <!-- ================= KHU VỰC QUẢN LÝ BƯỚC CON (SUB-STEPS) ================= -->
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;">
                                 📋 Các bước chi tiết (Ý nhỏ kèm hình ảnh):
                             </div>
 
                             {% if step.sub_steps %}
-                            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
                                 {% for sub in step.sub_steps %}
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem;">
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 0.85rem;">
                                     
                                     <!-- Chế độ hiển thị -->
-                                    <div id="sub-step-view-{{ sub.id }}" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                    <div id="sub-step-view-{{ sub.id }}" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
                                         <div style="flex-grow: 1;">
                                             {% if sub.image_url %}
-                                            <div style="margin-bottom: 6px;">
+                                            <div style="margin-bottom: 8px;">
                                                 <a href="{{ sub.image_url }}" target="_blank" title="Xem ảnh lớn">
-                                                    <img src="{{ sub.image_url }}" alt="Ảnh ý {{ sub.sub_order }}" style="max-height: 90px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; display: block;">
+                                                    <img src="{{ sub.image_url }}" alt="Ảnh ý {{ sub.sub_order }}" style="max-height: 100px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; display: block; object-fit: cover;">
                                                 </a>
                                             </div>
                                             {% endif %}
 
-                                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                                <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">Ý {{ sub.sub_order }}</span>
-                                                <span style="color: #1e293b; line-height: 1.4; font-weight: 500;">{{ sub.content }}</span>
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                <span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">Ý {{ sub.sub_order }}</span>
+                                                <span style="color: #1e293b; line-height: 1.5; font-weight: 500;">{{ sub.content }}</span>
                                             </div>
                                             
                                             {% if sub.note %}
-                                            <div style="color: #92400e; font-size: 0.72rem; margin-top: 4px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: 500;">
+                                            <div style="color: #92400e; font-size: 0.75rem; margin-top: 6px; background: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: 500;">
                                                 ⚠️ <strong>Lưu ý:</strong> {{ sub.note }}
                                             </div>
                                             {% endif %}
                                         </div>
 
                                         <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
-                                            <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: none; border: none; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
+                                            <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
                                             
                                             <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
                                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                                <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; font-weight: 600;" title="Xóa ý này">✕ Xóa</button>
+                                                <button type="submit" style="background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; cursor: pointer; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;" title="Xóa ý này">✕ Xóa</button>
                                             </form>
                                         </div>
                                     </div>
 
                                     <!-- Chế độ chỉnh sửa -->
-                                    <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px;">
+                                    <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
                                         <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                        <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 65px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" title="Thứ tự">
-                                        <input type="url" name="image_url" value="{{ sub.image_url or '' }}" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 160px; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                        <input type="text" name="content" value="{{ sub.content }}" required style="width: 100%; padding: 5px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;" placeholder="Nội dung các bước chi tiết...">
-                                        <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%; padding: 5px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                        <div style="display: flex; gap: 4px; width: 100%; justify-content: flex-end;">
-                                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Lưu lại</button>
-                                            <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Hủy</button>
+                                        <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 70px;" class="modern-input" title="Thứ tự">
+                                        <input type="url" name="image_url" value="{{ sub.image_url or '' }}" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 180px;" class="modern-input">
+                                        <input type="text" name="content" value="{{ sub.content }}" required style="width: 100%;" class="modern-input" placeholder="Nội dung các bước chi tiết...">
+                                        <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%;" class="modern-input">
+                                        <div style="display: flex; gap: 6px; width: 100%; justify-content: flex-end; margin-top: 4px;">
+                                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600;">Lưu lại</button>
+                                            <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #64748b; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600;">Hủy</button>
                                         </div>
                                     </form>
                                 </div>
@@ -507,13 +348,13 @@
                             {% endif %}
 
                             <!-- Form thêm nhanh bước con -->
-                            <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" class="sub-step-add-form" style="background: #f1f5f9; padding: 8px; border-radius: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                            <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" class="sub-step-add-form" style="background: #f1f5f9; padding: 10px; border-radius: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                <input type="number" name="sub_order" placeholder="Thứ tự" value="1" required style="width: 65px; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                <input type="url" name="image_url" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 160px; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                <input type="text" name="content" placeholder="Nội dung các bước chi tiết..." required style="width: 100%; padding: 6px 10px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                <input type="text" name="note" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%; padding: 6px 8px; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                                <button type="submit" style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600; width: 100%;">+ Thêm ý</button>
+                                <input type="number" name="sub_order" placeholder="Thứ tự" value="1" required style="width: 70px;" class="modern-input">
+                                <input type="url" name="image_url" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 180px;" class="modern-input">
+                                <input type="text" name="content" placeholder="Nội dung các bước chi tiết..." required style="width: 100%;" class="modern-input">
+                                <input type="text" name="note" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%;" class="modern-input">
+                                <button type="submit" style="background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.15s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">+ Thêm ý chi tiết</button>
                             </form>
                         </div>
                         <!-- ======================================================================= -->
@@ -521,7 +362,7 @@
                     </div>
                 </div>
                 {% else %}
-                <div style="text-align: center; color: #94a3b8; padding: 2rem; font-style: italic; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="text-align: center; color: #94a3b8; padding: 3rem 1.5rem; font-style: italic; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                     Chưa có bước thực hiện nào được thêm vào bài viết này.
                 </div>
                 {% endfor %}
@@ -534,66 +375,65 @@
 <!-- Modal Thêm/Sửa Bước -->
 <div id="stepModal" class="modal-overlay">
     <div class="modal-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h4 id="modalTitle" style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0;">Thêm bước mới</h4>
-            <button type="button" onclick="closeModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">✕</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+            <h4 id="modalTitle" style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Thêm bước mới</h4>
+            <button type="button" onclick="closeModal()" style="background: #f1f5f9; border: none; font-size: 1.1rem; cursor: pointer; color: #64748b; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Đóng">✕</button>
         </div>
         
         <form id="stepForm" method="POST" action="/admin/guide-step/add/{{ guide.id }}">
             <input type="hidden" name="guide_id" value="{{ guide.id }}">
             
-            <div class="modal-grid-step" style="display: grid; grid-template-columns: 90px 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="modal-grid-step" style="display: grid; grid-template-columns: 100px 1fr; gap: 12px; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Số thứ tự</label>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Số thứ tự</label>
                     <input type="number" id="step_number" name="step_number" class="modern-input" required min="1" value="{{ steps | length + 1 }}">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Tiêu đề bước</label>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Tiêu đề bước</label>
                     <input type="text" id="title" name="title" class="modern-input" placeholder="Ví dụ: Mở trình duyệt và gõ..." required minlength="2" maxlength="255">
                 </div>
             </div>
 
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Nội dung chi tiết</label>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Nội dung chi tiết</label>
                 <textarea id="content" name="content" class="modern-textarea" rows="4" placeholder="Mô tả chi tiết các thao tác thực hiện trong bước này..."></textarea>
             </div>
 
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Lưu ý (Cảnh báo quan trọng)</label>
-                <input type="text" id="note" name="note" class="modern-input" placeholder="Ví dụ: nên sử dụng trình duyệt gg chrome">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Lưu ý (Cảnh báo quan trọng)</label>
+                <input type="text" id="note" name="note" class="modern-input" placeholder="Ví dụ: nên sử dụng trình duyệt Google Chrome">
             </div>
 
             <!-- Ô nhập Đường dẫn Ảnh và Video cho từng bước -->
-            <!-- Ô nhập Đường dẫn Ảnh (Hỗ trợ nhiều ảnh) -->
-            <div style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Đường dẫn Ảnh (Có thể thêm nhiều ảnh)</label>
-                    <button type="button" onclick="addImageInput()" style="background: none; border: none; color: #2563eb; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Thêm ô ảnh</button>
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Đường dẫn Ảnh (Có thể thêm nhiều ảnh)</label>
+                    <button type="button" onclick="addImageInput()" style="background: none; border: none; color: #2563eb; font-size: 0.78rem; font-weight: 600; cursor: pointer;">+ Thêm ô ảnh</button>
                 </div>
-                <div id="imageInputsContainer" style="display: flex; flex-direction: column; gap: 6px;">
+                <div id="imageInputsContainer" style="display: flex; flex-direction: column; gap: 8px;">
                     <!-- Các ô input link ảnh sẽ được thêm tự động bằng JavaScript ở đây -->
                 </div>
             </div>
 
-            <div class="modal-grid-2" style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="modal-grid-2" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đường dẫn Video (YouTube URL)</label>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Đường dẫn Video (YouTube URL)</label>
                     <input type="url" id="video_url" name="video_url" class="modern-input" placeholder="https://youtube.com/...">
                 </div>
             </div>
 
             <!-- Ô nhập Link bộ cài / Tải xuống -->
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 4px;">Link bộ cài</label>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Link bộ cài</label>
                 <input type="url" id="download_url" name="download_url" class="modern-input" placeholder="https://drive.google.com/file/d/...">
             </div>
 
-            <div style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="is_active" name="is_active" value="true" checked style="width: 18px; height: 18px; cursor: pointer;">
-                <label for="is_active" style="font-size: 0.85rem; color: #334155; font-weight: 500; cursor: pointer;">Hiển thị bước này công khai</label>
+            <div style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="is_active" name="is_active" value="true" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #2563eb;">
+                <label for="is_active" style="font-size: 0.875rem; color: #334155; font-weight: 500; cursor: pointer;">Hiển thị bước này công khai</label>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
                 <button type="button" onclick="closeModal()" class="btn-secondary-modern">Hủy bỏ</button>
                 <button type="submit" class="btn-primary-modern shadow-sm">Lưu lại</button>
             </div>
@@ -610,10 +450,10 @@
     // Hàm thêm 1 dòng input nhập link ảnh
     function addImageInput(value = '') {
         const div = document.createElement('div');
-        div.style.cssText = 'display: flex; gap: 6px; align-items: center;';
+        div.style.cssText = 'display: flex; gap: 8px; align-items: center;';
         div.innerHTML = `
             <input type="url" name="image_url" class="modern-input" placeholder="https://..." value="${value}" style="flex: 1;">
-            <button type="button" onclick="this.parentElement.remove()" style="background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; width: 36px; height: 38px; cursor: pointer; font-weight: bold; flex-shrink: 0;" title="Xóa ảnh này">✕</button>
+            <button type="button" onclick="this.parentElement.remove()" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; border-radius: 8px; width: 38px; height: 38px; cursor: pointer; font-weight: bold; flex-shrink: 0; display: flex; align-items: center; justify-content: center;" title="Xóa ảnh này">✕</button>
         `;
         imageContainer.appendChild(div);
     }
@@ -729,5 +569,4 @@
         }
     });
 </script>
-</body>
-</html>
+{% endblock %}

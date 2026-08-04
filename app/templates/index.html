@@ -16,7 +16,7 @@
             color: #1e293b;
             background: #f8fafc;
             min-height: 100vh;
-            padding: 12px 8px; /* Tối ưu padding gọn hơn cho màn hình di động nhỏ */
+            padding: 12px 8px;
             box-sizing: border-box;
         }
 
@@ -32,20 +32,20 @@
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            padding: 16px; /* Giảm nhẹ padding trên mobile cho thoáng */
+            padding: 16px;
             margin-bottom: 16px;
             box-sizing: border-box;
         }
 
         /* =====================================================
-        HEADER BANNER (Đã tối ưu hóa với clamp() & hiệu ứng mượt)
+        HEADER BANNER (Đã tối ưu phóng to Logo & Tên trên Mobile)
         ===================================================== */
         .navbar-banner {
             display: flex;
             justify-content: center;
             align-items: center;
             background: #fff;
-            padding: clamp(12px, 2vw, 20px) clamp(14px, 3vw, 24px);
+            padding: clamp(14px, 2.5vw, 20px) clamp(16px, 3vw, 24px);
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
@@ -53,12 +53,12 @@
             box-sizing: border-box;
             width: 100%;
             overflow: hidden;
-            transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt khi hover cả khung */
+            transition: all 0.3s ease;
         }
 
         .navbar-banner:hover {
             border-color: #cbd5e1;
-            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.08); /* Tạo bóng hắt nhẹ mang màu nhận diện */
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.08);
         }
 
         .brand-centered {
@@ -75,9 +75,9 @@
             transform: translateY(-2px);
         }
 
-        /* Kích thước Logo linh hoạt bằng clamp() - Không cần viết nhiều media query */
+        /* Tối ưu kích thước Logo trên Mobile cho lớn và sắc nét hơn */
         .brand-logo {
-            height: clamp(34px, 8vw, 88px); 
+            height: clamp(46px, 11vw, 92px); 
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.15));
@@ -89,12 +89,12 @@
             transform: scale(1.06) rotate(-2deg);
         }
 
-        /* Tên thương hiệu co giãn mượt mà theo màn hình */
+        /* Tăng kích thước tên thương hiệu trên Mobile */
         .brand-centered span {
-            font-size: clamp(1.3rem, 4.5vw, 3.5rem); /* Tự động co giãn hoàn hảo từ điện thoại nhỏ đến Desktop */
+            font-size: clamp(1.5rem, 5vw, 3.65rem);
             font-weight: 800;
             letter-spacing: -0.02em;
-            color: #dc2626; /* Fallback an toàn cho trình duyệt cũ */
+            color: #dc2626;
             background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -107,17 +107,16 @@
             filter: brightness(1.1);
         }
 
-        /* Tinh chỉnh riêng cho màn hình điện thoại tầm trung/lớn (từ 480px đến 767px) */
+        /* Tinh chỉnh cho màn hình tablet/desktop */
         @media (min-width: 480px) {
             .brand-logo {
-                height: 42px;
+                height: 54px;
             }
             .brand-centered span {
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
         }
 
-        /* Tự động phóng lớn hoành tráng khi xem trên màn hình máy tính (Desktop từ 768px trở lên) */
         @media (min-width: 768px) {
             .modern-ui {
                 padding: 16px 12px;
@@ -289,8 +288,8 @@
 <div class="modern-ui">
     <div class="container">
         
-        <!-- Navbar tích hợp Logo Supabase -->
-        <div class="header-container">
+        <!-- Navbar tích hợp Logo Supabase (Đã dùng đúng class navbar-banner) -->
+        <div class="navbar-banner">
             <a href="/" class="brand-centered">
                 <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo Máy In Đại Thành" class="brand-logo">
                 <span>Máy In Đại Thành</span>
@@ -302,9 +301,9 @@
             <h1>Hướng dẫn & Sửa chữa Máy in</h1>
             <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
             
-            <!-- Chuyển thành thẻ form để truyền từ khóa tìm kiếm -->
+            <!-- Form tìm kiếm -->
             <form action="/search" method="GET" class="search-box">
-                <input type="text" name="q" class="search-input" placeholder="Nhập tên dòng máy cần tìm (vd: PRO-1000,..." required>
+                <input type="text" name="q" class="search-input" placeholder="Nhập tên dòng máy cần tìm (vd: PRO-1000...)" required>
                 <button type="submit" class="search-btn">Tìm kiếm</button>
             </form>
         </div>
@@ -312,36 +311,36 @@
         <!-- Phân vùng nội dung chính -->
         <div class="grid-section">
             
-        <!-- Cột trái: Khách hàng (Danh mục hướng dẫn mới cập nhật từ Database) -->
-        <div>
-            <div class="glass-card" style="margin-bottom: 0;">
-                <div class="section-title">📖 Tài liệu hướng dẫn mới cập nhật</div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    {% if recent_guides %}
-                        {% for guide in recent_guides %}
-                        <a href="/guide/{{ guide.id }}" class="card-list-item">
-                            <span>🔧 {{ guide.title }}</span>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">Xem chi tiết →</span>
-                        </a>
-                        {% endfor %}
-                    {% endif %}
+            <!-- Cột trái: Khách hàng (Danh mục hướng dẫn mới cập nhật từ Database) -->
+            <div>
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <div class="section-title">📖 Tài liệu hướng dẫn mới cập nhật</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        {% if recent_guides %}
+                            {% for guide in recent_guides %}
+                            <a href="/guide/{{ guide.id }}" class="card-list-item">
+                                <span>🔧 {{ guide.title }}</span>
+                                <span style="font-size: 0.75rem; color: #94a3b8;">Xem chi tiết →</span>
+                            </a>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Cột phải: Quản trị viên (Lối tắt nhanh) -->
-        <div>
-            <div class="glass-card admin-panel-card" style="margin-bottom: 0;">
-                <div class="section-title">⚡ Khu vực Quản trị</div>
-                <p style="font-size: 0.8rem; color: #701a75; margin-bottom: 14px;">
-                    Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
-                </p>
-                <a href="/admin/login" class="admin-link-btn">Quản lý bài viết hướng dẫn</a>
-                <a href="/admin/dashboard" class="admin-link-btn" style="background: #7e22ce;">Mở Dashboard Thống kê</a>
+            <!-- Cột phải: Quản trị viên (Lối tắt nhanh) -->
+            <div>
+                <div class="glass-card admin-panel-card" style="margin-bottom: 0;">
+                    <div class="section-title">⚡ Khu vực Quản trị</div>
+                    <p style="font-size: 0.8rem; color: #701a75; margin-bottom: 14px;">
+                        Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
+                    </p>
+                    <a href="/admin/login" class="admin-link-btn">Quản lý bài viết hướng dẫn</a>
+                    <a href="/admin/dashboard" class="admin-link-btn" style="background: #7e22ce;">Mở Dashboard Thống kê</a>
+                </div>
             </div>
-        </div>
 
-    </div>
+        </div>
 
         <!-- Footer -->
         <div class="footer">

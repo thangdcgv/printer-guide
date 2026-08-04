@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Thống kê - Máy In Đại Thành</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% extends "base.html" %}
 
+{% block content %}
 <style>
 :root{
     --primary:#2563eb;
@@ -341,5 +336,6 @@ tr:hover{
 
 </div>
 
-</body>
-</html>
+{% endif %}
+
+{% endblock %}

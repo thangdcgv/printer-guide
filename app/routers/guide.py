@@ -35,29 +35,6 @@ STOP_WORDS = {
 # HELPER FUNCTIONS
 # =====================================================
 
-async def save_image(image: UploadFile) -> Optional[str]:
-    """Lưu file ảnh tải lên cục bộ nếu sử dụng upload trực tiếp."""
-    if not image or not image.filename:
-        return None
-
-    ext = os.path.splitext(image.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Chỉ cho phép file jpg, jpeg, png, webp"
-        )
-
-    filename = f"{uuid.uuid4().hex}{ext}"
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
-    content = await image.read()
-    with open(filepath, "wb") as f:
-        f.write(content)
-
-    return f"/static/images/{filename}"
-
-
 def _get_brand_class(brand_name: str) -> str:
     """Xác định class CSS hiển thị theo hãng máy in."""
     brand_lower = (brand_name or "").strip().lower()
@@ -158,7 +135,8 @@ async def list_guides(
     search: Optional[str] = None,
     printer_model_id: Optional[str] = None,
     guide_status: Optional[str] = None,
-    tag_id: Optional[int] = None
+    tag_id: Optional[int] = None,
+    current_user: dict = Depends(require_admin)  # 👈 Lấy thông tin user đăng nhập
 ):
     def build_query(select_fields: str):
         query = supabase.table("guide").select(select_fields)
@@ -220,6 +198,7 @@ async def list_guides(
         "guide.html",
         {
             "request": request,
+            "user": current_user,  # 👈 Bổ sung để base.html hiển thị đúng nút Dashboard / Thoát
             "guides": guides,
             "printers": printers,
             "all_tags": all_tags,
@@ -236,7 +215,10 @@ async def list_guides(
 # =====================================================
 
 @router.get("/create", response_class=HTMLResponse)
-async def create_form(request: Request):
+async def create_form(
+    request: Request,
+    current_user: dict = Depends(require_admin)
+):
     printers = (
         supabase
         .table("printer_model")
@@ -250,6 +232,7 @@ async def create_form(request: Request):
         "guide_create.html",
         {
             "request": request,
+            "user": current_user,  # 👈 Bổ sung user
             "printers": printers
         }
     )
@@ -280,11 +263,13 @@ async def create_submit(
         "sort_order": sort,
     }
 
-    res = supabase.table("guide").insert(data).execute()
-    
-    if res.data:
-        new_guide_id = res.data[0]["id"]
-        await auto_generate_and_link_tags(new_guide_id, printer_model_id, title.strip())
+    try:
+        res = supabase.table("guide").insert(data).execute()
+        if res.data:
+            new_guide_id = res.data[0]["id"]
+            await auto_generate_and_link_tags(new_guide_id, printer_model_id, title.strip())
+    except Exception as e:
+        logger.error(f"Lỗi khi tạo mới bài hướng dẫn: {e}")
 
     return RedirectResponse(
         "/admin/guide",
@@ -297,7 +282,11 @@ async def create_submit(
 # =====================================================
 
 @router.get("/edit/{guide_id}", response_class=HTMLResponse)
-async def edit_form(request: Request, guide_id: int):
+async def edit_form(
+    request: Request, 
+    guide_id: int,
+    current_user: dict = Depends(require_admin)
+):
     guide_res = (
         supabase
         .table("guide")
@@ -321,6 +310,7 @@ async def edit_form(request: Request, guide_id: int):
         "guide_edit.html",
         {
             "request": request,
+            "user": current_user,  # 👈 Bổ sung user
             "guide": guide_res.data[0],
             "printers": printers
         }
@@ -348,8 +338,11 @@ async def edit_submit(
         "sort_order": int(sort_order) if sort_order and sort_order.isdigit() else 1
     }
 
-    supabase.table("guide").update(update).eq("id", guide_id).execute()
-    await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
+    try:
+        supabase.table("guide").update(update).eq("id", guide_id).execute()
+        await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
+    except Exception as e:
+        logger.error(f"Lỗi khi cập nhật bài hướng dẫn #{guide_id}: {e}")
 
     return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -360,7 +353,11 @@ async def edit_submit(
 
 @router.post("/delete/{guide_id}")
 async def delete_guide(guide_id: int):
-    supabase.table("guide").delete().eq("id", guide_id).execute()
+    try:
+        supabase.table("guide").delete().eq("id", guide_id).execute()
+    except Exception as e:
+        logger.error(f"Lỗi khi xóa bài hướng dẫn #{guide_id}: {e}")
+        
     return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -369,7 +366,11 @@ async def delete_guide(guide_id: int):
 # =====================================================
 
 @router.get("/{guide_id}", response_class=HTMLResponse)
-async def view_guide(request: Request, guide_id: int):
+async def view_guide(
+    request: Request, 
+    guide_id: int,
+    current_user: dict = Depends(require_admin)
+):
     res = (
         supabase
         .table("guide")
@@ -401,6 +402,7 @@ async def view_guide(request: Request, guide_id: int):
         "guide_detail.html",
         {
             "request": request,
+            "user": current_user,  # 👈 Bổ sung user
             "guide": guide
         }
     )

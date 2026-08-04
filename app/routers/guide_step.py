@@ -151,8 +151,12 @@ async def update_sub_step(
         "image_url": validated_image_url
     }
 
-    supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    try:
+        supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi cập nhật bước con #{sub_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể cập nhật bước con: {str(e)}")
 
 
 @router.post("/sub-steps/{sub_step_id}/delete")
@@ -173,7 +177,11 @@ async def delete_sub_step(
 # =====================================================
 
 @router.get("/guide-step", response_class=HTMLResponse)
-async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
+async def list_guide_steps(
+    request: Request, 
+    guide_id: Optional[int] = None,
+    current_user: dict = Depends(require_admin)  # 👈 Bổ sung lấy thông tin admin
+):
     if not guide_id:
         return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -213,6 +221,7 @@ async def list_guide_steps(request: Request, guide_id: Optional[int] = None):
         "guide_steps.html",
         {
             "request": request,
+            "user": current_user,  # 👈 Bổ sung biến user để base.html nhận dạng
             "guide": guide,
             "steps": steps
         }
@@ -352,8 +361,12 @@ async def update_guide_step(
         "is_active": is_active in ["true", "on", "1"]
     }
 
-    supabase.table("guide_step").update(step_data).eq("id", step_id).execute()
-    return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    try:
+        supabase.table("guide_step").update(step_data).eq("id", step_id).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi cập nhật bước lớn #{step_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể cập nhật bước lớn: {str(e)}")
 
 
 @router.post("/guide-step/{step_id}/delete")
