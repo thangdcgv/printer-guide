@@ -276,7 +276,68 @@ async def create_submit(
         status_code=status.HTTP_303_SEE_OTHER
     )
 
+@router.post("/copy/{guide_id}")
+async def copy_guide(guide_id: int):
+    try:
+        # 1. Lấy thông tin bài viết gốc từ bảng 'guide'
+        guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
+        
+        if not guide_res.data or len(guide_res.data) == 0:
+            raise HTTPException(status_code=404, detail="Không tìm thấy bài viết hướng dẫn gốc!")
+        
+        original_guide = guide_res.data[0]
+        
+        # 2. Chuẩn bị dữ liệu cho bài viết mới dựa đúng schema bảng guide
+        new_guide_data = {
+            "printer_model_id": original_guide.get("printer_model_id"),
+            "title": f"{original_guide['title']} (Bản sao)",
+            "description": original_guide.get("description"),
+            "image_url": original_guide.get("image_url"),
+            "sort_order": (original_guide.get("sort_order") or 1) + 1,
+            "is_active": False # Mặc định bản sao để ẩn (False) để bạn kiểm tra lại trước khi public
+        }
+        
+        # 3. Thêm bản ghi mới vào bảng 'guide'
+        insert_guide_res = supabase.table("guide").insert(new_guide_data).execute()
+        
+        if not insert_guide_res.data:
+            raise HTTPException(status_code=500, detail="Không thể tạo bản sao bài viết trong cơ sở dữ liệu.")
+            
+        new_guide = insert_guide_res.data[0]
+        new_guide_id = new_guide["id"]
+        
+        # 4. Sao chép toàn bộ các bước hướng dẫn (guide_steps) liên quan của bài cũ sang bài mới
+        steps_res = supabase.table("guide_step").select("*").eq("guide_id", guide_id).execute()
+        
+        if steps_res.data and len(steps_res.data) > 0:
+            new_steps_list = []
+            for step in steps_res.data:
+                new_steps_list.append({
+                    "guide_id": new_guide_id, # Trỏ khóa ngoại sang ID bài viết mới
+                    "step_number": step.get("step_number"),
+                    "title": step.get("title"),
+                    "content": step.get("content"),
+                    "note": step.get("note"),
+                    "video_url": step.get("video_url"),
+                    "download_url": step.get("download_url"),
+                    "image_urls": step.get("image_urls"),
+                    "is_active": step.get("is_active", True)
+                })
+            
+            if new_steps_list:
+                supabase.table("guide_step").insert(new_steps_list).execute()
+        
+        # 5. Trả về kết quả thành công và kèm ID để Frontend tự động chuyển hướng sang trang chỉnh sửa bản sao
+        return {
+            "success": True,
+            "message": "Sao chép bài viết và các bước hướng dẫn thành công!",
+            "new_guide_id": new_guide_id
+        }
 
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Lỗi hệ thống khi sao chép bài viết: {str(e)}")
 # =====================================================
 # EDIT
 # =====================================================

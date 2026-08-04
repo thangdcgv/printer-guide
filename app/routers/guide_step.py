@@ -381,3 +381,4 @@ async def delete_guide_step(
     except Exception as e:
         logger.error(f"Lỗi xóa bước lớn: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước lớn: {str(e)}")
+  

@@ -177,7 +177,7 @@
                     Các bước thực hiện: <span style="color: #2563eb;">{{ guide.title }}</span>
                 </h2>
             </div>
-            
+
             <!-- Chỉ hiển thị nút Thêm bước mới nếu người dùng là Admin/KTV đã đăng nhập -->
             {% if request.cookies.get("user_session") %}
             <button type="button" data-next-step="{{ steps | length + 1 }}" onclick="openAddModal(this)" class="btn-primary-modern shadow-sm">
