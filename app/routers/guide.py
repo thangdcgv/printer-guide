@@ -1,10 +1,10 @@
-import os
-import uuid
-import re
-import logging
-from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, Request, Form, UploadFile, File, status, HTTPException, Depends
+import re
+import math
+import logging
+from typing import Optional
+
+from fastapi import APIRouter, Request, Form, status, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -135,36 +135,46 @@ async def list_guides(
     search: Optional[str] = None,
     printer_model_id: Optional[str] = None,
     guide_status: Optional[str] = None,
-    tag_id: Optional[int] = None,
-    current_user: dict = Depends(require_admin)  # 👈 Lấy thông tin user đăng nhập
+    tag_id: Optional[str] = None,  # 🟢 ĐÃ SỬA: Đổi từ Optional[int] sang Optional[str]
+    page: int = 1,
+    current_user: dict = Depends(require_admin)
 ):
+    PER_PAGE = 10
+    page = max(1, page)
+    start_idx = (page - 1) * PER_PAGE
+    end_idx = start_idx + PER_PAGE - 1
+
+    # 🟢 Ép kiểu an toàn cho tag_id
+    parsed_tag_id = int(tag_id) if tag_id and tag_id.isdigit() else None
+
     def build_query(select_fields: str):
-        query = supabase.table("guide").select(select_fields)
+        query = supabase.table("guide").select(select_fields, count="exact")
         if search and search.strip():
             query = query.ilike("title", f"%{search.strip()}%")
         if printer_model_id and printer_model_id.isdigit():
             query = query.eq("printer_model_id", int(printer_model_id))
         if guide_status in ["0", "1"]:
             query = query.eq("is_active", guide_status == "1")
+        if parsed_tag_id:
+            query = query.eq("guide_tags.tag_id", parsed_tag_id)
         return query.order("sort_order").order("id", desc=True)
 
-    # Lấy danh sách bài viết (Có fallback nếu chưa tạo quan hệ tags)
     try:
-        guides_res = build_query("*, guide_tags(tag_id, tags(*))").execute()
+        tag_relation = "guide_tags!inner(tag_id, tags(*))" if parsed_tag_id else "guide_tags(tag_id, tags(*))"
+        select_query = f"*, {tag_relation}, quan_tri_vien!created_by(ho_ten, username)"
+        
+        guides_res = build_query(select_query).range(start_idx, end_idx).execute()
         guides = guides_res.data or []
+        total_count = guides_res.count or 0
     except Exception as e:
-        logger.warning(f"Không thể load quan hệ guide_tags, fallback về query thường: {e}")
-        guides_res = build_query("*").execute()
+        logger.warning(f"Lỗi query phân trang, fallback về query thường: {e}")
+        guides_res = build_query("*").range(start_idx, end_idx).execute()
         guides = guides_res.data or []
+        total_count = guides_res.count or 0
 
-    # Lọc theo tag_id nếu có
-    if tag_id:
-        guides = [
-            g for g in guides 
-            if any(gt.get("tag_id") == tag_id for gt in g.get("guide_tags", []))
-        ]
+    total_pages = math.ceil(total_count / PER_PAGE) if total_count > 0 else 1
 
-    # Lấy danh sách tags phục vụ bộ lọc
+    # Lấy danh sách tags
     try:
         tags_res = supabase.table("tags").select("*").order("name").execute()
         all_tags = tags_res.data or []
@@ -184,7 +194,6 @@ async def list_guides(
     printers = printers_res.data or []
     printer_map = {p["id"]: p for p in printers}
 
-    # Đóng gói thông tin printer_model cho từng guide
     for g in guides:
         p = printer_map.get(g.get("printer_model_id"))
         if p:
@@ -198,14 +207,18 @@ async def list_guides(
         "guide.html",
         {
             "request": request,
-            "user": current_user,  # 👈 Bổ sung để base.html hiển thị đúng nút Dashboard / Thoát
+            "user": current_user,
             "guides": guides,
             "printers": printers,
             "all_tags": all_tags,
-            "selected_tag_id": tag_id,
+            "selected_tag_id": parsed_tag_id,
             "search": search or "",
             "selected_printer_id": int(printer_model_id) if printer_model_id and printer_model_id.isdigit() else None,
-            "status": guide_status
+            "status": guide_status,
+            "page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "per_page": PER_PAGE
         }
     )
 
@@ -244,8 +257,10 @@ async def create_submit(
     printer_model_id: int = Form(...),
     description: Optional[str] = Form(""),
     image_url: Optional[str] = Form(None),
+    video_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
-    sort_order: Optional[str] = Form("1")
+    sort_order: Optional[str] = Form("1"),
+    current_user: dict = Depends(require_admin)
 ):
     try:
         sort = int(sort_order) if sort_order and sort_order.isdigit() else 1
@@ -253,14 +268,27 @@ async def create_submit(
         sort = 1
 
     clean_image_url = image_url.strip() if image_url and image_url.strip() else None
+    clean_video_url = video_url.strip() if video_url and video_url.strip() else None  # 🟢 CHUẨN HÓA LINK VIDEO
+    # Lấy ID của quản trị viên từ bảng quan_tri_vien dựa vào email trong current_user
+    admin_id = None
+    try:
+        user_email = current_user.get("email")
+        if user_email:
+            admin_res = supabase.table("quan_tri_vien").select("id").eq("email", user_email).execute()
+            if admin_res.data:
+                admin_id = admin_res.data[0]["id"]
+    except Exception as e:
+        logger.error(f"Không thể lấy id quản trị viên: {e}")
 
     data = {
         "title": title.strip(),
         "printer_model_id": printer_model_id,
         "description": description.strip() if description else "",
         "image_url": clean_image_url,
+        "video_url": clean_video_url,  # 🟢 LƯU VIDEO_URL VÀO DATABASE
         "is_active": is_active in ["true", "on", "1"],
         "sort_order": sort,
+        "created_by": admin_id
     }
 
     try:
@@ -277,43 +305,57 @@ async def create_submit(
     )
 
 @router.post("/copy/{guide_id}")
-async def copy_guide(guide_id: int):
+async def copy_guide(
+    guide_id: int,
+    current_user: dict = Depends(require_admin)  # 🟢 ĐÃ SỬA: Lấy user hiện tại khi copy
+):
     try:
-        # 1. Lấy thông tin bài viết gốc từ bảng 'guide'
+        # Lấy ID của admin thực hiện sao chép
+        admin_id = None
+        try:
+            user_email = current_user.get("email")
+            if user_email:
+                admin_res = supabase.table("quan_tri_vien").select("id").eq("email", user_email).execute()
+                if admin_res.data:
+                    admin_id = admin_res.data[0]["id"]
+        except Exception as e:
+            logger.error(f"Không thể lấy id quản trị viên khi sao chép bài: {e}")
+
+        # 1. Lấy thông tin bài viết gốc
         guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
         
-        if not guide_res.data or len(guide_res.data) == 0:
+        if not guide_res.data:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài viết hướng dẫn gốc!")
         
         original_guide = guide_res.data[0]
         
-        # 2. Chuẩn bị dữ liệu cho bài viết mới dựa đúng schema bảng guide
+        # 2. Chuẩn bị dữ liệu bài viết mới
         new_guide_data = {
             "printer_model_id": original_guide.get("printer_model_id"),
             "title": f"{original_guide['title']} (Bản sao)",
             "description": original_guide.get("description"),
             "image_url": original_guide.get("image_url"),
+            "video_url": original_guide.get("video_url"),  # 🟢 SAO CHÉP LUÔN VIDEO_URL
             "sort_order": (original_guide.get("sort_order") or 1) + 1,
-            "is_active": False # Mặc định bản sao để ẩn (False) để bạn kiểm tra lại trước khi public
+            "is_active": False,
+            "created_by": admin_id  # 🟢 ĐÃ SỬA: Gán người tạo bài sao chép
         }
         
-        # 3. Thêm bản ghi mới vào bảng 'guide'
+        # 3. Thêm bản ghi mới
         insert_guide_res = supabase.table("guide").insert(new_guide_data).execute()
-        
         if not insert_guide_res.data:
             raise HTTPException(status_code=500, detail="Không thể tạo bản sao bài viết trong cơ sở dữ liệu.")
             
         new_guide = insert_guide_res.data[0]
         new_guide_id = new_guide["id"]
         
-        # 4. Sao chép toàn bộ các bước hướng dẫn (guide_steps) liên quan của bài cũ sang bài mới
+        # 4. Sao chép toàn bộ các bước hướng dẫn (guide_step)
         steps_res = supabase.table("guide_step").select("*").eq("guide_id", guide_id).execute()
-        
-        if steps_res.data and len(steps_res.data) > 0:
+        if steps_res.data:
             new_steps_list = []
             for step in steps_res.data:
                 new_steps_list.append({
-                    "guide_id": new_guide_id, # Trỏ khóa ngoại sang ID bài viết mới
+                    "guide_id": new_guide_id,
                     "step_number": step.get("step_number"),
                     "title": step.get("title"),
                     "content": step.get("content"),
@@ -327,10 +369,13 @@ async def copy_guide(guide_id: int):
             if new_steps_list:
                 supabase.table("guide_step").insert(new_steps_list).execute()
         
-        # 5. Trả về kết quả thành công và kèm ID để Frontend tự động chuyển hướng sang trang chỉnh sửa bản sao
+        # 5. Đồng bộ tags cho bài viết mới
+        if new_guide_data["printer_model_id"]:
+            await auto_generate_and_link_tags(new_guide_id, new_guide_data["printer_model_id"], new_guide_data["title"])
+
         return {
             "success": True,
-            "message": "Sao chép bài viết và các bước hướng dẫn thành công!",
+            "message": "Sao chép bài viết thành công!",
             "new_guide_id": new_guide_id
         }
 
@@ -385,16 +430,19 @@ async def edit_submit(
     printer_model_id: int = Form(...),
     description: Optional[str] = Form(""),
     image_url: Optional[str] = Form(None),
+    video_url: Optional[str] = Form(None),  # 🟢 THÊM PARAMETER NÀY
     is_active: Optional[str] = Form(None),
     sort_order: Optional[str] = Form("1")
 ):
     clean_image_url = image_url.strip() if image_url and image_url.strip() else None
+    clean_video_url = video_url.strip() if video_url and video_url.strip() else None  # 🟢 CHUẨN HÓA LINK VIDEO
 
     update = {
         "title": title.strip(),
         "printer_model_id": printer_model_id,
         "description": description.strip() if description else "",
         "image_url": clean_image_url,
+        "video_url": clean_video_url,  # 🟢 CẬP NHẬT VIDEO_URL VÀO DATABASE
         "is_active": is_active in ["true", "on", "1"],
         "sort_order": int(sort_order) if sort_order and sort_order.isdigit() else 1
     }
@@ -435,7 +483,7 @@ async def view_guide(
     res = (
         supabase
         .table("guide")
-        .select("*, guide_tags(tag_id, tags(*))")
+        .select("*, guide_tags(tag_id, tags(*)), quan_tri_vien!created_by(ho_ten, username)")  # 🟢 ĐÃ SỬA: Kéo thêm quan_tri_vien
         .eq("id", guide_id)
         .execute()
     )
@@ -463,7 +511,7 @@ async def view_guide(
         "guide_detail.html",
         {
             "request": request,
-            "user": current_user,  # 👈 Bổ sung user
+            "user": current_user,
             "guide": guide
         }
     )

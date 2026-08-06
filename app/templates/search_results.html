@@ -34,6 +34,7 @@
     gap: 4px;
     margin-bottom: 16px;
     transition: color 0.2s;
+    cursor: pointer;
 }
 
 .search-back-link:hover {
@@ -123,10 +124,10 @@
 <div class="search-ui">
     <div class="search-card">
         
-        <!-- Link quay lại trang chủ -->
-        <a href="/" class="search-back-link">
+        <!-- Link quay lại kết quả tìm kiếm / trang trước -->
+        <a href="javascript:history.back()" class="search-back-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            Quay lại trang chủ
+            Quay lại kết quả tìm kiếm
         </a>
 
         <!-- Tiêu đề kết quả -->

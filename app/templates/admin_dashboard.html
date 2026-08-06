@@ -274,8 +274,6 @@ tr:hover{
     }
 }
 </style>
-</head>
-<body>
 
 <div class="container">
     
@@ -298,7 +296,7 @@ tr:hover{
         </div>
         <div class="stat-card">
             <div class="stat-title">🖨️ Tổng số dòng máy in quản lý</div>
-            <div class="stat-value">{{ category_stats | length }}</div>
+            <div class="stat-value">{{ category_stats | length if category_stats else 0 }}</div>
         </div>
     </div>
 
@@ -335,7 +333,5 @@ tr:hover{
     </div>
 
 </div>
-
-{% endif %}
 
 {% endblock %}

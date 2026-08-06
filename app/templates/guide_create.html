@@ -230,6 +230,34 @@ textarea.modern-control {
                             📌 Link ảnh đại diện sản phẩm hoặc hình tổng quan. Ảnh này sẽ xuất hiện ở đầu bài viết trước khi vào từng bước chi tiết.
                         </div>
                     </div>
+                    <!-- 🎥 5. BỔ SUNG: ĐƯỜNG DẪN VIDEO HƯỚNG DẪN TỔNG QUAN -->
+                    <div class="mb-3">
+                        <label for="video_url" class="form-label form-label-custom">
+                            🎥 Đường dẫn Video hướng dẫn tổng quan (Video URL)
+                        </label>
+                        <input type="url"
+                            name="video_url"
+                            id="video_url"
+                            class="form-control modern-input"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value="{{ guide.video_url if (guide is defined and guide) else '' }}">
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic;">
+                            📌 Dán liên kết video YouTube hoặc đường dẫn mp4 trực tiếp để kỹ thuật viên xem nhanh trước khi thực hiện.
+                        </div>
+
+                        <!-- XEM TRƯỚC VIDEO ĐÃ CÓ -->
+                        {% if guide is defined and guide and guide.video_url %}
+                        <div class="mt-2 p-2 rounded d-flex align-items-center gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0; max-width: 320px;">
+                            <div class="d-flex align-items-center justify-content-center" style="height: 48px; width: 48px; border-radius: 6px; background: #eff6ff; border: 1px solid #bfdbfe; font-size: 1.25rem;">
+                                🎬
+                            </div>
+                            <div class="small text-truncate" style="color: #475569; font-size: 0.75rem;">
+                                <span class="fw-semibold d-block">Video đang sử dụng</span>
+                                <a href="{{ guide.video_url }}" target="_blank" class="text-primary text-decoration-none" style="font-size: 0.72rem;">Mở xem video ↗</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
 
                     <!-- AUTO-TAG NOTICE -->
                     <div class="auto-tag-notice">

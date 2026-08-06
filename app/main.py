@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-# Gộp tất cả router vào 1 dòng import duy nhất
 from app.routers import admin, home, guide, guide_step, auth, printer, dashboard, library
 
 app = FastAPI(title="Thư viện hướng dẫn sử dụng máy in", version="1.0.0")
