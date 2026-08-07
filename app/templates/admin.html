@@ -19,11 +19,14 @@
     padding: clamp(8px, 1.5vw, 20px) 0;
 }
 
+/* HEADER CÓ NÚT THỐNG KÊ KẾ BÊN */
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
 .admin-header h2 {
@@ -33,13 +36,42 @@
     font-size: clamp(1.35rem, 3vw, 1.75rem);
 }
 
+.btn-header-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.btn-header-stat:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+}
+
 /* =========================
-   GRID HỆ THỐNG (LINH HOẠT TỰ CO GIÃN)
+   GRID HỆ THỐNG (3 CỘT TRÊN 1 HÀNG MÁY TÍNH)
 ========================= */
 .admin-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
+}
+
+@media (min-width: 992px) {
+    .admin-grid {
+        grid-template-columns: repeat(3, 1fr); /* Ép cố định 3 card trên 1 hàng cho màn hình PC */
+    }
 }
 
 /* =========================
@@ -105,7 +137,6 @@
     gap: 6px;
 }
 
-/* Tùy chỉnh màu nút thư viện để đảm bảo độ tương phản */
 .btn-outline-amber {
     color: #b45309;
     border-color: #fcd34d;
@@ -117,8 +148,16 @@
     border-color: #d97706;
 }
 
-/* Responsive cho điện thoại nhỏ */
+/* Responsive điện thoại */
 @media (max-width: 480px) {
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .btn-header-stat {
+        width: 100%;
+        justify-content: center;
+    }
     .admin-grid {
         grid-template-columns: 1fr;
         gap: 14px;
@@ -128,13 +167,18 @@
 
 {% if user %}
 
-<!-- KHỐI HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP ADMIM -->
+<!-- KHỐI HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP ADMIN -->
 <div class="admin-dashboard-container">
 
     <div class="admin-header">
         <h2>🛠️ Trang Quản Trị Hệ Thống</h2>
+        <!-- Nút Thống Kê & Góp Ý đưa lên góc phải Header -->
+        <a href="/admin/dashboard" class="btn-header-stat">
+            📊 Xem Thống Kê & Góp Ý
+        </a>
     </div>
 
+    <!-- Lưới 3 Card chức năng chính (Xếp gọn 1 hàng trên PC) -->
     <div class="admin-grid">
 
         <!-- Card 1: Model Máy In -->

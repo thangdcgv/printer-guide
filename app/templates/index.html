@@ -4,350 +4,557 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thư viện Máy in Đại Thành</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
         /* =====================================================
-        GLOBAL STYLES
+        1. DESIGN SYSTEM & VARIABLES
         ===================================================== */
-        .modern-ui {
-            font-family: 'Inter', Arial, sans-serif;
-            color: #1e293b;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding: 12px 8px;
+        :root {
+            /* Palette Màu Chính */
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --primary-border: #bfdbfe;
+
+            /* Neutral Colors */
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #94a3b8;
+            --border-subtle: #e2e8f0;
+
+            /* Accent Colors (Ghim / Warning) */
+            --amber-bg: #fffbeb;
+            --amber-border: #fef08a;
+            --amber-accent: #f59e0b;
+            --amber-text: #78350f;
+
+            /* Admin Colors */
+            --violet-bg: #faf5ff;
+            --violet-border: #e9d5ff;
+            --violet-primary: #8b5cf6;
+            --violet-hover: #7c3aed;
+            --violet-text: #581c87;
+
+            /* Effects & Radii */
+            --radius-xl: 18px;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Reset chuẩn */
+        *, *::before, *::after {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-main);
+            background-color: var(--bg-body);
+            min-height: 100vh;
+            padding: clamp(12px, 2vw, 24px) clamp(8px, 2vw, 16px);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1040px;
             margin: 0 auto;
             width: 100%;
-            box-sizing: border-box;
         }
 
+        /* Glass / Card Base */
         .glass-card {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            padding: 16px;
-            margin-bottom: 16px;
-            box-sizing: border-box;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: clamp(16px, 3vw, 24px);
+            transition: var(--transition);
         }
 
         /* =====================================================
-        HEADER BANNER (Đã tối ưu phóng to Logo & Tên trên Mobile)
+        2. HEADER BANNER
         ===================================================== */
         .navbar-banner {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #fff;
-            padding: clamp(14px, 2.5vw, 20px) clamp(16px, 3vw, 24px);
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            background: var(--bg-surface);
+            padding: clamp(14px, 2.5vw, 22px) clamp(16px, 3vw, 28px);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-sm);
             margin-bottom: 20px;
-            box-sizing: border-box;
-            width: 100%;
-            overflow: hidden;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .navbar-banner:hover {
+            box-shadow: var(--shadow-md);
             border-color: #cbd5e1;
-            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.08);
         }
 
         .brand-centered {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: clamp(10px, 2vw, 16px);
             text-decoration: none !important;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             max-width: 100%;
         }
 
-        .brand-centered:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Tối ưu kích thước Logo trên Mobile cho lớn và sắc nét hơn */
         .brand-logo {
-            height: clamp(46px, 11vw, 92px); 
+            height: clamp(48px, 9vw, 84px);
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 3px 6px rgba(220, 38, 38, 0.15));
-            transition: transform 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(220, 38, 38, 0.12));
+            transition: var(--transition);
             flex-shrink: 0;
         }
 
         .brand-centered:hover .brand-logo {
-            transform: scale(1.06) rotate(-2deg);
+            transform: scale(1.04) rotate(-1.5deg);
         }
 
-        /* Tăng kích thước tên thương hiệu trên Mobile */
         .brand-centered span {
-            font-size: clamp(1.5rem, 5vw, 3.65rem);
+            font-size: clamp(1.6rem, 4.5vw, 3.2rem);
             font-weight: 800;
-            letter-spacing: -0.02em;
-            color: #dc2626;
+            letter-spacing: -0.03em;
             background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
             -webkit-background-clip: text;
+            background-clip: text; /* Standard property cho tương thích chuẩn W3C */
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 2px 10px rgba(220, 38, 38, 0.1);
             white-space: nowrap;
         }
 
-        .brand-centered:hover span {
-            filter: brightness(1.1);
-        }
-
-        /* Tinh chỉnh cho màn hình tablet/desktop */
-        @media (min-width: 480px) {
-            .brand-logo {
-                height: 54px;
-            }
-            .brand-centered span {
-                font-size: 2.2rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .modern-ui {
-                padding: 16px 12px;
-            }
-            .glass-card {
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-            .navbar-banner {
-                padding: 18px 24px;
-                margin-bottom: 20px;
-            }
-            .brand-logo {
-                height: 92px;
-            }
-            .brand-centered span {
-                font-size: 3.65rem;
-            }
-        }
-
         /* =====================================================
-        HERO SECTION & SEARCH
+        3. HERO SEARCH SECTION
         ===================================================== */
         .hero {
             text-align: center;
-            padding: 24px 12px;
-            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
-            border-radius: 12px;
-            border: 1px solid #dbeafe;
+            padding: clamp(24px, 4vw, 36px) clamp(16px, 3vw, 24px);
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--primary-border);
             margin-bottom: 20px;
-            box-sizing: border-box;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
         }
 
         .hero h1 {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: #0f172a;
+            font-size: clamp(1.25rem, 3vw, 1.65rem);
+            font-weight: 800;
+            color: var(--text-main);
             margin-bottom: 8px;
+            letter-spacing: -0.01em;
         }
 
         .hero p {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-bottom: 16px;
-            padding: 0 4px;
+            font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .search-box {
             display: flex;
-            max-width: 500px;
+            max-width: 520px;
             width: 100%;
             margin: 0 auto;
             gap: 8px;
-            box-sizing: border-box;
+            background: var(--bg-surface);
+            padding: 6px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), var(--shadow-md);
         }
 
         .search-input {
             flex: 1;
             padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            border: none;
             outline: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .search-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: var(--text-main);
+            background: transparent;
+            min-width: 0;
         }
 
         .search-btn {
-            background: #2563eb;
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 0 16px;
-            border-radius: 8px;
+            padding: 0 20px;
+            border-radius: var(--radius-md);
             font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* =====================================================
+        4. PINNED PANEL (HỔ PHÁCH / AMBER GLOW)
+        ===================================================== */
+        .pinned-panel {
+            background: linear-gradient(135deg, var(--amber-bg) 0%, #fef3c7 100%);
+            border: 1px solid var(--amber-border);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pinned-header {
+            color: var(--amber-text);
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pinned-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .pinned-item {
+            background: var(--bg-surface);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 4px solid var(--amber-accent);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            transition: var(--transition);
+            gap: 12px;
+        }
+
+        .pinned-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--amber-accent);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.12);
+        }
+
+        .pinned-item-title {
+            font-weight: 600;
+            color: var(--amber-text);
+            font-size: 0.88rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .badge-pinned {
+            background: #fef3c7;
+            color: #d97706;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid #fcd34d;
+            white-space: nowrap;
             flex-shrink: 0;
         }
 
         /* =====================================================
-        GRID SECTIONS
+        5. MAIN GRID 2 CỘT
         ===================================================== */
         .grid-section {
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 16px;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 20px;
+            align-items: stretch;
         }
 
-        @media(max-width: 768px) {
+        @media (max-width: 768px) {
             .grid-section {
                 grid-template-columns: 1fr;
             }
         }
 
         .section-title {
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 12px;
+            color: var(--text-main);
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
+        /* Danh sách bài viết mới */
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
         .card-list-item {
-            padding: 10px 8px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 14px;
+            border: 1px solid transparent;
+            border-bottom-color: var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
             text-decoration: none;
-            color: #334155;
-            border-radius: 6px;
+            color: var(--text-sub);
+            border-radius: var(--radius-md);
             font-size: 0.88rem;
-            word-break: break-word;
+            transition: var(--transition);
+            gap: 12px;
         }
 
         .card-list-item:hover {
-            background: #f8fafc;
-            color: #2563eb;
+            background: var(--primary-light);
+            border-color: var(--primary-border);
+            color: var(--primary);
+            transform: translateX(3px);
         }
 
-        /* Admin Quick Panel Style */
+        .card-list-item span:first-child {
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .card-list-item .arrow-icon {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .card-list-item:hover .arrow-icon {
+            color: var(--primary);
+            transform: translateX(2px);
+        }
+
+        /* Admin Panel Card */
         .admin-panel-card {
-            background: #fdf4ff;
-            border: 1px solid #f5d0fe;
+            background: linear-gradient(180deg, var(--violet-bg) 0%, #ffffff 100%);
+            border-color: var(--violet-border);
+            display: flex;
+            flex-direction: column;
         }
 
         .admin-panel-card .section-title {
-            color: #86198f;
+            color: var(--violet-text);
+        }
+
+        .admin-desc {
+            font-size: 0.82rem;
+            color: #6b21a8;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .admin-actions {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .admin-link-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
-            padding: 10px;
-            margin-bottom: 8px;
-            text-align: center;
-            background: #a855f7;
+            padding: 11px 16px;
+            background: var(--violet-primary);
             color: white;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             text-decoration: none;
             font-weight: 600;
             font-size: 0.85rem;
-            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+            transition: var(--transition);
         }
 
         .admin-link-btn:hover {
-            background: #9333ea;
+            background: var(--violet-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
         }
 
-        /* Footer */
+        .admin-link-btn.secondary {
+            background: #7c3aed;
+        }
+
+        .admin-link-btn.secondary:hover {
+            background: #6d28d9;
+        }
+
+        /* =====================================================
+        6. FOOTER
+        ===================================================== */
         .footer {
             text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 24px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
-<div class="modern-ui">
-    <div class="container">
+<div class="container">
+    
+    <!-- 1. HEADER BANNER -->
+    <header class="navbar-banner">
+        <a href="/" class="brand-centered">
+            <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo Máy In Đại Thành" class="brand-logo">
+            <span>Máy In Đại Thành</span>
+        </a>
+    </header>
+
+    <!-- 2. HERO SEARCH SECTION -->
+    <section class="hero">
+        <h1>Hướng dẫn & Sửa chữa Máy in</h1>
+        <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
         
-        <!-- Navbar tích hợp Logo Supabase (Đã dùng đúng class navbar-banner) -->
-        <div class="navbar-banner">
-            <a href="/" class="brand-centered">
-                <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo Máy In Đại Thành" class="brand-logo">
-                <span>Máy In Đại Thành</span>
+        <form action="/search" method="GET" class="search-box">
+            <input type="text" name="q" class="search-input" placeholder="Nhập dòng máy cần tìm (vd: PRO-1000, L8050...)" required>
+            <button type="submit" class="search-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                Tìm kiếm
+            </button>
+        </form>
+    </section>
+
+    <!-- 3. PANEL BÀI VIẾT GHIM (NẰM NGANG ĐỘC LẬP) -->
+    {% if pinned_guides %}
+    <section class="glass-card pinned-panel">
+        <div class="pinned-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--amber-accent);">
+                <line x1="12" y1="17" x2="12" y2="22"></line>
+                <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
+            </svg>
+            Hướng dẫn căn bản & Bài viết nên đọc
+        </div>
+        <div class="pinned-grid">
+            {% for guide in pinned_guides %}
+            <a href="/guide/{{ guide.id }}" class="pinned-item">
+                <span class="pinned-item-title">{{ guide.title }}</span>
+                <span class="badge-pinned">Ghim</span>
             </a>
+            {% endfor %}
         </div>
+    </section>
+    {% endif %}
 
-        <!-- Hero Section cho Khách hàng tra cứu -->
-        <div class="hero">
-            <h1>Hướng dẫn & Sửa chữa Máy in</h1>
-            <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
-            
-            <!-- Form tìm kiếm -->
-            <form action="/search" method="GET" class="search-box">
-                <input type="text" name="q" class="search-input" placeholder="Nhập tên dòng máy cần tìm (vd: PRO-1000...)" required>
-                <button type="submit" class="search-btn">Tìm kiếm</button>
-            </form>
-        </div>
-
-        <!-- Phân vùng nội dung chính -->
-        <div class="grid-section">
-            
-            <!-- Cột trái: Khách hàng (Danh mục hướng dẫn mới cập nhật từ Database) -->
-            <div>
-                <div class="glass-card" style="margin-bottom: 0;">
-                    <div class="section-title">📖 Tài liệu hướng dẫn mới cập nhật</div>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        {% if recent_guides %}
-                            {% for guide in recent_guides %}
-                            <a href="/guide/{{ guide.id }}" class="card-list-item">
-                                <span>🔧 {{ guide.title }}</span>
-                                <span style="font-size: 0.75rem; color: #94a3b8;">Xem chi tiết →</span>
-                            </a>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                </div>
+    <!-- 4. GRID 2 CỘT CÂN BẰNG -->
+    <div class="grid-section">
+        
+        <!-- Cột trái: Bài viết mới cập nhật -->
+        <main class="glass-card" style="margin-bottom: 0;">
+            <div class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Tài liệu hướng dẫn mới cập nhật
             </div>
-
-            <!-- Cột phải: Quản trị viên (Lối tắt nhanh) -->
-            <div>
-                <div class="glass-card admin-panel-card" style="margin-bottom: 0;">
-                    <div class="section-title">⚡ Khu vực Quản trị</div>
-                    <p style="font-size: 0.8rem; color: #701a75; margin-bottom: 14px;">
-                        Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
+            <div class="card-list">
+                {% if recent_guides %}
+                    {% for guide in recent_guides %}
+                    <a href="/guide/{{ guide.id }}" class="card-list-item">
+                        <span>🔧 {{ guide.title }}</span>
+                        <span class="arrow-icon">Xem chi tiết →</span>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; padding: 20px 0;">
+                        Chưa có bài viết mới.
                     </p>
-                    <a href="/admin/login" class="admin-link-btn">Quản lý bài viết hướng dẫn</a>
-                    <a href="/admin/dashboard" class="admin-link-btn" style="background: #7e22ce;">Mở Dashboard Thống kê</a>
-                </div>
+                {% endif %}
             </div>
+        </main>
 
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            Máy In Đại Thành Technical Support System &copy; 2026
-        </div>
+        <!-- Cột phải: Khu vực Quản trị -->
+        <aside class="glass-card admin-panel-card" style="margin-bottom: 0;">
+            <div class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--violet-primary);">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Khu vực Quản trị
+            </div>
+            <p class="admin-desc">
+                Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
+            </p>
+            <div class="admin-actions">
+                <a href="/admin/login" class="admin-link-btn">
+                    Quản lý bài viết hướng dẫn
+                </a>
+                <a href="/admin/dashboard" class="admin-link-btn secondary">
+                    Mở Trang Thống kê
+                </a>
+            </div>
+        </aside>
 
     </div>
+
+    <!-- 5. FOOTER -->
+    <footer class="footer">
+        Máy In Đại Thành Technical Support System &copy; 2026
+    </footer>
+
 </div>
 
 </body>

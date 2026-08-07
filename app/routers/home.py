@@ -1,8 +1,9 @@
 import logging
 import re
-from typing import Optional, List
+from typing import Optional
+from pydantic import BaseModel
 
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -34,29 +35,45 @@ def auto_linkify(text: Optional[str]) -> str:
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
+    pinned_guides = []
+    recent_guides = []
+    
     try:
-        res = (
+        # 1. Lấy danh sách các bài viết được GHIM (is_pinned = True)
+        pinned_res = (
             supabase.table("guide")
             .select("*")
             .eq("is_active", True)
+            .eq("is_pinned", True)
+            .order("id", desc=True)
+            .execute()
+        )
+        pinned_guides = pinned_res.data or []
+
+        # 2. Lấy các bài viết mới cập nhật chưa ghim (để tránh trùng lặp)
+        recent_res = (
+            supabase.table("guide")
+            .select("*")
+            .eq("is_active", True)
+            .eq("is_pinned", False)
             .order("id", desc=True)
             .limit(3)
             .execute()
         )
-        recent_guides = res.data or []
+        recent_guides = recent_res.data or []
+
     except Exception as e:
         logger.error(f"Lỗi load trang chủ: {e}")
-        recent_guides = []
 
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "title": "Trang chủ",
+            "pinned_guides": pinned_guides,
             "recent_guides": recent_guides
         }
     )
-
 
 # =====================================================
 # 2. TRANG TÌM KIẾM
@@ -268,3 +285,26 @@ async def view_guide_detail(request: Request, guide_id: int):
             "related_guides": related_guides
         }
     )
+
+class FeedbackPayload(BaseModel):
+    category: str
+    rating: int
+    content: str
+    page_url: Optional[str] = None
+
+@router.post("/api/feedback")
+async def create_feedback(data: FeedbackPayload):
+    try:
+        feedback_data = {
+            "category": data.category,
+            "rating": data.rating,
+            "content": data.content,
+            "page_url": data.page_url
+        }
+        
+        # Lưu vào bảng "feedbacks" trong Supabase
+        supabase.table("feedbacks").insert(feedback_data).execute()
+        return {"success": True, "message": "Gửi phản hồi thành công"}
+    except Exception as e:
+        logger.error(f"Lỗi lưu feedback: {e}")
+        raise HTTPException(status_code=500, detail="Không thể lưu phản hồi")

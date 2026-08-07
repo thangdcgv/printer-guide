@@ -114,6 +114,156 @@
             color: #b91c1c;
         }
 
+        /* =========================================================
+           FLOATING FEEDBACK WIDGET STYLING
+        ========================================================= */
+        .feedback-float-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feedback-float-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.45);
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        .feedback-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 24px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .feedback-modal-overlay.is-active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .feedback-modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+            padding: 20px;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .feedback-modal-overlay.is-active .feedback-modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .feedback-icon-badge {
+            background: #eff6ff;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .feedback-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 4px;
+        }
+        .feedback-close-btn:hover {
+            color: #0f172a;
+        }
+
+        .sentiment-rating {
+            display: flex;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .sentiment-item {
+            cursor: pointer;
+        }
+
+        .sentiment-item input {
+            display: none;
+        }
+
+        .sentiment-item span {
+            font-size: 1.35rem;
+            padding: 6px 10px;
+            display: inline-block;
+            border-radius: 8px;
+            transition: transform 0.15s, background 0.15s;
+            opacity: 0.5;
+            filter: grayscale(80%);
+        }
+
+        .sentiment-item:hover span {
+            transform: scale(1.2);
+            opacity: 0.9;
+            filter: grayscale(0%);
+        }
+
+        .sentiment-item input:checked + span {
+            opacity: 1;
+            filter: grayscale(0%);
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transform: scale(1.15);
+        }
+
+        /* Controls Form inside Feedback Modal */
+        .feedback-modal-card .form-control,
+        .feedback-modal-card .form-select {
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.875rem;
+        }
+        .feedback-modal-card .form-control:focus,
+        .feedback-modal-card .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
         /* Responsive cho Mobile <= 480px */
         @media (max-width: 480px) {
             .container {
@@ -124,6 +274,20 @@
             .app-nav .btn {
                 padding: 8px 10px;
                 font-size: 0.8rem;
+            }
+            .feedback-float-btn {
+                bottom: 16px;
+                right: 16px;
+                padding: 12px;
+                border-radius: 50%;
+            }
+            .feedback-float-btn .btn-text {
+                display: none;
+            }
+            .feedback-modal-overlay {
+                padding: 12px;
+                align-items: center;
+                justify-content: center;
             }
         }
     </style>
@@ -177,12 +341,86 @@
 
 </div>
 
-<!-- Bootstrap 5.3.3 JS Bundle (Đã bỏ thẻ <link> chèn thừa) -->
+<!-- NÚT GÓP Ý NỔI (FLOATING FEEDBACK BUTTON) -->
+<button id="feedbackBtn" class="feedback-float-btn" onclick="toggleFeedbackModal()" title="Gửi góp ý hoặc báo lỗi">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+    <span class="btn-text">Góp ý</span>
+</button>
+
+<!-- POPUP MODAL GÓP Ý -->
+<div id="feedbackModal" class="feedback-modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="feedback-modal-card">
+        <div class="feedback-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="feedback-icon-badge">💬</span>
+                <h6 class="m-0 fw-bold text-dark">Gửi góp ý & Phản hồi</h6>
+            </div>
+            <button type="button" class="feedback-close-btn" onclick="toggleFeedbackModal()">&times;</button>
+        </div>
+
+        <form id="feedbackForm" onsubmit="submitFeedback(event)" class="mt-3">
+            <!-- Loại phản hồi -->
+            <div class="mb-3">
+                <label class="form-label text-secondary fw-semibold small mb-1">Bạn muốn phản hồi về gì?</label>
+                <select id="feedbackCategory" class="form-select" required>
+                    <option value="ui">🎨 Giao diện & Trải nghiệm</option>
+                    <option value="bug">🐛 Báo lỗi kỹ thuật / Lỗi trang</option>
+                    <option value="content">📖 Nội dung bài hướng dẫn</option>
+                    <option value="feature">💡 Đề xuất tính năng mới</option>
+                    <option value="other">💬 Ý kiến đóng góp khác</option>
+                </select>
+            </div>
+
+            <!-- Mức độ hài lòng -->
+            <div class="mb-3">
+                <label class="form-label text-secondary fw-semibold small mb-1">Mức độ hài lòng của bạn</label>
+                <div class="sentiment-rating">
+                    <label class="sentiment-item">
+                        <input type="radio" name="rating" value="1">
+                        <span>😠</span>
+                    </label>
+                    <label class="sentiment-item">
+                        <input type="radio" name="rating" value="2">
+                        <span>🙁</span>
+                    </label>
+                    <label class="sentiment-item">
+                        <input type="radio" name="rating" value="3" checked>
+                        <span>😐</span>
+                    </label>
+                    <label class="sentiment-item">
+                        <input type="radio" name="rating" value="4">
+                        <span>🙂</span>
+                    </label>
+                    <label class="sentiment-item">
+                        <input type="radio" name="rating" value="5">
+                        <span>😍</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Nội dung góp ý -->
+            <div class="mb-3">
+                <label class="form-label text-secondary fw-semibold small mb-1">Nội dung góp ý <span class="text-danger">*</span></label>
+                <textarea id="feedbackContent" class="form-control" rows="3" placeholder="Chi tiết ý kiến hoặc mô tả lỗi bạn gặp phải..." style="resize: none;" required></textarea>
+            </div>
+
+            <!-- Nút gửi -->
+            <button type="submit" id="submitFeedbackBtn" class="btn btn-primary w-100 fw-semibold py-2">
+                Gửi phản hồi
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Bootstrap 5.3.3 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script tự động ẩn thông báo mượt mà sau 3.5 giây -->
+<!-- Script tự động ẩn thông báo & Xử lý Góp ý -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // Tự động ẩn Flash Messages sau 3.5s
         setTimeout(function () {
             document.querySelectorAll(".alert").forEach(function(alertEl){
                 var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
@@ -192,6 +430,62 @@
             });
         }, 3500);
     });
+
+    // Bật/tắt Modal Feedback
+    function toggleFeedbackModal() {
+        const modal = document.getElementById('feedbackModal');
+        modal.classList.toggle('is-active');
+    }
+
+    // Đóng khi click ngoài nền đen
+    function handleOverlayClick(event) {
+        if (event.target.id === 'feedbackModal') {
+            toggleFeedbackModal();
+        }
+    }
+
+    // Xử lý gửi Form Feedback qua API
+    async function submitFeedback(event) {
+        event.preventDefault();
+
+        const submitBtn = document.getElementById('submitFeedbackBtn');
+        const category = document.getElementById('feedbackCategory').value;
+        const content = document.getElementById('feedbackContent').value;
+        const ratingEl = document.querySelector('input[name="rating"]:checked');
+        const rating = ratingEl ? parseInt(ratingEl.value) : 3;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Đang gửi...';
+
+        try {
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    category: category,
+                    rating: rating,
+                    content: content,
+                    page_url: window.location.href
+                })
+            });
+
+            if (response.ok) {
+                alert('Cảm ơn bạn đã đóng góp ý kiến!');
+                document.getElementById('feedbackForm').reset();
+                toggleFeedbackModal();
+            } else {
+                alert('Có lỗi xảy ra khi gửi phản hồi, vui lòng thử lại sau.');
+            }
+        } catch (error) {
+            console.error('Feedback submit error:', error);
+            alert('Không thể kết nối đến máy chủ.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Gửi phản hồi';
+        }
+    }
 </script>
 
 </body>
