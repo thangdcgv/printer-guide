@@ -3,7 +3,7 @@ import math
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Request, Form, status, HTTPException, Depends
+from fastapi import APIRouter, Request, Form, status, HTTPException, Depends, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -122,40 +122,102 @@ async def auto_generate_and_link_tags(guide_id: int, printer_model_id: int, titl
 
     except Exception as e:
         logger.error(f"Lỗi khi đồng bộ tags cho guide #{guide_id}: {e}")
+#Helpẻr check quyền xóa sửa
+def _check_guide_permission(guide_id: int, current_user: dict) -> dict:
+    """
+    Kiểm tra quyền hạn tác động lên bài viết:
+    - Trả về dict thông tin bài viết nếu hợp lệ.
+    - Chặn và bắn HTTPException 403 nếu không có quyền.
+    """
+    # 1. Truy vấn bài viết để lấy created_by
+    res = supabase.table("guide").select("id, title, created_by").eq("id", guide_id).execute()
+    if not res.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Bài viết không tồn tại trên hệ thống."
+        )
+    
+    guide = res.data[0]
+    
+    # 2. Quyền 1: Nếu là Admin -> Cho phép toàn quyền
+    user_role = current_user.get("role")
+    if user_role == "Admin":
+        return guide
 
+    # 3. Quyền 2: Nếu là người tạo ra bài viết (created_by trùng id người dùng) -> Cho phép
+    user_id = current_user.get("id")
+    if guide.get("created_by") is not None and guide.get("created_by") == user_id:
+        return guide
 
+    # 4. Trường hợp còn lại -> Chặn truy cập
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="⛔ Bạn không có quyền chỉnh sửa hoặc xóa bài viết này!"
+    )
 # =====================================================
 # HELPER FUNCTIONS (Cập nhật _get_admin_id)
 # =====================================================
 
 def _get_admin_id(current_user: dict) -> Optional[int]:
-    """Helper lấy ID quản trị viên linh hoạt từ thông tin session."""
-    if not current_user:
+    """Helper lấy ID (integer) của quản trị viên từ thông tin session/user."""
+    if not current_user or not isinstance(current_user, dict):
+        logger.warning("❌ [DEBUG _get_admin_id]: current_user bị rỗng hoặc không phải dict!")
         return None
     
-    # Kiểm tra tất cả các key ID phổ biến trong session
-    for key in ["id", "user_id", "admin_id", "sub"]:
-        if current_user.get(key):
-            val = str(current_user.get(key))
-            if val.isdigit():
-                return int(val)
+    print(f"\n👉 [DEBUG _get_admin_id] RAW USER SESSION: {current_user}", flush=True)
+
+    # 1. Kiểm tra nếu trong session đã lưu sẵn ID nguyên bản (integer của bảng quan_tri_vien)
+    for key in ["id", "admin_id", "quan_tri_vien_id"]:
+        val = current_user.get(key)
+        if val is not None and str(val).isdigit():
+            admin_id = int(val)
+            print(f"✅ [DEBUG _get_admin_id]: Tìm thấy ID trực tiếp = {admin_id}", flush=True)
+            return admin_id
+
+    # 2. Tra cứu bằng auth_id (Supabase Auth UUID)
+    # Thường session lưu UUID ở key 'user_id', 'auth_id', hoặc 'sub'
+    possible_auth_ids = [
+        current_user.get("auth_id"),
+        current_user.get("user_id"),
+        current_user.get("sub")
+    ]
     
-    # Tra cứu qua email hoặc username nếu không tìm thấy ID trực tiếp
+    for auth_id in possible_auth_ids:
+        if auth_id and isinstance(auth_id, str):
+            try:
+                res = supabase.table("quan_tri_vien").select("id").eq("auth_id", auth_id).execute()
+                if res.data and len(res.data) > 0:
+                    admin_id = res.data[0]["id"]
+                    print(f"✅ [DEBUG _get_admin_id]: Tìm thấy ID qua auth_id ({auth_id}) = {admin_id}", flush=True)
+                    return admin_id
+            except Exception as e:
+                logger.error(f"Lỗi tra cứu quan_tri_vien theo auth_id ({auth_id}): {e}")
+
+    # 3. Tra cứu qua email
     user_email = current_user.get("email")
-    username = current_user.get("username")
-    
-    try:
-        if user_email:
+    if user_email:
+        try:
             res = supabase.table("quan_tri_vien").select("id").eq("email", user_email).execute()
-            if res.data:
-                return res.data[0]["id"]
-        if username:
+            if res.data and len(res.data) > 0:
+                admin_id = res.data[0]["id"]
+                print(f"✅ [DEBUG _get_admin_id]: Tìm thấy ID qua email ({user_email}) = {admin_id}", flush=True)
+                return admin_id
+        except Exception as e:
+            logger.error(f"Lỗi tra cứu quan_tri_vien theo email ({user_email}): {e}")
+
+    # 4. Tra cứu qua username
+    username = current_user.get("username")
+    if username:
+        try:
             res = supabase.table("quan_tri_vien").select("id").eq("username", username).execute()
-            if res.data:
-                return res.data[0]["id"]
-    except Exception as e:
-        logger.error(f"Không thể tra cứu id quản trị viên: {e}")
-        
+            if res.data and len(res.data) > 0:
+                admin_id = res.data[0]["id"]
+                print(f"✅ [DEBUG _get_admin_id]: Tìm thấy ID qua username ({username}) = {admin_id}", flush=True)
+                return admin_id
+        except Exception as e:
+            logger.error(f"Lỗi tra cứu quan_tri_vien theo username ({username}): {e}")
+
+    print("❌ [DEBUG _get_admin_id]: Không thể xác định được ID quản trị viên!", flush=True)
     return None
 
 # =====================================================
@@ -339,6 +401,7 @@ async def create_form(
         .table("printer_model")
         .select("id, brand, model")
         .order("brand")
+        .order("model")
         .execute()
         .data or []
     )
@@ -390,7 +453,7 @@ async def create_submit(
             new_guide_id = res.data[0]["id"]
             await auto_generate_and_link_tags(new_guide_id, printer_model_id, title.strip())
         else:
-            raise HTTPException(status_code=500, detail="Không thể tạo bài viết mới")
+            raise HTTPException(status_code=500, detail="Không thể tạo bài viết mới trong database.")
     except Exception as e:
         logger.error(f"Lỗi khi tạo mới bài hướng dẫn: {e}")
         raise HTTPException(status_code=500, detail=f"Lỗi hệ thống khi tạo bài viết: {str(e)}")
@@ -405,15 +468,15 @@ async def copy_guide(
 ):
     try:
         admin_id = _get_admin_id(current_user)
-
+        
         # 1. Lấy thông tin bài viết gốc
         guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
         if not guide_res.data:
-            raise HTTPException(status_code=404, detail="Không tìm thấy bài viết hướng dẫn gốc!")
+            raise HTTPException(status_code=404, detail="Không tìm thấy bài viết gốc!")
         
         original_guide = guide_res.data[0]
         
-        # 2. Chuẩn bị dữ liệu bài viết mới
+        # 2. Chuẩn bị dữ liệu bài viết mới (Gán created_by = admin_id hiện tại)
         new_guide_data = {
             "printer_model_id": original_guide.get("printer_model_id"),
             "title": f"{original_guide['title']} (Bản sao)",
@@ -428,7 +491,7 @@ async def copy_guide(
         # 3. Thêm bản ghi mới
         insert_guide_res = supabase.table("guide").insert(new_guide_data).execute()
         if not insert_guide_res.data:
-            raise HTTPException(status_code=500, detail="Không thể tạo bản sao bài viết trong cơ sở dữ liệu.")
+            raise HTTPException(status_code=500, detail="Không thể tạo bản sao bài viết.")
             
         new_guide = insert_guide_res.data[0]
         new_guide_id = new_guide["id"]
@@ -465,6 +528,7 @@ async def copy_guide(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Lỗi khi sao chép bài viết #{guide_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Lỗi hệ thống khi sao chép bài viết: {str(e)}")
 
 
@@ -478,21 +542,19 @@ async def edit_form(
     guide_id: int,
     current_user: dict = Depends(require_admin)
 ):
-    guide_res = (
-        supabase
-        .table("guide")
-        .select("*")
-        .eq("id", guide_id)
-        .execute()
-    )
+    # 🔒 Kiểm tra quyền truy cập (Admin hoặc Người tạo)
+    _check_guide_permission(guide_id, current_user)
 
+    guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
     if not guide_res.data:
-        return RedirectResponse("/admin/guide")
+        return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
     printers = (
         supabase
         .table("printer_model")
         .select("id, brand, model")
+        .order("brand")
+        .order("model")
         .execute()
         .data or []
     )
@@ -520,6 +582,9 @@ async def edit_submit(
     sort_order: Optional[str] = Form("1"),
     current_user: dict = Depends(require_admin)
 ):
+    # 🔒 Kiểm tra quyền cập nhật bài viết
+    _check_guide_permission(guide_id, current_user)
+
     clean_image_url = image_url.strip() if image_url and image_url.strip() else None
     clean_video_url = video_url.strip() if video_url and video_url.strip() else None
 
@@ -537,6 +602,7 @@ async def edit_submit(
         res = supabase.table("guide").update(update).eq("id", guide_id).execute()
         if not res.data:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài viết để cập nhật")
+        
         await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
     except HTTPException:
         raise
@@ -556,11 +622,19 @@ async def delete_guide(
     guide_id: int,
     current_user: dict = Depends(require_admin)
 ):
+    # 🔒 Kiểm tra quyền xóa bài viết
+    _check_guide_permission(guide_id, current_user)
+
     try:
+        # Xóa các liên kết ở bảng phụ trước để tránh ràng buộc khóa ngoại (Foreign Key)
+        supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
+        supabase.table("guide_step").delete().eq("guide_id", guide_id).execute()
+        
+        # Xóa bài viết chính
         supabase.table("guide").delete().eq("id", guide_id).execute()
     except Exception as e:
         logger.error(f"Lỗi khi xóa bài hướng dẫn #{guide_id}: {e}")
-        raise HTTPException(status_code=500, detail="Không thể xóa bài viết do có ràng buộc dữ liệu")
+        raise HTTPException(status_code=500, detail=f"Không thể xóa bài viết: {str(e)}")
         
     return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
