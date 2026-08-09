@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from app.config import templates
 from app.database import supabase
-from app.routers.auth import require_admin
+from app.routers.auth import require_login
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/admin", tags=["Admin Hub"])
 @router.get("", response_class=HTMLResponse)
 async def admin_main(
     request: Request,
-    admin: dict = Depends(require_admin),  # Tự động xác thực & redirect nếu chưa login
+    admin: dict = Depends(require_login),  # Cho phép mọi user đã đăng nhập truy cập
 ):
     """
     Trang Hub chính hiển thị 3 card chức năng và nút Thống kê trên Header
@@ -27,7 +27,7 @@ async def admin_main(
         "admin.html",
         {
             "request": request,
-            "admin": admin,  # Truyền dict admin chuẩn vào context
+            "admin": admin,  # Truyền thông tin user vào context
         },
     )
 
@@ -39,7 +39,7 @@ async def admin_main(
 @router.get("/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(
     request: Request,
-    admin: dict = Depends(require_admin),
+    admin: dict = Depends(require_login),
 ):
     """
     Trang chi tiết thống kê bài viết, dòng máy in và các phản hồi/góp ý
@@ -123,7 +123,7 @@ async def admin_dashboard(
 @router.post("/api/feedback/process/{feedback_id}")
 async def mark_feedback_processed(
     feedback_id: int,
-    admin: dict = Depends(require_admin),  # Bảo vệ API bằng require_admin
+    admin: dict = Depends(require_login),  # Cho phép user đã đăng nhập thao tác API này
 ):
     try:
         supabase.table("feedbacks").update({"is_processed": True}).eq(

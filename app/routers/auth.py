@@ -37,7 +37,7 @@ ALLOWED_ADMIN_ROLES = {
 
 class AdminUnauthenticatedException(Exception):
     """
-    Được raise khi: Chưa đăng nhập, token không hợp lệ, hết hạn, hoặc không có quyền admin.
+    Được raise khi: Chưa đăng nhập, token không hợp lệ, hoặc hết hạn.
     main.py sẽ catch exception này và redirect về /admin/login bằng HTTP 303.
     """
     pass
@@ -67,13 +67,12 @@ def render_login_error(
 
 
 # =========================================================
-# HELPER: GET ADMIN PROFILE
+# HELPER: GET USER PROFILE
 # =========================================================
 
 def get_admin_profile(auth_id: str) -> Optional[dict]:
     """
-    Lấy thông tin quản trị viên dựa trên auth_id đã được Supabase Auth xác thực.
-    Không truy vấn ma_truy_cap để đảm bảo an toàn dữ liệu.
+    Lấy thông tin người dùng / quản trị viên dựa trên auth_id đã được Supabase Auth xác thực.
     """
     result = (
         supabase
@@ -106,13 +105,13 @@ def get_admin_profile(auth_id: str) -> Optional[dict]:
 
 
 # =========================================================
-# HELPER: AUTHENTICATE ADMIN SESSION
+# HELPER: AUTHENTICATE USER & ADMIN SESSION
 # =========================================================
 
-def authenticate_admin_session(request: Request) -> Optional[dict]:
+def authenticate_session(request: Request) -> Optional[dict]:
     """
-    Xác thực session admin.
-    Flow: Cookie -> access_token -> Supabase Auth -> auth_id -> quan_tri_vien -> role -> Valid Admin
+    Xác thực session của BẤT KỲ tài khoản nào đã đăng nhập.
+    Flow: Cookie -> access_token -> Supabase Auth -> auth_id -> quan_tri_vien -> Profile
     """
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
 
@@ -130,24 +129,35 @@ def authenticate_admin_session(request: Request) -> Optional[dict]:
         auth_id = auth_user.id
 
         # 2. Kiểm tra profile trong quan_tri_vien
-        admin = get_admin_profile(auth_id)
+        user_profile = get_admin_profile(auth_id)
 
-        if not admin:
-            logger.warning("Auth user không có profile admin: auth_id=%s", auth_id)
+        if not user_profile:
+            logger.warning("Auth user không có profile hệ thống: auth_id=%s", auth_id)
             return None
 
-        # 3. Kiểm tra role
-        role = admin.get("role")
-
-        if role not in ALLOWED_ADMIN_ROLES:
-            logger.warning("User không đủ quyền admin: auth_id=%s role=%s", auth_id, role)
-            return None
-
-        return admin
+        return user_profile
 
     except Exception as exc:
-        logger.info("Admin session không hợp lệ: %s", exc)
+        logger.info("Session không hợp lệ: %s", exc)
         return None
+
+
+def authenticate_admin_session(request: Request) -> Optional[dict]:
+    """
+    Xác thực session VÀ kiểm tra xem tài khoản có quyền Admin/SuperAdmin hay không.
+    """
+    user_profile = authenticate_session(request)
+
+    if not user_profile:
+        return None
+
+    role = user_profile.get("role")
+
+    if role not in ALLOWED_ADMIN_ROLES:
+        logger.warning("User không đủ quyền admin: auth_id=%s role=%s", user_profile.get("auth_id"), role)
+        return None
+
+    return user_profile
 
 
 # =========================================================
@@ -160,12 +170,14 @@ async def login_page(
     error: Optional[str] = None,
 ):
     """GET /admin/login"""
-    admin = authenticate_admin_session(request)
+    user = authenticate_session(request)
 
-    # Nếu đã đăng nhập thì tự động chuyển vào trang quản trị
-    if admin:
+    # Nếu đã đăng nhập thì tự động chuyển hướng về trang tương ứng với role
+    if user:
+        user_role = user.get("role", "User")
+        target_url = "/admin/guide" if user_role in ALLOWED_ADMIN_ROLES else "/"
         return RedirectResponse(
-            url="/admin/guide",
+            url=target_url,
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -237,17 +249,16 @@ async def handle_login(
         session = auth_response.session
 
         # 3. Kiểm tra Profile trong cơ sở dữ liệu (Cho phép cả Admin và User)
-        admin = get_admin_profile(user.id)
+        user_profile = get_admin_profile(user.id)
 
-        if not admin:
+        if not user_profile:
             return render_login_error(
                 request,
                 "Tài khoản chưa được cấp quyền trên hệ thống.",
                 status.HTTP_403_FORBIDDEN,
             )
 
-        # (Đã loại bỏ đoạn kiểm tra chặn role User để User bình thường có thể đăng nhập)
-        user_role = admin.get("role", "User")
+        user_role = user_profile.get("role", "User")
 
         # 4. Điều hướng linh hoạt theo Role sau khi đăng nhập thành công
         # - Nếu là Admin: Vào trang quản lý/thư viện (/admin/guide)
@@ -281,7 +292,6 @@ async def handle_login(
 # LOGOUT
 # =========================================================
 
-# Sửa decorator từ @router.post("/logout") thành @router.api_route
 @router.api_route("/logout", methods=["GET", "POST"])
 async def logout(request: Request):
     """
@@ -312,13 +322,25 @@ async def logout(request: Request):
 
 
 # =========================================================
-# REQUIRE ADMIN DEPENDENCY
+# DEPENDENCIES
 # =========================================================
+
+async def require_login(request: Request) -> dict:
+    """
+    Dependency bảo vệ các Route yêu cầu người dùng ĐÃ ĐĂNG NHẬP (Cả User & Admin).
+    Nếu chưa đăng nhập sẽ bắn Exception để main.py tự động Redirect về /admin/login.
+    """
+    user = authenticate_session(request)
+
+    if not user:
+        raise AdminUnauthenticatedException()
+
+    return user
+
 
 async def require_admin(request: Request) -> dict:
     """
-    Dependency bảo vệ các Route Admin.
-    Nếu không hợp lệ sẽ bắn Exception để main.py tự động Redirect.
+    Dependency bảo vệ các Route chỉ dành riêng cho Quản trị viên (Admin / SuperAdmin).
     """
     admin = authenticate_admin_session(request)
 

@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from app.config import templates
 from app.database import supabase
-from app.routers.auth import require_admin
+from app.routers.auth import require_login  # Hoặc tên hàm kiểm tra đăng nhập đang có sẵn trong auth.py của bạn
 
 logger = logging.getLogger(__name__)
 
@@ -92,16 +92,16 @@ async def public_dashboard(request: Request):
 
 
 # =========================================================
-# 2. ADMIN DASHBOARD (Dành riêng cho Quản trị viên)
+# 2. DASHBOARD KHU VỰC QUẢN TRỊ (Cho phép cả User & Admin đã đăng nhập)
 # =========================================================
 
 @router.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(
     request: Request,
-    admin: dict = Depends(require_admin),  # Xác thực chuẩn qua require_admin
+    admin: dict = Depends(require_login),  # Chỉ cần đăng nhập là vào được, không check quyền Admin nữa
 ):
     """
-    Trang Dashboard quản trị. Yêu cầu đăng nhập Admin.
+    Trang Dashboard khu vực quản trị. Yêu cầu đã đăng nhập (User hoặc Admin).
     """
     total_guides, total_models, category_stats = fetch_dashboard_stats()
 
@@ -109,7 +109,7 @@ async def admin_dashboard(
         "admin_dashboard.html",
         {
             "request": request,
-            "admin": admin,  # Truyền thông tin admin vào template
+            "admin": admin,  # Truyền thông tin user/admin vào template
             "total_guides": total_guides,
             "total_models": total_models,
             "category_stats": category_stats,

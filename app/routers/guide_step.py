@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.config import templates
 from app.database import supabase
-from app.routers.auth import require_admin
+from app.routers.auth import require_login  
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class ReorderRequest(BaseModel):
 router = APIRouter(
     prefix="/admin", 
     tags=["Guide Steps"],
-    dependencies=[Depends(require_admin)]
+    dependencies=[Depends(require_login)]  # ➔ THAY ĐỔI: Cho phép mọi user đã đăng nhập thao tác
 )
 
 # =====================================================
@@ -180,7 +180,7 @@ async def delete_sub_step(
 async def list_guide_steps(
     request: Request, 
     guide_id: Optional[int] = None,
-    current_user: dict = Depends(require_admin)  # 👈 Bổ sung lấy thông tin admin
+    current_user: dict = Depends(require_login)  # ➔ THAY ĐỔI: Dùng require_login
 ):
     if not guide_id:
         return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
@@ -221,7 +221,7 @@ async def list_guide_steps(
         "guide_steps.html",
         {
             "request": request,
-            "user": current_user,  # 👈 Bổ sung biến user để base.html nhận dạng
+            "user": current_user,  
             "guide": guide,
             "steps": steps
         }
@@ -381,4 +381,3 @@ async def delete_guide_step(
     except Exception as e:
         logger.error(f"Lỗi xóa bước lớn: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước lớn: {str(e)}")
-  

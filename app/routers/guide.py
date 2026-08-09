@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request, Form, status, HTTPException, Depends, st
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.routers.auth import require_admin
+from app.routers.auth import require_login
 from app.database import supabase
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/admin/guide",
     tags=["guide"],
-    dependencies=[Depends(require_admin)]  # Khóa toàn bộ các route quản lý bài viết
+    dependencies=[Depends(require_login)]  # Khóa toàn bộ các route quản lý bài viết
 )
 
 templates = Jinja2Templates(directory="app/templates")
@@ -232,7 +232,7 @@ async def list_guides(
     guide_status: Optional[str] = None,
     tag_id: Optional[str] = None,
     page: int = 1,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
 
     PER_PAGE = 10
@@ -364,7 +364,7 @@ async def list_guides(
 @router.post("/toggle-pin/{guide_id}")
 async def toggle_pin_guide(
     guide_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     try:
         res = supabase.table("guide").select("is_pinned").eq("id", guide_id).execute()
@@ -390,7 +390,7 @@ async def toggle_pin_guide(
 @router.get("/create", response_class=HTMLResponse)
 async def create_form(
     request: Request,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     printers = (
         supabase
@@ -421,7 +421,7 @@ async def create_submit(
     video_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
     sort_order: Optional[str] = Form("1"),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     try:
         sort = int(sort_order) if sort_order and sort_order.isdigit() else 1
@@ -460,7 +460,7 @@ async def create_submit(
 @router.post("/copy/{guide_id}")
 async def copy_guide(
     guide_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     try:
         admin_id = _get_admin_id(current_user)
@@ -536,7 +536,7 @@ async def copy_guide(
 async def edit_form(
     request: Request, 
     guide_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     # 🔒 Kiểm tra quyền truy cập (Admin hoặc Người tạo)
     _check_guide_permission(guide_id, current_user)
@@ -576,7 +576,7 @@ async def edit_submit(
     video_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
     sort_order: Optional[str] = Form("1"),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     # 🔒 Kiểm tra quyền cập nhật bài viết
     _check_guide_permission(guide_id, current_user)
@@ -616,7 +616,7 @@ async def edit_submit(
 @router.post("/delete/{guide_id}")
 async def delete_guide(
     guide_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     # 🔒 Kiểm tra quyền xóa bài viết
     _check_guide_permission(guide_id, current_user)
@@ -643,7 +643,7 @@ async def delete_guide(
 async def view_guide(
     request: Request, 
     guide_id: int,
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_login)
 ):
     res = (
         supabase
