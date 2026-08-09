@@ -236,26 +236,27 @@ async def handle_login(
         user = auth_response.user
         session = auth_response.session
 
-        # 3. Kiểm tra Admin Profile & Role
+        # 3. Kiểm tra Profile trong cơ sở dữ liệu (Cho phép cả Admin và User)
         admin = get_admin_profile(user.id)
 
         if not admin:
             return render_login_error(
                 request,
-                "Tài khoản chưa được cấp quyền quản trị.",
+                "Tài khoản chưa được cấp quyền trên hệ thống.",
                 status.HTTP_403_FORBIDDEN,
             )
 
-        if admin.get("role") not in ALLOWED_ADMIN_ROLES:
-            return render_login_error(
-                request,
-                "Tài khoản không có quyền truy cập khu vực quản trị.",
-                status.HTTP_403_FORBIDDEN,
-            )
+        # (Đã loại bỏ đoạn kiểm tra chặn role User để User bình thường có thể đăng nhập)
+        user_role = admin.get("role", "User")
 
-        # 4. Tạo Response & Thiết lập Cookie
+        # 4. Điều hướng linh hoạt theo Role sau khi đăng nhập thành công
+        # - Nếu là Admin: Vào trang quản lý/thư viện (/admin/guide)
+        # - Nếu là User thường: Chuyển về trang chủ (/)
+        target_url = "/admin/guide" if user_role in ALLOWED_ADMIN_ROLES else "/"
+
+        # 5. Tạo Response & Thiết lập Cookie
         response = RedirectResponse(
-            url="/admin/guide",
+            url=target_url,
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
