@@ -1,164 +1,285 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}{{ title or "Thư viện Máy in Đại Thành" }}{% endblock %}</title>
-    
-    <!-- Google Fonts: Inter -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+
+    <title>
+        {% block title %}
+            {{ title or "Thư viện Máy in Đại Thành" }}
+        {% endblock %}
+    </title>
+
+    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5.3.3 CSS -->
+    <!-- BOOTSTRAP 5.3.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 
-    <style>
-        /* =========================================================
-           CSS RESET & NORMALIZE (CHỐNG TRÀN NGANG CHUẨN MỰC)
-        ========================================================= */
+    {% block head_extra %}{% endblock %}
 
+    <style>
+        /* =====================================================
+           GLOBAL & RESET
+        ====================================================== */
         *, *::before, *::after {
             box-sizing: border-box;
         }
 
-        html, body {
+        html {
             width: 100%;
-            overflow-x: hidden !important; 
+            min-height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            width: 100%;
+            min-height: 100vh;
             margin: 0;
             padding: 0;
-            background-color: #f8fafc;
+            background: #f8fafc;
             color: #1e293b;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Co giãn hình ảnh & media an toàn */
         img, svg, video {
-            max-width: 100% !important;
-            height: auto !important;
-            object-fit: contain;
+            max-width: 100%;
         }
 
-        /* Chỉ bẻ dòng văn bản ở các thẻ chứa nội dung dài, không bẻ dòng trên Nút/Nav */
-        p, .content-text, table td {
-            overflow-wrap: break-word;
-            word-break: break-word;
+        img {
+            height: auto;
         }
 
-        .container {
-            max-width: 1100px;
+        p, td, th, .content-text {
+            overflow-wrap: anywhere;
+        }
+
+        /* =====================================================
+           APPLICATION SHELL & NAV
+        ====================================================== */
+        .app-shell {
             width: 100%;
-            padding-left: 12px;
-            padding-right: 12px;
+            min-height: 100vh;
         }
 
-        /* Tiêu đề tự động co giãn kích thước theo màn hình */
-        .app-title {
+        .app-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        .app-header {
+            margin-bottom: 18px;
+        }
+
+        .app-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #0f172a;
+            text-decoration: none;
             font-size: clamp(1.25rem, 4vw, 1.75rem);
             font-weight: 700;
-            color: #0f172a;
+            line-height: 1.2;
+            transition: color 0.15s ease, opacity 0.15s ease;
         }
 
-        /* Tối ưu thanh điều hướng Flexbox */
+        .app-brand:hover {
+            color: #2563eb;
+        }
+
+        .app-brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            font-size: 1.25rem;
+        }
+
         .app-nav {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            backdrop-filter: blur(8px);
         }
 
-        .app-nav .nav-group {
+        .nav-group {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
         }
 
-        /* Chuẩn hóa kích thước nút bấm - Giữ nguyên chữ không bị rớt dòng */
+        .nav-group-right {
+            margin-left: auto;
+        }
+
         .app-nav .btn {
-            font-size: 0.875rem;
-            font-weight: 600;
-            padding: 8px 14px;
-            border-radius: 8px;
+            min-height: 38px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            white-space: nowrap; /* Giữ chữ trên nút luôn cố định 1 dòng */
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.15s ease;
         }
 
-        /* Nút Đăng nhập */
-        .btn-login {
+        .app-nav .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-home {
+            color: #1d4ed8;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+        .btn-home:hover {
+            color: #1e40af;
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .btn-dashboard {
+            color: #334155;
             background: #ffffff;
-            color: #475569;
             border: 1px solid #cbd5e1;
+        }
+        .btn-dashboard:hover {
+            color: #0f172a;
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-login {
+            color: #ffffff;
+            background: #2563eb;
+            border: 1px solid #2563eb;
             text-decoration: none;
         }
         .btn-login:hover {
-            background: #f1f5f9;
-            color: #0f172a;
+            color: #ffffff;
+            background: #1d4ed8;
+            border-color: #1d4ed8;
         }
 
-        /* Nút Thoát (Logout) */
         .btn-logout {
-            background: #fef2f2;
             color: #dc2626;
+            background: #fef2f2;
             border: 1px solid #fecaca;
-            text-decoration: none;
         }
         .btn-logout:hover {
-            background: #fee2e2;
             color: #b91c1c;
+            background: #fee2e2;
+            border-color: #fca5a5;
         }
 
-        /* =========================================================
-           FLOATING FEEDBACK WIDGET STYLING
-        ========================================================= */
+        .account-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 38px;
+            padding: 7px 10px;
+            color: #475569;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .account-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        }
+
+        #alert-container {
+            margin-bottom: 16px;
+        }
+        #alert-container:empty {
+            display: none;
+        }
+
+        .app-main {
+            width: 100%;
+        }
+
+        /* =====================================================
+           FEEDBACK FLOAT BUTTON & MODAL
+        ====================================================== */
         .feedback-float-btn {
             position: fixed;
-            bottom: 24px;
             right: 24px;
-            z-index: 999;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            bottom: 24px;
+            z-index: 1050;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 17px;
             color: #ffffff;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
             border: none;
-            border-radius: 50px;
-            padding: 10px 18px;
+            border-radius: 999px;
             font-size: 0.875rem;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.30);
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .feedback-float-btn:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.45);
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(37, 99, 235, 0.38);
+        }
+
+        .feedback-float-btn:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.25);
+            outline-offset: 3px;
         }
 
         .feedback-modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
+            inset: 0;
+            z-index: 2000;
             display: flex;
             align-items: flex-end;
             justify-content: flex-end;
             padding: 24px;
+            background: rgba(15, 23, 42, 0.42);
+            backdrop-filter: blur(4px);
             opacity: 0;
             visibility: hidden;
-            transition: all 0.2s ease-in-out;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
 
         .feedback-modal-overlay.is-active {
@@ -167,15 +288,15 @@
         }
 
         .feedback-modal-card {
-            background: #ffffff;
             width: 100%;
-            max-width: 380px;
-            border-radius: 16px;
+            max-width: 390px;
+            overflow: hidden;
+            background: #ffffff;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
-            padding: 20px;
-            transform: translateY(20px) scale(0.95);
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+            transform: translateY(18px) scale(0.97);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .feedback-modal-overlay.is-active .feedback-modal-card {
@@ -186,30 +307,65 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            gap: 12px;
+            padding: 16px 18px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .feedback-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
         }
 
         .feedback-icon-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
             background: #eff6ff;
-            padding: 4px 8px;
-            border-radius: 8px;
+            border: 1px solid #dbeafe;
+            border-radius: 9px;
             font-size: 1rem;
         }
 
-        .feedback-close-btn {
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: #94a3b8;
-            cursor: pointer;
-            line-height: 1;
-            padding: 0 4px;
-        }
-        .feedback-close-btn:hover {
+        .feedback-title {
+            margin: 0;
             color: #0f172a;
+            font-size: 0.95rem;
+            font-weight: 700;
         }
 
+        .feedback-close-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            color: #64748b;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .feedback-close-btn:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
+        .feedback-body {
+            padding: 18px;
+        }
+
+        /* SENTIMENT EMOJI RATING */
         .sentiment-rating {
             display: flex;
             justify-content: space-between;
@@ -251,173 +407,240 @@
             transform: scale(1.15);
         }
 
-        /* Controls Form inside Feedback Modal */
+        .feedback-modal-card .form-label {
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
         .feedback-modal-card .form-control,
         .feedback-modal-card .form-select {
+            min-height: 42px;
+            color: #1e293b;
             border: 1px solid #cbd5e1;
-            border-radius: 10px;
+            border-radius: 9px;
             font-size: 0.875rem;
+            box-shadow: none;
         }
+
         .feedback-modal-card .form-control:focus,
         .feedback-modal-card .form-select:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
-        /* Responsive cho Mobile <= 480px */
-        @media (max-width: 480px) {
-            .container {
-                padding-left: 10px;
-                padding-right: 10px;
-                margin-top: 10px !important;
+        .feedback-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* =====================================================
+           RESPONSIVE & ACCESSIBILITY
+        ====================================================== */
+        @media (max-width: 640px) {
+            .app-container {
+                padding: 14px 12px 32px;
+            }
+            .app-header {
+                margin-bottom: 12px;
+            }
+            .app-brand {
+                font-size: 1.25rem;
+            }
+            .app-brand-icon {
+                width: 34px;
+                height: 34px;
+                flex-basis: 34px;
+            }
+            .app-nav {
+                align-items: stretch;
+                padding: 8px;
+                border-radius: 10px;
+            }
+            .nav-group, .nav-group-right {
+                width: 100%;
+            }
+            .nav-group-right {
+                margin-left: 0;
             }
             .app-nav .btn {
-                padding: 8px 10px;
-                font-size: 0.8rem;
+                flex: 1 1 auto;
+                min-height: 40px;
+            }
+            .account-badge {
+                display: none;
             }
             .feedback-float-btn {
-                bottom: 16px;
                 right: 16px;
-                padding: 12px;
+                bottom: 16px;
+                width: 46px;
+                height: 46px;
+                min-height: 46px;
+                padding: 0;
                 border-radius: 50%;
             }
             .feedback-float-btn .btn-text {
                 display: none;
             }
             .feedback-modal-overlay {
-                padding: 12px;
-                align-items: center;
+                align-items: flex-end;
                 justify-content: center;
+                padding: 12px;
+            }
+            .feedback-modal-card {
+                max-width: 100%;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .app-nav .btn {
+                padding: 8px 9px;
+                font-size: 0.8rem;
+            }
+            .app-brand {
+                font-size: 1.15rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
+
 <body>
 
-<div class="container mt-3 mt-md-4 mb-4">
+<div class="app-shell">
+    <div class="app-container">
 
-    <!-- Tiêu đề trang -->
-    <h2 class="app-title mb-3 mb-md-4">
-        <a href="/" class="text-decoration-none text-dark">🖨 Thư viện Máy in Đại Thành</a>
-    </h2>
-
-    <!-- Thanh điều hướng chuẩn hóa layout -->
-    <nav class="mb-3 mb-md-4 app-nav">
-        <!-- Cụm bên trái: Trang chính -->
-        <div class="nav-group">
-            <a class="btn btn-outline-primary" href="/">
-                🏠 Trang chủ
+        <!-- HEADER -->
+        <header class="app-header">
+            <a href="/" class="app-brand" aria-label="Trang chủ Thư viện Máy in Đại Thành">
+                <span class="app-brand-icon" aria-hidden="true">🖨️</span>
+                <span>Thư viện Máy in Đại Thành</span>
             </a>
-            {% if user or request.cookies.get("user_session") %}
-                <a class="btn btn-outline-dark" href="/admin">
-                    📊 Dashboard
+        </header>
+
+        <!-- NAVIGATION -->
+        <nav class="app-nav" aria-label="Điều hướng chính">
+            <div class="nav-group">
+                <a href="/" class="btn btn-home">
+                    🏠 <span>Trang chủ</span>
                 </a>
-            {% endif %}
+
+                <!-- SỬA LỖI: Kiểm tra đúng biến admin hoặc cookie admin_session -->
+                {% if admin or request.cookies.get("admin_session") %}
+                    <a href="/admin" class="btn btn-dashboard">
+                        📊 <span>Dashboard</span>
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="nav-group nav-group-right">
+                {% if admin or request.cookies.get("admin_session") %}
+                    {% if admin and admin.ho_ten %}
+                        <span class="account-badge">
+                            <span class="account-dot" aria-hidden="true"></span>
+                            <span>{{ admin.ho_ten }}</span>
+                        </span>
+                    {% endif %}
+
+                    <!-- Form Logout POST chuẩn chống lỗi 405 -->
+                    <form method="post" action="/admin/logout" class="m-0">
+                        <button type="submit" class="btn btn-logout">
+                            🚪 <span>Thoát</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="/admin/login" class="btn btn-login">
+                        🔑 <span>Đăng nhập</span>
+                    </a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- ALERTS -->
+        <div id="alert-container" role="status" aria-live="polite">
+            {% block alerts %}{% endblock %}
         </div>
 
-        <!-- Cụm bên phải: Trạng thái tài khoản -->
-        <div class="nav-group ms-auto">
-            {% if user or request.cookies.get("user_session") %}
-                <a href="/admin/logout" class="btn btn-logout">
-                    🚪 Thoát
-                </a>
-            {% else %}
-                <a href="/admin/login" class="btn btn-login">
-                    🔑 Đăng nhập
-                </a>
-            {% endif %}
-        </div>
-    </nav>
-
-    <!-- Khu vực hiển thị thông báo chung (Flash Messages) -->
-    <div id="alert-container">
-        {% block alerts %}{% endblock %}
+        <!-- MAIN CONTENT -->
+        <main class="app-main">
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
-    <!-- Khối nội dung động kế thừa từ các trang con -->
-    {% block content %}
+    <!-- FLOATING FEEDBACK BUTTON -->
+    <button id="feedbackBtn" type="button" class="feedback-float-btn" onclick="toggleFeedbackModal()" aria-label="Gửi góp ý hoặc báo lỗi" title="Gửi góp ý hoặc báo lỗi">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <span class="btn-text">Góp ý</span>
+    </button>
 
-    {% endblock %}
-
-</div>
-
-<!-- NÚT GÓP Ý NỔI (FLOATING FEEDBACK BUTTON) -->
-<button id="feedbackBtn" class="feedback-float-btn" onclick="toggleFeedbackModal()" title="Gửi góp ý hoặc báo lỗi">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-    </svg>
-    <span class="btn-text">Góp ý</span>
-</button>
-
-<!-- POPUP MODAL GÓP Ý -->
-<div id="feedbackModal" class="feedback-modal-overlay" onclick="handleOverlayClick(event)">
-    <div class="feedback-modal-card">
-        <div class="feedback-header">
-            <div class="d-flex align-items-center gap-2">
-                <span class="feedback-icon-badge">💬</span>
-                <h6 class="m-0 fw-bold text-dark">Gửi góp ý & Phản hồi</h6>
-            </div>
-            <button type="button" class="feedback-close-btn" onclick="toggleFeedbackModal()">&times;</button>
-        </div>
-
-        <form id="feedbackForm" onsubmit="submitFeedback(event)" class="mt-3">
-            <!-- Loại phản hồi -->
-            <div class="mb-3">
-                <label class="form-label text-secondary fw-semibold small mb-1">Bạn muốn phản hồi về gì?</label>
-                <select id="feedbackCategory" class="form-select" required>
-                    <option value="ui">🎨 Giao diện & Trải nghiệm</option>
-                    <option value="bug">🐛 Báo lỗi kỹ thuật / Lỗi trang</option>
-                    <option value="content">📖 Nội dung bài hướng dẫn</option>
-                    <option value="feature">💡 Đề xuất tính năng mới</option>
-                    <option value="other">💬 Ý kiến đóng góp khác</option>
-                </select>
-            </div>
-
-            <!-- Mức độ hài lòng -->
-            <div class="mb-3">
-                <label class="form-label text-secondary fw-semibold small mb-1">Mức độ hài lòng của bạn</label>
-                <div class="sentiment-rating">
-                    <label class="sentiment-item">
-                        <input type="radio" name="rating" value="1">
-                        <span>😠</span>
-                    </label>
-                    <label class="sentiment-item">
-                        <input type="radio" name="rating" value="2">
-                        <span>🙁</span>
-                    </label>
-                    <label class="sentiment-item">
-                        <input type="radio" name="rating" value="3" checked>
-                        <span>😐</span>
-                    </label>
-                    <label class="sentiment-item">
-                        <input type="radio" name="rating" value="4">
-                        <span>🙂</span>
-                    </label>
-                    <label class="sentiment-item">
-                        <input type="radio" name="rating" value="5">
-                        <span>😍</span>
-                    </label>
+    <!-- FEEDBACK MODAL -->
+    <div id="feedbackModal" class="feedback-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" aria-hidden="true" onclick="handleOverlayClick(event)">
+        <div class="feedback-modal-card">
+            <div class="feedback-header">
+                <div class="feedback-title-wrap">
+                    <span class="feedback-icon-badge" aria-hidden="true">💬</span>
+                    <h2 id="feedbackTitle" class="feedback-title">Gửi góp ý & Phản hồi</h2>
                 </div>
+                <button type="button" class="feedback-close-btn" onclick="toggleFeedbackModal()" aria-label="Đóng">&times;</button>
             </div>
 
-            <!-- Nội dung góp ý -->
-            <div class="mb-3">
-                <label class="form-label text-secondary fw-semibold small mb-1">Nội dung góp ý <span class="text-danger">*</span></label>
-                <textarea id="feedbackContent" class="form-control" rows="3" placeholder="Chi tiết ý kiến hoặc mô tả lỗi bạn gặp phải..." style="resize: none;" required></textarea>
-            </div>
+            <div class="feedback-body">
+                <form id="feedbackForm" onsubmit="submitFeedback(event)">
+                    <div class="mb-3">
+                        <label for="feedbackCategory" class="form-label">Loại phản hồi</label>
+                        <select id="feedbackCategory" class="form-select" required>
+                            <option value="ui">🎨 Giao diện & Trải nghiệm</option>
+                            <option value="bug">🐛 Báo lỗi kỹ thuật / Lỗi trang</option>
+                            <option value="content">📖 Nội dung bài hướng dẫn</option>
+                            <option value="feature">💡 Đề xuất tính năng mới</option>
+                            <option value="other">💬 Ý kiến đóng góp khác</option>
+                        </select>
+                    </div>
 
-            <!-- Nút gửi -->
-            <button type="submit" id="submitFeedbackBtn" class="btn btn-primary w-100 fw-semibold py-2">
-                Gửi phản hồi
-            </button>
-        </form>
+                    <div class="mb-3">
+                        <label class="form-label">Mức độ hài lòng của bạn</label>
+                        <div class="sentiment-rating">
+                            <label class="sentiment-item"><input type="radio" name="rating" value="1"><span>😠</span></label>
+                            <label class="sentiment-item"><input type="radio" name="rating" value="2"><span>🙁</span></label>
+                            <label class="sentiment-item"><input type="radio" name="rating" value="3" checked><span>😐</span></label>
+                            <label class="sentiment-item"><input type="radio" name="rating" value="4"><span>🙂</span></label>
+                            <label class="sentiment-item"><input type="radio" name="rating" value="5"><span>😍</span></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedbackContent" class="form-label">Nội dung góp ý <span class="text-danger">*</span></label>
+                        <textarea id="feedbackContent" class="form-control" rows="3" placeholder="Chi tiết ý kiến hoặc mô tả lỗi bạn gặp phải..." style="resize: none;" required></textarea>
+                    </div>
+
+                    <div class="feedback-footer">
+                        <button type="button" class="btn btn-light" onclick="toggleFeedbackModal()">Hủy</button>
+                        <button id="feedbackSubmitBtn" type="submit" class="btn btn-primary">Gửi phản hồi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Bootstrap 5.3.3 JS Bundle -->
+<!-- BOOTSTRAP JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script tự động ẩn thông báo & Xử lý Góp ý -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Tự động ẩn Flash Messages sau 3.5s
@@ -431,24 +654,36 @@
         }, 3500);
     });
 
-    // Bật/tắt Modal Feedback
     function toggleFeedbackModal() {
-        const modal = document.getElementById('feedbackModal');
-        modal.classList.toggle('is-active');
+        const modal = document.getElementById("feedbackModal");
+        if (!modal) return;
+
+        const isActive = modal.classList.toggle("is-active");
+        modal.setAttribute("aria-hidden", String(!isActive));
+        document.body.style.overflow = isActive ? "hidden" : "";
     }
 
-    // Đóng khi click ngoài nền đen
     function handleOverlayClick(event) {
-        if (event.target.id === 'feedbackModal') {
+        const modal = document.getElementById("feedbackModal");
+        if (event.target === modal) {
             toggleFeedbackModal();
         }
     }
 
-    // Xử lý gửi Form Feedback qua API
+    /* Đóng modal bằng phím ESC */
+    document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        const modal = document.getElementById("feedbackModal");
+        if (modal && modal.classList.contains("is-active")) {
+            toggleFeedbackModal();
+        }
+    });
+
+    /* Gửi Feedback bằng AJAX fetch mượt mà không reload trang */
     async function submitFeedback(event) {
         event.preventDefault();
 
-        const submitBtn = document.getElementById('submitFeedbackBtn');
+        const submitBtn = document.getElementById('feedbackSubmitBtn');
         const category = document.getElementById('feedbackCategory').value;
         const content = document.getElementById('feedbackContent').value;
         const ratingEl = document.querySelector('input[name="rating"]:checked');
@@ -460,9 +695,7 @@
         try {
             const response = await fetch('/api/feedback', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     category: category,
                     rating: rating,
@@ -487,6 +720,8 @@
         }
     }
 </script>
+
+{% block scripts %}{% endblock %}
 
 </body>
 </html>

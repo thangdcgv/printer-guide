@@ -1,17 +1,102 @@
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from app.routers import admin, home, guide, guide_step, auth, printer, dashboard, library
 
-app = FastAPI(title="Thư viện hướng dẫn sử dụng máy in", version="1.0.0")
+from app.routers import (
+    admin,
+    auth,
+    dashboard,
+    guide,
+    guide_step,
+    home,
+    library,
+    printer,
+)
+# Import Exception để bắt lỗi chưa xác thực
+from app.routers.auth import AdminUnauthenticatedException
 
-# Mount thư mục chứa file tĩnh (CSS, JS, Images)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# =========================================================
+# APPLICATION
+# =========================================================
 
-# Khai báo Templates
-templates = Jinja2Templates(directory="app/templates")
+ENV = os.getenv("ENV", "development").lower()
+IS_DEVELOPMENT = ENV == "development"
 
-# Đăng ký các Router
+app = FastAPI(
+    title="Thư viện hướng dẫn sử dụng máy in",
+    version="1.0.0",
+    docs_url="/docs" if IS_DEVELOPMENT else None,
+    redoc_url="/redoc" if IS_DEVELOPMENT else None,
+)
+
+# =========================================================
+# EXCEPTION HANDLERS
+# =========================================================
+
+@app.exception_handler(AdminUnauthenticatedException)
+async def admin_unauthenticated_handler(
+    request: Request,
+    exc: AdminUnauthenticatedException,
+):
+    """
+    Tự động chuyển hướng trình duyệt về /admin/login (303)
+    khi người dùng chưa đăng nhập hoặc hết hạn Session Admin.
+    """
+    return RedirectResponse(
+        url="/admin/login",
+        status_code=303,
+    )
+
+# =========================================================
+# TRUSTED HOST
+# =========================================================
+
+allowed_hosts = [
+    "printer-guide.onrender.com",  # Domain Render
+    "*.onrender.com",              # Subdomain Render (dự phòng)
+    "localhost",                   # Test local
+    "127.0.0.1",                   # Test local IP
+    "[::1]",
+]
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=allowed_hosts,
+)
+
+# =========================================================
+# CORS
+# =========================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://printer-guide.onrender.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================================================
+# STATIC FILES
+# =========================================================
+
+app.mount(
+    "/static",
+    StaticFiles(directory="app/static"),
+    name="static",
+)
+
+# =========================================================
+# ROUTERS
+# =========================================================
+
 app.include_router(home.router)
 app.include_router(admin.router)
 app.include_router(guide.router)

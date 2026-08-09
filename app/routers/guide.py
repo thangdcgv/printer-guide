@@ -234,10 +234,6 @@ async def list_guides(
     page: int = 1,
     current_user: dict = Depends(require_admin)
 ):
-    print("\n" + "="*50, flush=True)
-    print(">>> [DEBUG TEST] ĐÃ VÀO HÀM list_guides!", flush=True)
-    print(f">>> USER DANG DANG NHAP: {current_user}", flush=True)
-    print("="*50 + "\n", flush=True)
 
     PER_PAGE = 10
     page = max(1, page)
