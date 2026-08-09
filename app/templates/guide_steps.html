@@ -162,8 +162,8 @@
         <!-- Breadcrumb & Header -->
         <div class="header-flex-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
             <div>
-                <!-- Kiểm tra nếu có cookie user_session thì về trang quản trị, ngược lại về trang chủ -->
-                {% if request.cookies.get("user_session") %}
+                <!-- Kiểm tra nếu có session hợp lệ thì cho quay lại trang quản trị/thư viện, ngược lại về trang chủ -->
+                {% if request.cookies.get("admin_session") %}
                     <a href="/admin/guide" style="color: #64748b; font-size: 0.8125rem; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; transition: color 0.15s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">
                         ← Quay lại trang quản trị
                     </a>
@@ -179,7 +179,7 @@
             </div>
 
             <!-- Chỉ hiển thị nút Thêm bước mới nếu người dùng là Admin/KTV đã đăng nhập -->
-            {% if request.cookies.get("user_session") %}
+            {% if user and (user.role in ['Admin', 'SuperAdmin'] or (guide.created_by and guide.created_by == user.id)) %}
             <button type="button" data-next-step="{{ steps | length + 1 }}" onclick="openAddModal(this)" class="btn-primary-modern shadow-sm">
                 <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Thêm bước mới
