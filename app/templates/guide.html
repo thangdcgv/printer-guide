@@ -321,6 +321,46 @@
         width: 100%;
     }
 }
+/* Nút cuộn trang thông minh - Ép vị trí hiển thị chuẩn */
+    .scroll-toggle-btn {
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important;
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999 !important; /* Tăng z-index lên cao nhất */
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        outline: none !important;
+    }
+
+    .scroll-toggle-btn:hover {
+        background: #1d4ed8 !important;
+        transform: translateY(-2px) scale(1.05) !important;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
+    }
+
+    .scroll-toggle-btn:active {
+        transform: translateY(0) scale(0.95) !important;
+    }
+
+    .scroll-toggle-btn svg {
+        width: 22px !important;
+        height: 22px !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    .scroll-toggle-btn.is-bottom svg {
+        transform: rotate(180deg) !important;
+    }
 </style>
 
 <div class="modern-ui">
@@ -528,6 +568,13 @@
                 </table>
             </div>
         </div>
+        <!-- Nút cuộn nhanh Trang (Lên / Xuống) -->
+<button type="button" id="scrollToggleBtn" class="scroll-toggle-btn" title="Cuộn xuống cuối trang" onclick="handleScrollToggle()">
+    <!-- Icon Mũi tên chỉ xuống (Mặc định khi ở đầu trang) -->
+    <svg id="scrollIcon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
+    </svg>
+</button>
         {% if total_pages > 1 %}
 <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 mt-4 sm:px-6 rounded-lg shadow-sm">
     <div>
@@ -562,5 +609,51 @@
 {% endif %}
     </div>
 </div>
+<script>
+// =========================================================
+    // XỬ LÝ NÚT CUỘN TRANG THÔNG MINH (TOP <-> BOTTOM)
+    // =========================================================
+    const scrollBtn = document.getElementById('scrollToggleBtn');
+    let isNearTop = true;
 
+    function updateScrollButton() {
+        if (!scrollBtn) return;
+        
+        // Kiểm tra xem vị trí cuộn hiện tại có nằm ở nửa trên trang hay không
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+        
+        // Nếu cuộn qua 30% chiều dài trang thì chuyển sang chế độ "Lên đầu trang"
+        if (scrollPosition > totalHeight * 0.3) {
+            isNearTop = false;
+            scrollBtn.classList.add('is-bottom');
+            scrollBtn.setAttribute('title', 'Cuộn lên đầu trang');
+        } else {
+            isNearTop = true;
+            scrollBtn.classList.remove('is-bottom');
+            scrollBtn.setAttribute('title', 'Cuộn xuống cuối trang');
+        }
+    }
+
+    function handleScrollToggle() {
+        if (isNearTop) {
+            // Cuộn mượt xuống cuối trang
+            window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
+            });
+        } else {
+            // Cuộn mượt lên đầu trang
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // Bắt sự kiện cuộn chuột để tự động đổi icon mũi tên
+    window.addEventListener('scroll', updateScrollButton);
+    // Kiểm tra trạng thái ngay khi tải trang
+    document.addEventListener('DOMContentLoaded', updateScrollButton);
+</script>
 {% endblock %}

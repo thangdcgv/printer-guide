@@ -15,7 +15,7 @@ from app.routers import (
     library,
     printer,
 )
-# Import Exception để bắt lỗi chưa xác thực
+# Cập nhật import Exception từ app.routers.admin
 from app.routers.auth import AdminUnauthenticatedException
 
 # =========================================================
@@ -42,13 +42,17 @@ async def admin_unauthenticated_handler(
     exc: AdminUnauthenticatedException,
 ):
     """
-    Tự động chuyển hướng trình duyệt về /admin/login (303)
-    khi người dùng chưa đăng nhập hoặc hết hạn Session Admin.
+    Tự động xóa cookie hết hạn và chuyển hướng trình duyệt về /admin/login (303)
+    khi người dùng chưa đăng nhập hoặc bị hủy Session.
     """
-    return RedirectResponse(
+    response = RedirectResponse(
         url="/admin/login",
         status_code=303,
     )
+    # Xóa sạch cookie rác/hết hạn trên trình duyệt client
+    response.delete_cookie(key="admin_session", path="/")
+    response.delete_cookie(key="admin_refresh", path="/")
+    return response
 
 # =========================================================
 # TRUSTED HOST

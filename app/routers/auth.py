@@ -2,7 +2,7 @@ import os
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Form, Request, status
+from fastapi import APIRouter, Form, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import templates
@@ -23,7 +23,8 @@ ENV = os.getenv("ENV", "development").lower()
 IS_PRODUCTION = ENV == "production"
 
 SESSION_COOKIE_NAME = "admin_session"
-SESSION_MAX_AGE = 60 * 60  # Cookie tồn tại tối đa 1 giờ
+REFRESH_COOKIE_NAME = "admin_refresh"
+SESSION_MAX_AGE = 60 * 60 * 24 * 7  # Duy trì đăng nhập 7 ngày (604,800 giây)
 
 ALLOWED_ADMIN_ROLES = {
     "Admin",
@@ -41,6 +42,42 @@ class AdminUnauthenticatedException(Exception):
     main.py sẽ catch exception này và redirect về /admin/login bằng HTTP 303.
     """
     pass
+
+
+# =========================================================
+# COOKIE HELPERS
+# =========================================================
+
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    """
+    Thiết lập cặp Cookie Access Token & Refresh Token vào Response.
+    """
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=IS_PRODUCTION,
+        samesite="lax",
+        path="/",
+        max_age=SESSION_MAX_AGE,
+    )
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=IS_PRODUCTION,
+        samesite="lax",
+        path="/",
+        max_age=SESSION_MAX_AGE,
+    )
+
+
+def clear_auth_cookies(response: Response) -> None:
+    """
+    Xóa toàn bộ Session Cookie ở Client khi đăng xuất hoặc Session bị vô hiệu hóa.
+    """
+    response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
 
 
 # =========================================================
@@ -74,79 +111,106 @@ def get_admin_profile(auth_id: str) -> Optional[dict]:
     """
     Lấy thông tin người dùng / quản trị viên dựa trên auth_id đã được Supabase Auth xác thực.
     """
-    result = (
-        supabase
-        .table("quan_tri_vien")
-        .select(
-            """
-            id,
-            auth_id,
-            username,
-            email,
-            ho_ten,
-            role,
-            nhan_vien_id,
-            chuc_danh,
-            ngay_sinh,
-            so_dien_thoai,
-            dia_chi,
-            nguoi_quan_ly_id
-            """
+    try:
+        result = (
+            supabase
+            .table("quan_tri_vien")
+            .select(
+                """
+                id,
+                auth_id,
+                username,
+                email,
+                ho_ten,
+                role,
+                nhan_vien_id,
+                chuc_danh,
+                ngay_sinh,
+                so_dien_thoai,
+                dia_chi,
+                nguoi_quan_ly_id
+                """
+            )
+            .eq("auth_id", auth_id)
+            .limit(1)
+            .execute()
         )
-        .eq("auth_id", auth_id)
-        .limit(1)
-        .execute()
-    )
 
-    if not result.data:
+        if not result.data:
+            return None
+
+        return result.data[0]
+    except Exception as exc:
+        logger.error("Lỗi khi lấy thông tin admin profile: %s", exc)
         return None
 
-    return result.data[0]
-
 
 # =========================================================
-# HELPER: AUTHENTICATE USER & ADMIN SESSION
+# HELPER: AUTHENTICATE USER & ADMIN SESSION (WITH AUTO-REFRESH)
 # =========================================================
 
-def authenticate_session(request: Request) -> Optional[dict]:
+def authenticate_session(request: Request, response: Optional[Response] = None) -> Optional[dict]:
     """
     Xác thực session của BẤT KỲ tài khoản nào đã đăng nhập.
-    Flow: Cookie -> access_token -> Supabase Auth -> auth_id -> quan_tri_vien -> Profile
+    Tự động dùng Refresh Token để gia hạn nếu Access Token bị hết hạn (sau 15 phút).
     """
+    # Kiểm tra nếu Middleware đã xác thực trước đó
+    if hasattr(request.state, "user_profile") and request.state.user_profile:
+        return request.state.user_profile
+
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
 
-    if not access_token:
+    if not access_token and not refresh_token:
         return None
 
-    try:
-        # 1. Xác thực access token với Supabase
-        user_response = supabase.auth.get_user(access_token)
+    auth_id: Optional[str] = None
 
-        if not user_response or not user_response.user:
+    # 1. Thử xác thực với Access Token hiện tại
+    if access_token:
+        try:
+            user_response = supabase.auth.get_user(access_token)
+            if user_response and user_response.user:
+                auth_id = user_response.user.id
+        except Exception:
+            auth_id = None
+
+    # 2. Nếu Access Token hết hạn (sau 15 phút) -> Dùng Refresh Token để lấy Session mới
+    if not auth_id and refresh_token:
+        try:
+            refresh_response = supabase.auth.refresh_session(refresh_token)
+            if refresh_response and refresh_response.session and refresh_response.user:
+                auth_id = refresh_response.user.id
+                new_access_token = refresh_response.session.access_token
+                new_refresh_token = refresh_response.session.refresh_token
+
+                # Cập nhật Cookie mới ngay lập tức nếu có response object
+                if response:
+                    set_auth_cookies(response, new_access_token, new_refresh_token)
+                
+                logger.info("Tự động gia hạn Session thành công cho auth_id=%s", auth_id)
+        except Exception as exc:
+            logger.warning("Gia hạn session bằng Refresh Token thất bại: %s", exc)
             return None
 
-        auth_user = user_response.user
-        auth_id = auth_user.id
-
-        # 2. Kiểm tra profile trong quan_tri_vien
-        user_profile = get_admin_profile(auth_id)
-
-        if not user_profile:
-            logger.warning("Auth user không có profile hệ thống: auth_id=%s", auth_id)
-            return None
-
-        return user_profile
-
-    except Exception as exc:
-        logger.info("Session không hợp lệ: %s", exc)
+    if not auth_id:
         return None
 
+    # 3. Kiểm tra profile trong quan_tri_vien
+    user_profile = get_admin_profile(auth_id)
 
-def authenticate_admin_session(request: Request) -> Optional[dict]:
+    if not user_profile:
+        logger.warning("Auth user không có profile hệ thống: auth_id=%s", auth_id)
+        return None
+
+    return user_profile
+
+
+def authenticate_admin_session(request: Request, response: Optional[Response] = None) -> Optional[dict]:
     """
     Xác thực session VÀ kiểm tra xem tài khoản có quyền Admin/SuperAdmin hay không.
     """
-    user_profile = authenticate_session(request)
+    user_profile = authenticate_session(request, response)
 
     if not user_profile:
         return None
@@ -167,10 +231,11 @@ def authenticate_admin_session(request: Request) -> Optional[dict]:
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
+    response: Response,
     error: Optional[str] = None,
 ):
     """GET /admin/login"""
-    user = authenticate_session(request)
+    user = authenticate_session(request, response)
 
     # Nếu đã đăng nhập thì tự động chuyển hướng về trang tương ứng với role
     if user:
@@ -204,7 +269,7 @@ async def handle_login(
     clean_username = username.strip()
     clean_password = password  # Mật khẩu giữ nguyên khoảng trắng hợp lệ
 
-    # Validation cơ bản
+    # 1. Validation đầu vào
     if not clean_username or not clean_password:
         return render_login_error(
             request,
@@ -213,28 +278,26 @@ async def handle_login(
         )
 
     try:
-        # 1. Xác định email
+        # 2. Xác định Email từ Username nhập vào
         target_email = clean_username
 
         if "@" not in clean_username:
+            # Tra cứu Email trong bảng quan_tri_vien theo username
             lookup = (
-                supabase
-                .table("quan_tri_vien")
+                supabase.table("quan_tri_vien")
                 .select("email")
                 .eq("username", clean_username)
                 .limit(1)
                 .execute()
             )
 
-            if not lookup.data:
-                return render_login_error(request)
+            if lookup.data and lookup.data[0].get("email"):
+                target_email = lookup.data[0].get("email")
+            else:
+                # Dự phòng nếu username chưa khai báo trong DB: Tự động nối @gmail.com
+                target_email = f"{clean_username.lower()}@gmail.com"
 
-            target_email = lookup.data[0].get("email")
-
-            if not target_email:
-                return render_login_error(request)
-
-        # 2. Supabase Authentication
+        # 3. Supabase Authentication
         auth_response = supabase.auth.sign_in_with_password(
             {
                 "email": target_email,
@@ -248,7 +311,7 @@ async def handle_login(
         user = auth_response.user
         session = auth_response.session
 
-        # 3. Kiểm tra Profile trong cơ sở dữ liệu (Cho phép cả Admin và User)
+        # 4. Kiểm tra Profile trong cơ sở dữ liệu
         user_profile = get_admin_profile(user.id)
 
         if not user_profile:
@@ -260,26 +323,16 @@ async def handle_login(
 
         user_role = user_profile.get("role", "User")
 
-        # 4. Điều hướng linh hoạt theo Role sau khi đăng nhập thành công
-        # - Nếu là Admin: Vào trang quản lý/thư viện (/admin/guide)
-        # - Nếu là User thường: Chuyển về trang chủ (/)
+        # 5. Điều hướng linh hoạt theo Role sau khi đăng nhập thành công
         target_url = "/admin/guide" if user_role in ALLOWED_ADMIN_ROLES else "/"
 
-        # 5. Tạo Response & Thiết lập Cookie
+        # 6. Tạo Response & Thiết lập cặp Cookie (Access Token + Refresh Token)
         response = RedirectResponse(
             url=target_url,
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-        response.set_cookie(
-            key=SESSION_COOKIE_NAME,
-            value=session.access_token,
-            httponly=True,
-            secure=IS_PRODUCTION,
-            samesite="lax",
-            path="/",
-            max_age=SESSION_MAX_AGE,
-        )
+        set_auth_cookies(response, session.access_token, session.refresh_token)
 
         return response
 
@@ -299,10 +352,11 @@ async def logout(request: Request):
     """
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
 
-    # 1. Thu hồi session phía Supabase
+    # 1. Thu hồi session phía Supabase qua Admin API
     if access_token:
         try:
-            supabase.auth.sign_out(access_token)
+            # Sửa sign_out() thành admin.sign_out()
+            supabase.auth.admin.sign_out(access_token)
         except Exception as exc:
             logger.warning("Không thể thu hồi token phía Supabase Auth: %s", exc)
 
@@ -312,11 +366,8 @@ async def logout(request: Request):
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
-    # 3. Xóa Cookie ở client
-    response.delete_cookie(
-        key=SESSION_COOKIE_NAME,
-        path="/",
-    )
+    # 3. Xóa cả 2 Cookie ở client
+    clear_auth_cookies(response)
 
     return response
 
@@ -325,12 +376,12 @@ async def logout(request: Request):
 # DEPENDENCIES
 # =========================================================
 
-async def require_login(request: Request) -> dict:
+async def require_login(request: Request, response: Response) -> dict:
     """
     Dependency bảo vệ các Route yêu cầu người dùng ĐÃ ĐĂNG NHẬP (Cả User & Admin).
     Nếu chưa đăng nhập sẽ bắn Exception để main.py tự động Redirect về /admin/login.
     """
-    user = authenticate_session(request)
+    user = authenticate_session(request, response)
 
     if not user:
         raise AdminUnauthenticatedException()
@@ -338,11 +389,11 @@ async def require_login(request: Request) -> dict:
     return user
 
 
-async def require_admin(request: Request) -> dict:
+async def require_admin(request: Request, response: Response) -> dict:
     """
     Dependency bảo vệ các Route chỉ dành riêng cho Quản trị viên (Admin / SuperAdmin).
     """
-    admin = authenticate_admin_session(request)
+    admin = authenticate_admin_session(request, response)
 
     if not admin:
         raise AdminUnauthenticatedException()

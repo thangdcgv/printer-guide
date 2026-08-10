@@ -2,119 +2,127 @@
 
 {% block content %}
 <style>
-:root{
-    --primary:#2563eb;
-    --bg:#f8fafc;
-    --card-bg:#ffffff;
-    --text:#1e293b;
-    --text-secondary:#64748b;
-    --border:#e2e8f0;
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
 }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-    font-family:'Inter',Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    padding:clamp(8px, 2vw, 20px);
-    line-height:1.5;
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: clamp(10px, 2vw, 24px);
+    line-height: 1.5;
 }
 
-.container{
-    width:100%;
-    max-width:1200px;
-    margin:auto;
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: auto;
 }
 
 /* NAVBAR */
-.navbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:10px;
-    background:var(--card-bg);
-    padding:clamp(12px, 2vw, 16px);
-    border-radius:14px;
-    border:1px solid var(--border);
-    margin-bottom:16px;
-    box-shadow:0 2px 8px rgba(0,0,0,.03);
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--card-bg);
+    padding: clamp(12px, 2vw, 16px);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.03);
 }
 
-.brand{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:clamp(0.9rem, 2vw, 1.05rem);
-    font-weight:700;
-    color:#111827;
-    text-decoration:none;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    font-weight: 700;
+    color: #0f172a;
+    text-decoration: none;
 }
 
-.nav-actions{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
+.nav-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* BUTTONS */
-.btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    min-height:38px;
-    padding:8px 14px;
-    border-radius:10px;
-    font-size:clamp(0.8rem, 2vw, 0.88rem);
-    font-weight:600;
-    text-decoration:none;
-    transition:.25s;
-    cursor:pointer;
-    white-space:nowrap;
-    border:none;
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: clamp(0.8rem, 2vw, 0.88rem);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+    border: none;
 }
 
-.btn:hover{ opacity:.9; }
-.btn-outline{ background:#f8fafc; border:1px solid var(--border); color:#334155; }
-.btn-danger{ background:#ef4444; color:#fff; }
-.btn-sm{ min-height:28px; padding:4px 8px; font-size:0.75rem; border-radius:6px; }
+.btn:hover { opacity: .9; transform: translateY(-1px); }
+.btn-outline { background: #ffffff; border: 1px solid var(--border); color: #334155; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-sm { min-height: 28px; padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; }
 
 /* STATS GRID 4 CỘT */
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(2, 1fr);
-    gap:12px;
-    margin-bottom:16px;
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
 }
 
-@media (min-width: 1024px){
-    .stats-grid{ grid-template-columns:repeat(4, 1fr); }
+@media (min-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-.stat-card{
-    background:var(--card-bg);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:clamp(12px, 2vw, 18px);
-    box-shadow:0 2px 8px rgba(0,0,0,.03);
-    transition: transform 0.2s ease;
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: clamp(14px, 2vw, 20px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
 }
 
-.stat-card:hover{ transform: translateY(-2px); }
-.stat-title{ font-size:clamp(0.75rem, 1.8vw, 0.85rem); color:var(--text-secondary); margin-bottom:6px; font-weight:600; }
-.stat-value{ font-size:clamp(1.3rem, 4vw, 1.8rem); font-weight:700; color:#111827; }
+.stat-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 16px rgba(0,0,0,.06);
+}
+
+.stat-title { font-size: clamp(0.75rem, 1.8vw, 0.85rem); color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+.stat-value { font-size: clamp(1.4rem, 4vw, 1.8rem); font-weight: 800; color: #0f172a; line-height: 1.2; }
+.stat-subtext { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+
+.text-danger { color: #ef4444 !important; }
 
 .pulse-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 14px;
+    right: 14px;
     background: #ef4444;
     color: white;
     font-size: 0.7rem;
@@ -123,110 +131,168 @@ body{
     font-weight: 700;
 }
 
-/* LAYOUT 2 CỘT CHO BẢNG */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-}
-
-@media (min-width: 992px){
-    .dashboard-grid { grid-template-columns: 1fr 1fr; }
-    .grid-full { grid-column: 1 / -1; }
-}
-
-.glass-card{
-    background:var(--card-bg);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:clamp(14px, 2vw, 20px);
-    margin-bottom:16px;
-    box-shadow:0 2px 8px rgba(0,0,0,.03);
-}
-
-.section-title{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:14px;
-    font-size:clamp(0.95rem, 2vw, 1.05rem);
-    font-weight:700;
-}
-
-/* TABLE & LISTS */
-.table-responsive{ width:100%; overflow-x:auto; }
-table{ width:100%; min-width:400px; border-collapse:collapse; font-size:0.85rem; }
-th{ background:#f8fafc; color:#64748b; padding:10px 12px; text-align:left; font-weight:600; border-bottom:1px solid var(--border); }
-td{ padding:10px 12px; border-bottom:1px solid #f1f5f9; vertical-align: middle; }
-tr:hover{ background:#fafafa; }
-
-/* BADGES */
-.badge{ display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:0.75rem; font-weight:600; }
-.badge-blue{ background:#dbeafe; color:#1d4ed8; }
-.badge-warning{ background:#fef3c7; color:#d97706; }
-.badge-success{ background:#dcfce7; color:#15803d; }
-.badge-gray{ background:#f1f5f9; color:#475569; }
-
-/* LOG TIMELINE */
-.log-item {
+/* LAYOUT XẾP CHỒNG DỌC (FULL WIDTH EACH) */
+.dashboard-sections {
     display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.glass-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: clamp(16px, 2vw, 22px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.03);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* TABLE & ACCORDION */
+.table-responsive { width: 100%; overflow-x: auto; }
+table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.86rem; }
+th { background: #f8fafc; color: #64748b; padding: 12px 16px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+
+/* Dòng máy in Header Clickable */
+.category-row-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+.category-row-header:hover {
+    background: #f8fafc;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-right: 8px;
+}
+
+.category-row-header.active .toggle-icon {
+    transform: rotate(90deg);
+    color: var(--primary);
+}
+
+/* Danh sách bài viết con xổ ra */
+.guides-detail-row {
+    background: #f8fafc;
+}
+.guides-container {
+    padding: 10px 16px 16px 32px;
+}
+.guide-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.guide-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px dashed #f1f5f9;
+    background: #ffffff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
     font-size: 0.85rem;
 }
-.log-item:last-child { border-bottom: none; }
-.log-icon { width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-.log-content { flex: 1; }
-.log-time { font-size: 0.75rem; color: #94a3b8; }
+.guide-item-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+.guide-item a {
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 500;
+}
+.guide-item a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
 
-.empty-state{ text-align:center; padding:20px 16px; color:#64748b; font-size:0.85rem; }
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.badge-blue { background: #dbeafe; color: #1d4ed8; }
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-success { background: #dcfce7; color: #15803d; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+.badge-pinned { background: #fee2e2; color: #dc2626; font-size: 0.7rem; }
+
+.empty-state { text-align: center; padding: 24px 16px; color: #64748b; font-size: 0.86rem; }
 </style>
 
 <div class="container">
     
-    <!-- Navbar -->
+    <!-- Navbar Header -->
     <div class="navbar">
         <a href="/admin/guide" class="brand">
-            📊 Thống kê & Vận hành Hệ thống
+            📊 Quản Lý & Thống Kê Hướng Dẫn Máy In
         </a>
         <div class="nav-actions">
-            <a href="/admin/guide" class="btn btn-outline">Quản lý Bài viết</a>
+            <a href="/admin/guide/create" class="btn btn-primary">➕ Thêm Hướng Dẫn Mới</a>
         </div>
     </div>
 
-    <!-- Khối 4 Thẻ tổng quan -->
+    <!-- Khối 4 Thẻ Tổng Quan -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-title">📁 Tổng số bài hướng dẫn</div>
             <div class="stat-value">{{ total_guides or 0 }}</div>
+            <div class="stat-subtext">Đã ghi nhận trong CSDL</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">🖨️ Dòng máy in quản lý</div>
+            <div class="stat-title">🖨️ Model máy in</div>
             <div class="stat-value">{{ category_stats | length if category_stats else 0 }}</div>
+            <div class="stat-subtext">Dòng máy trong hệ thống</div>
         </div>
         <div class="stat-card">
-            <div class="stat-title">💬 Góp ý chưa xử lý</div>
-            <div class="stat-value text-danger">{{ unread_feedbacks_count or 0 }}</div>
-            {% if unread_feedbacks_count and unread_feedbacks_count > 0 %}
-                <span class="pulse-badge">Mới</span>
+            <div class="stat-title">🔥 Dòng máy nhiều bài nhất</div>
+            {% if category_stats and category_stats | length > 0 %}
+                {% set top_cat = category_stats | sort(attribute='count', reverse=True) | first %}
+                <div class="stat-value" style="font-size: 1.15rem; margin-top: 4px;">
+                    {{ top_cat.display_name or ((top_cat.brand or '') ~ ' ' ~ (top_cat.model or '')) }}
+                </div>
+                <div class="stat-subtext">Chiếm <strong>{{ top_cat.count }}</strong> bài hướng dẫn</div>
+            {% else %}
+                <div class="stat-value">--</div>
+                <div class="stat-subtext">Chưa có dữ liệu</div>
             {% endif %}
         </div>
         <div class="stat-card">
-            <div class="stat-title">⚡ Hoạt động trong ngày</div>
-            <div class="stat-value">{{ today_logs_count or 0 }}</div>
+            <div class="stat-title">💬 Phản hồi chưa đọc</div>
+            <div class="stat-value text-danger" id="stat-unread-count">{{ unread_feedbacks_count or 0 }}</div>
+            <div class="stat-subtext">Góp ý từ người dùng</div>
+            {% if unread_feedbacks_count and unread_feedbacks_count > 0 %}
+                <span class="pulse-badge" id="stat-pulse-badge">Mới</span>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Bố cục 2 Cột: Feedback & Log hệ thống -->
-    <div class="dashboard-grid">
-        
-        <!-- CỘT 1: FEEDBACK TỪ KHÁCH HÀNG -->
+    <!-- Bố cục xếp chồng dọc -->
+    <div class="dashboard-sections">
+        <!-- PHẦN: PHẢN HỒI & GÓP Ý TỪ KHÁCH HÀNG -->
         <div class="glass-card">
             <div class="section-title">
-                <span>💬 Phản hồi & Góp ý mới nhất</span>
+                <span>💬 Phản hồi & Góp ý từ người dùng</span>
                 {% if unread_feedbacks_count and unread_feedbacks_count > 0 %}
-                    <span class="badge badge-warning">{{ unread_feedbacks_count }} chưa đọc</span>
+                    <span id="unread-count-badge" class="badge badge-warning">{{ unread_feedbacks_count }} chưa đọc</span>
+                {% else %}
+                    <span id="unread-count-badge" class="badge badge-warning" style="display: none;">0 chưa đọc</span>
                 {% endif %}
             </div>
             
@@ -234,46 +300,66 @@ tr:hover{ background:#fafafa; }
                 <table>
                     <thead>
                         <tr>
-                            <th>Loại</th>
-                            <th>Đánh giá</th>
-                            <th>Nội dung</th>
-                            <th>Thao tác</th>
+                            <th style="width: 12%;">Phân loại</th>
+                            <th style="width: 10%; text-align: center;">Đánh giá</th>
+                            <th style="width: 58%;">Nội dung góp ý</th>
+                            <th style="width: 20%; text-align: right;">Trạng thái / Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if recent_feedbacks %}
                             {% for fb in recent_feedbacks %}
-                            <tr>
+                            <tr id="feedback-row-{{ fb.id }}">
                                 <td>
                                     {% if fb.category == 'bug' %}
-                                        <span class="badge badge-warning" title="Báo lỗi">🐛 Lỗi</span>
+                                        <span class="badge badge-warning" title="Báo lỗi">🐛 Báo lỗi</span>
                                     {% elif fb.category == 'ui' %}
-                                        <span class="badge badge-blue" title="Giao diện">🎨 UI</span>
+                                        <span class="badge badge-blue" title="Giao diện">🎨 Giao diện</span>
                                     {% else %}
-                                        <span class="badge badge-gray">💬 Khác</span>
+                                        <span class="badge badge-gray" title="Khác">💬 Khác</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td style="text-align: center; font-size: 1.1rem;">
                                     {% if fb.rating == 5 %}😍{% elif fb.rating == 4 %}🙂{% elif fb.rating == 3 %}😐{% elif fb.rating == 2 %}🙁{% else %}😠{% endif %}
                                 </td>
                                 <td>
-                                    <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ fb.content }}">
+                                    <div style="font-weight: 500; color: #1e293b; line-height: 1.4;">
                                         {{ fb.content }}
                                     </div>
-                                    <small style="color: #94a3b8; font-size: 0.7rem;">{{ fb.created_at[:10] if fb.created_at else '' }}</small>
+                                    <div style="display: flex; gap: 12px; color: #94a3b8; font-size: 0.72rem; margin-top: 4px; flex-wrap: wrap;">
+                                        <span>
+                                            🕒 Gửi lúc: 
+                                            {% if fb.created_at %}
+                                                {% if fb.created_at.strftime is defined %}
+                                                    {{ fb.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    {{ fb.created_at[:16] | replace('T', ' ') }}
+                                                {% endif %}
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </span>
+                                        {% if fb.page_url %}
+                                        <span>
+                                            🔗 Trang: <a href="{{ fb.page_url }}" target="_blank" style="color: #3b82f6; text-decoration: underline;">{{ fb.page_url }}</a>
+                                        </span>
+                                        {% endif %}
+                                    </div>
                                 </td>
-                                <td>
+                                <td style="text-align: right;" id="feedback-action-{{ fb.id }}">
                                     {% if not fb.is_processed %}
-                                        <button onclick="markProcessed('{{ fb.id }}')" class="btn btn-outline btn-sm">Đã đọc</button>
+                                        <button onclick="markProcessed('{{ fb.id }}')" class="btn btn-outline btn-sm">Đánh dấu đã đọc</button>
                                     {% else %}
-                                        <span class="badge badge-success">✓ Xử lý</span>
+                                        <span class="badge badge-success">✓ Đã xử lý</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="empty-state">Chưa có góp ý nào từ khách hàng.</td>
+                                <td colspan="4" class="empty-state" style="text-align: center; color: #94a3b8; padding: 24px;">
+                                    Chưa có góp ý nào từ khách hàng.
+                                </td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -281,78 +367,161 @@ tr:hover{ background:#fafafa; }
             </div>
         </div>
 
-        <!-- CỘT 2: NHẬT KÝ THAY ĐỔI HỆ THỐNG (AUDIT LOGS) -->
+        <!-- PHẦN: THỐNG KÊ CHI TIẾT BÀI VIẾT THEO DÒNG MÁY -->
         <div class="glass-card">
             <div class="section-title">
-                <span>📋 Lịch sử thay đổi hệ thống</span>
+                <span>🔍 Chi tiết bài viết theo Dòng máy</span>
+                <span class="badge badge-gray">Bấm vào dòng máy để xem danh sách bài</span>
             </div>
-
-            {% if system_logs %}
-                <div class="log-list">
-                    {% for log in system_logs %}
-                    <div class="log-item">
-                        <div class="log-icon">
-                            {% if log.action == 'CREATE' %}➕{% elif log.action == 'UPDATE' %}✏️{% elif log.action == 'DELETE' %}🗑️{% else %}📌{% endif %}
-                        </div>
-                        <div class="log-content">
-                            <div><strong>{{ log.user_name or 'Admin' }}</strong> {{ log.description }}</div>
-                            <div class="log-time">{{ log.created_at }}</div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">Chưa ghi nhận nhật ký hoạt động nào.</div>
-            {% endif %}
-        </div>
-
-        <!-- BẢNG THỐNG KÊ MÁY IN (RỘNG FULL CỘT) -->
-        <div class="glass-card grid-full">
-            <div class="section-title">🔍 Thống kê chi tiết tài liệu theo dòng máy in</div>
             
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Dòng máy / Chủng loại</th>
-                            <th style="text-align: right;">Số lượng tài liệu</th>
+                            <th style="width: 65%;">Thương hiệu & Model máy in</th>
+                            <th style="width: 20%; text-align: center;">Số lượng bài</th>
+                            <th style="width: 15%; text-align: right;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if category_stats %}
                             {% for item in category_stats %}
-                            <tr>
-                                <td style="font-weight: 500;">🖨️ {{ item.name }}</td>
-                                <td style="text-align: right;">
+                            <!-- Dòng Header Máy in -->
+                            <tr class="category-row-header" onclick="toggleCategory('cat-{{ loop.index }}', this)">
+                                <td>
+                                    <span class="toggle-icon">▶</span>
+                                    <strong style="color: #0f172a; font-size: 0.92rem;">🖨️ {{ item.display_name or ((item.brand or '') ~ ' ' ~ (item.model or '')) }}</strong>
+                                </td>
+                                <td style="text-align: center;">
                                     <span class="badge badge-blue">{{ item.count }} bài viết</span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <span class="btn btn-outline btn-sm" style="pointer-events: none;">Xem danh sách</span>
+                                </td>
+                            </tr>
+                            
+                            <!-- Dòng Chi Tiết Xổ Ra -->
+                            <tr id="cat-{{ loop.index }}" class="guides-detail-row" style="display: none;">
+                                <td colspan="3">
+                                    <div class="guides-container">
+                                        {% if item.guides and item.guides | length > 0 %}
+                                            <ul class="guide-list">
+                                                {% for guide in item.guides %}
+                                                <li class="guide-item">
+                                                    <div class="guide-item-title">
+                                                        {% if guide.is_pinned %}
+                                                            <span class="badge badge-pinned">📌 Ghim</span>
+                                                        {% else %}
+                                                            <span>📄</span>
+                                                        {% endif %}
+                                                        <a href="/admin/guide/edit/{{ guide.id }}" title="Sửa bài viết ID {{ guide.id }}">
+                                                            {{ guide.title }}
+                                                        </a>
+                                                        {% if not guide.is_active %}
+                                                            <span class="badge badge-gray" style="font-size:0.68rem;">Ẩn</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    {% if guide.created_at %}
+                                                        <span style="font-size: 0.75rem; color: #94a3b8;">
+                                                            {% if guide.created_at.strftime is defined %}
+                                                                {{ guide.created_at.strftime('%Y-%m-%d') }}
+                                                            {% else %}
+                                                                {{ guide.created_at[:10] }}
+                                                            {% endif %}
+                                                        </span>
+                                                    {% endif %}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <div style="font-size: 0.82rem; color: #64748b; font-style: italic; padding: 6px 0;">
+                                                Chưa có bài hướng dẫn nào cho model máy in này.
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="2" class="empty-state">Chưa có dữ liệu thống kê nào trong hệ thống.</td>
+                                <td colspan="3" class="empty-state">Chưa có dữ liệu dòng máy in nào trong hệ thống.</td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
-
 </div>
 
 <script>
+// Toggle đóng/mở danh sách bài viết theo targetId
+function toggleCategory(targetId, headerRow) {
+    const detailRow = document.getElementById(targetId);
+    if (!detailRow) return;
+
+    const isHidden = detailRow.style.display === 'none';
+    if (isHidden) {
+        detailRow.style.display = 'table-row';
+        headerRow.classList.add('active');
+    } else {
+        detailRow.style.display = 'none';
+        headerRow.classList.remove('active');
+    }
+}
+
+// Xử lý đánh dấu đã đọc feedback (AJAX)
 async function markProcessed(feedbackId) {
+    const actionCell = document.getElementById(`feedback-action-${feedbackId}`);
+    if (!actionCell) return;
+
+    const originalContent = actionCell.innerHTML;
+    actionCell.innerHTML = `<span style="font-size: 0.8rem; color: #64748b;">Đang lưu...</span>`;
+
     try {
-        const response = await fetch(`/admin/api/feedback/process/${feedbackId}`, { method: 'POST' });
-        if (response.ok) {
-            window.location.reload();
+        const response = await fetch(`/admin/api/feedback/process/${feedbackId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // 1. Đổi nút thành badge "Đã xử lý"
+            actionCell.innerHTML = `<span class="badge badge-success">✓ Đã xử lý</span>`;
+
+            // 2. Giảm badge ở tiêu đề section phản hồi
+            const badge = document.getElementById('unread-count-badge');
+            let currentCount = 0;
+            if (badge) {
+                currentCount = parseInt(badge.textContent) || 0;
+                if (currentCount > 1) {
+                    badge.textContent = `${currentCount - 1} chưa đọc`;
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+            // 3. Đồng bộ số đếm trên Stat Card 4 ở trên cùng
+            const statCardValue = document.getElementById('stat-unread-count');
+            if (statCardValue) {
+                const newCount = Math.max(0, (parseInt(statCardValue.textContent) || 0) - 1);
+                statCardValue.textContent = newCount;
+                if (newCount === 0) {
+                    const pulseBadge = document.getElementById('stat-pulse-badge');
+                    if (pulseBadge) pulseBadge.style.display = 'none';
+                }
+            }
+        } else {
+            alert(result.detail || 'Có lỗi xảy ra khi cập nhật trạng thái.');
+            actionCell.innerHTML = originalContent;
         }
-    } catch (err) {
-        console.error('Lỗi cập nhật trạng thái:', err);
+    } catch (error) {
+        console.error('Lỗi khi gọi API markProcessed:', error);
+        alert('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+        actionCell.innerHTML = originalContent;
     }
 }
 </script>
-
 {% endblock %}

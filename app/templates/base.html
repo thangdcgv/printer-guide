@@ -579,7 +579,7 @@
             {% block content %}{% endblock %}
         </main>
     </div>
-
+{% if request.url.path == "/" or (request.url.path.startswith("/guide/") and not request.url.path.startswith("/admin/")) %}
     <!-- FLOATING FEEDBACK BUTTON -->
     <button id="feedbackBtn" type="button" class="feedback-float-btn" onclick="toggleFeedbackModal()" aria-label="Gửi góp ý hoặc báo lỗi" title="Gửi góp ý hoặc báo lỗi">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -636,6 +636,7 @@
             </div>
         </div>
     </div>
+{% endif %}   
 </div>
 
 <!-- BOOTSTRAP JS -->
