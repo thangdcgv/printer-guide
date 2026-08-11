@@ -456,7 +456,7 @@ async def create_submit(
 
     return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
-
+#Xử lý copy bài viết
 @router.post("/copy/{guide_id}")
 async def copy_guide(
     guide_id: int,
@@ -465,14 +465,19 @@ async def copy_guide(
     try:
         admin_id = _get_admin_id(current_user)
         
-        # 1. Lấy thông tin bài viết gốc
-        guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
+        # 1. Lấy thông tin bài viết gốc (bảng public.guide)
+        guide_res = (
+            supabase.table("guide")
+            .select("*")
+            .eq("id", guide_id)
+            .execute()
+        )
         if not guide_res.data:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài viết gốc!")
         
         original_guide = guide_res.data[0]
         
-        # 2. Chuẩn bị dữ liệu bài viết mới (Gán created_by = admin_id hiện tại)
+        # 2. Chuẩn bị dữ liệu bài viết mới (bảng public.guide)
         new_guide_data = {
             "printer_model_id": original_guide.get("printer_model_id"),
             "title": f"{original_guide['title']} (Bản sao)",
@@ -481,10 +486,11 @@ async def copy_guide(
             "video_url": original_guide.get("video_url"),
             "sort_order": (original_guide.get("sort_order") or 1) + 1,
             "is_active": False,
+            "is_pinned": False,
             "created_by": admin_id
         }
         
-        # 3. Thêm bản ghi mới
+        # 3. Thêm bản ghi Guide mới
         insert_guide_res = supabase.table("guide").insert(new_guide_data).execute()
         if not insert_guide_res.data:
             raise HTTPException(status_code=500, detail="Không thể tạo bản sao bài viết.")
@@ -492,32 +498,79 @@ async def copy_guide(
         new_guide = insert_guide_res.data[0]
         new_guide_id = new_guide["id"]
         
-        # 4. Sao chép toàn bộ các bước hướng dẫn (guide_step)
-        steps_res = supabase.table("guide_step").select("*").eq("guide_id", guide_id).execute()
+        # 4. Sao chép các bước lớn (bảng public.guide_step)
+        steps_res = (
+            supabase.table("guide_step")
+            .select("*")
+            .eq("guide_id", guide_id)
+            .order("step_number")
+            .execute()
+        )
+        
         if steps_res.data:
-            new_steps_list = [
+            old_steps = steps_res.data
+            new_steps_payload = [
                 {
                     "guide_id": new_guide_id,
                     "step_number": step.get("step_number"),
                     "title": step.get("title"),
                     "content": step.get("content"),
+                    "image_urls": step.get("image_urls"),
                     "note": step.get("note"),
+                    "is_active": step.get("is_active", True),
                     "video_url": step.get("video_url"),
                     "download_url": step.get("download_url"),
-                    "image_urls": step.get("image_urls"),
-                    "is_active": step.get("is_active", True)
                 }
-                for step in steps_res.data
+                for step in old_steps
             ]
-            supabase.table("guide_step").insert(new_steps_list).execute()
-        
-        # 5. Đồng bộ tags cho bài viết mới
+            
+            # Thêm mới danh sách guide_step
+            insert_steps_res = supabase.table("guide_step").insert(new_steps_payload).execute()
+            new_steps = insert_steps_res.data or []
+
+            # Tạo bản đồ ánh xạ ID bước cũ -> ID bước mới
+            step_id_map = {
+                old_step["id"]: new_step["id"]
+                for old_step, new_step in zip(old_steps, new_steps)
+            }
+
+            # 5. Sao chép các bước nhỏ (bảng public.guide_sub_steps)
+            old_step_ids = list(step_id_map.keys())
+            if old_step_ids:
+                sub_steps_res = (
+                    supabase.table("guide_sub_steps")
+                    .select("*")
+                    .in_("step_id", old_step_ids)
+                    .order("sub_order")
+                    .execute()
+                )
+
+                if sub_steps_res.data:
+                    new_sub_steps_payload = [
+                        {
+                            "step_id": step_id_map[sub_step["step_id"]],
+                            "sub_order": sub_step.get("sub_order", 1),
+                            "content": sub_step.get("content", ""),
+                            "image_url": sub_step.get("image_url"),
+                            "note": sub_step.get("note"),
+                        }
+                        for sub_step in sub_steps_res.data
+                    ]
+                    
+                    # Insert danh sách bước nhỏ vào bảng guide_sub_steps
+                    supabase.table("guide_sub_steps").insert(new_sub_steps_payload).execute()
+
+        # 6. Tự động đồng bộ Tags
         if new_guide_data["printer_model_id"]:
-            await auto_generate_and_link_tags(new_guide_id, new_guide_data["printer_model_id"], new_guide_data["title"])
+            await auto_generate_and_link_tags(
+                new_guide_id, 
+                new_guide_data["printer_model_id"], 
+                new_guide_data["title"]
+            )
 
         return {
             "success": True,
-            "message": "Sao chép bài viết thành công!",
+            "message": "Sao chép bài viết và đầy đủ các bước thành công!",
             "new_guide_id": new_guide_id
         }
 
@@ -525,7 +578,10 @@ async def copy_guide(
         raise
     except Exception as e:
         logger.error(f"Lỗi khi sao chép bài viết #{guide_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Lỗi hệ thống khi sao chép bài viết: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Lỗi hệ thống khi sao chép bài viết: {str(e)}"
+        )
 
 
 # =====================================================

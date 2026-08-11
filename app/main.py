@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import RedirectResponse
@@ -15,8 +15,13 @@ from app.routers import (
     library,
     printer,
 )
-# Cập nhật import Exception từ app.routers.admin
-from app.routers.auth import AdminUnauthenticatedException
+from app.routers.auth import (
+    AdminUnauthenticatedException,
+    SESSION_COOKIE_NAME,
+    REFRESH_COOKIE_NAME,
+    set_auth_cookies,
+)
+from app.database import supabase
 
 # =========================================================
 # APPLICATION
@@ -31,6 +36,56 @@ app = FastAPI(
     docs_url="/docs" if IS_DEVELOPMENT else None,
     redoc_url="/redoc" if IS_DEVELOPMENT else None,
 )
+
+# =========================================================
+# AUTHENTICATION MIDDLEWARE (TỰ ĐỘNG GIA HẠN COOKIE)
+# =========================================================
+
+@app.middleware("http")
+async def auth_session_middleware(request: Request, call_next):
+    """
+    Middleware kiểm tra Session và tự động gia hạn Token khi hết hạn 15 phút.
+    Đảm bảo Cookie mới luôn được đính kèm vào Response trả về trình duyệt.
+    """
+    access_token = request.cookies.get(SESSION_COOKIE_NAME)
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+
+    new_tokens = None
+    auth_id = None
+
+    # 1. Kiểm tra với Access Token hiện tại
+    if access_token:
+        try:
+            user_res = supabase.auth.get_user(access_token)
+            if user_res and user_res.user:
+                auth_id = user_res.user.id
+        except Exception:
+            auth_id = None
+
+    # 2. Nếu Access Token hết hạn (sau 15 phút) -> Refresh bằng Refresh Token
+    if not auth_id and refresh_token:
+        try:
+            refresh_res = supabase.auth.refresh_session(refresh_token)
+            if refresh_res and refresh_res.session and refresh_res.user:
+                auth_id = refresh_res.user.id
+                new_tokens = (
+                    refresh_res.session.access_token,
+                    refresh_res.session.refresh_token,
+                )
+        except Exception:
+            auth_id = None
+
+    # Lưu auth_id vào request.state để auth.py sử dụng lại
+    request.state.auth_id = auth_id
+
+    # Cho request đi tiếp vào endpoint
+    response: Response = await call_next(request)
+
+    # 3. Nếu vừa Refresh thành công, ghi đè Set-Cookie vào Response THỰC TẾ
+    if new_tokens:
+        set_auth_cookies(response, new_tokens[0], new_tokens[1])
+
+    return response
 
 # =========================================================
 # EXCEPTION HANDLERS
@@ -49,9 +104,8 @@ async def admin_unauthenticated_handler(
         url="/admin/login",
         status_code=303,
     )
-    # Xóa sạch cookie rác/hết hạn trên trình duyệt client
-    response.delete_cookie(key="admin_session", path="/")
-    response.delete_cookie(key="admin_refresh", path="/")
+    response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
     return response
 
 # =========================================================
@@ -59,10 +113,10 @@ async def admin_unauthenticated_handler(
 # =========================================================
 
 allowed_hosts = [
-    "printer-guide.onrender.com",  # Domain Render
-    "*.onrender.com",              # Subdomain Render (dự phòng)
-    "localhost",                   # Test local
-    "127.0.0.1",                   # Test local IP
+    "printer-guide.onrender.com",
+    "*.onrender.com",
+    "localhost",
+    "127.0.0.1",
     "[::1]",
 ]
 

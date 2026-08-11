@@ -151,58 +151,25 @@ def get_admin_profile(auth_id: str) -> Optional[dict]:
 
 def authenticate_session(request: Request, response: Optional[Response] = None) -> Optional[dict]:
     """
-    Xác thực session của BẤT KỲ tài khoản nào đã đăng nhập.
-    Tự động dùng Refresh Token để gia hạn nếu Access Token bị hết hạn (sau 15 phút).
+    Xác thực session dựa trên auth_id đã được Middleware verify & refresh tại main.py.
     """
-    # Kiểm tra nếu Middleware đã xác thực trước đó
+    # 1. Trả về kết quả ngay nếu đã query profile trước đó trong cùng request (Cache)
     if hasattr(request.state, "user_profile") and request.state.user_profile:
         return request.state.user_profile
 
-    access_token = request.cookies.get(SESSION_COOKIE_NAME)
-    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
-
-    if not access_token and not refresh_token:
-        return None
-
-    auth_id: Optional[str] = None
-
-    # 1. Thử xác thực với Access Token hiện tại
-    if access_token:
-        try:
-            user_response = supabase.auth.get_user(access_token)
-            if user_response and user_response.user:
-                auth_id = user_response.user.id
-        except Exception:
-            auth_id = None
-
-    # 2. Nếu Access Token hết hạn (sau 15 phút) -> Dùng Refresh Token để lấy Session mới
-    if not auth_id and refresh_token:
-        try:
-            refresh_response = supabase.auth.refresh_session(refresh_token)
-            if refresh_response and refresh_response.session and refresh_response.user:
-                auth_id = refresh_response.user.id
-                new_access_token = refresh_response.session.access_token
-                new_refresh_token = refresh_response.session.refresh_token
-
-                # Cập nhật Cookie mới ngay lập tức nếu có response object
-                if response:
-                    set_auth_cookies(response, new_access_token, new_refresh_token)
-                
-                logger.info("Tự động gia hạn Session thành công cho auth_id=%s", auth_id)
-        except Exception as exc:
-            logger.warning("Gia hạn session bằng Refresh Token thất bại: %s", exc)
-            return None
-
+    # 2. Lấy auth_id đã được Middleware (main.py) xác thực thành công
+    auth_id = getattr(request.state, "auth_id", None)
     if not auth_id:
         return None
 
-    # 3. Kiểm tra profile trong quan_tri_vien
+    # 3. Lấy thông tin profile người dùng từ Database
     user_profile = get_admin_profile(auth_id)
-
     if not user_profile:
         logger.warning("Auth user không có profile hệ thống: auth_id=%s", auth_id)
         return None
 
+    # Lưu lại vào request state để các hàm khác dùng lại trong cùng 1 request
+    request.state.user_profile = user_profile
     return user_profile
 
 
