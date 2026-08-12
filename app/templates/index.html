@@ -557,6 +557,82 @@
     </footer>
 
 </div>
+<!-- NÚT CHAT NỔI ZALO MULTI-OPTION -->
+<div id="zalo-floating-widget" style="position: fixed; bottom: 25px; right: 25px; z-index: 99999; font-family: system-ui, -apple-system, sans-serif;">
+    
+    <!-- Menu lựa chọn (Mặc định ẩn) -->
+    <div id="zalo-menu-box" style="display: none; position: absolute; bottom: 70px; right: 0; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); width: 270px; padding: 14px; border: 1px solid #e2e8f0; animation: fadeIn 0.2s ease-in-out;">
+        
+        <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Hỗ trợ trực tuyến Đại Thành
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <!-- Lựa chọn 1: Kỹ thuật Lắp đặt -->
+            <a href="https://zalo.me/0795570380" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
+                <div style="width: 34px; height: 34px; background: #0068ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,104,255,0.2);">🛠️</div>
+                <div style="line-height: 1.3;">
+                    <div>Kỹ thuật Lắp đặt</div>
+                    <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Hướng dẫn lắp đặt máy in</div>
+                </div>
+            </a>
 
+            <!-- Lựa chọn 2: Kỹ thuật Sửa chữa / Bảo hành -->
+            <a href="https://zalo.me/0795570381" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
+                <div style="width: 34px; height: 34px; background: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16,185,129,0.2);">🔧</div>
+                <div style="line-height: 1.3;">
+                    <div>Sửa chữa & Bảo hành</div>
+                    <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Xử lý sự cố máy in</div>
+                </div>
+            </a>
+
+            <!-- Lựa chọn 3: Tư vấn bán hàng 01 -->
+            <a href="https://zalo.me/0908762316" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
+                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,158,11,0.2);">📦</div>
+                <div style="line-height: 1.3;">
+                    <div>Tư vấn bán hàng 01</div>
+                    <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Báo giá & Đặt mua máy</div>
+                </div>
+            </a>
+
+            <!-- Lựa chọn 4: Tư vấn bán hàng 02 -->
+            <a href="https://zalo.me/0902724806" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
+                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,158,11,0.2);">💡</div>
+                <div style="line-height: 1.3;">
+                    <div>Tư vấn bán hàng 02</div>
+                    <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Báo giá & Đặt mua máy</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Nút tròn Zalo chính hiển thị góc màn hình -->
+    <button onclick="toggleZaloMenu()" style="width: 56px; height: 56px; background: #0068ff; border: none; border-radius: 50%; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 104, 255, 0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Liên hệ Zalo hỗ trợ">
+        <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 4C12.954 4 4 12.954 4 24C4 29.531 6.221 34.531 9.845 38.155L7.5 43.5L13.12 41.25C16.36 43.32 20.02 44 24 44C35.046 44 44 35.046 44 24C44 12.954 35.046 4 24 4Z" fill="white"/>
+            <path d="M34.5 28.5C34.5 29.328 33.828 30 33 30H17C16.172 30 15.5 29.328 15.5 28.5V19.5C15.5 18.672 16.172 18 17 18H33C33.828 18 34.5 18.672 34.5 19.5V28.5ZM21.5 22.5C21.5 22.224 21.276 22 21 22H19.5C19.224 22 19 22.224 19 22.5V25.5C19 25.776 19.224 26 19.5 26H21C21.276 26 21.5 25.776 21.5 25.5V22.5ZM26.5 22.5C26.5 22.224 26.276 22 26 22H24.5C24.224 24 24 22.224 24 22.5V25.5C24 25.776 24.224 26 24.5 26H26C26.276 26 26.5 25.776 26.5 25.5V22.5ZM31.5 22.5C31.5 22.224 31.276 22 31 22H29.5C29.224 22 29 22.224 29 22.5V25.5C29 25.776 29.224 26 29.5 26H31C31.276 26 31.5 25.776 31.5 25.5V22.5Z" fill="#0068ff"/>
+        </svg>
+    </button>
+</div>
 </body>
+<!-- Script xử lý bật/tắt menu -->
+<script>
+function toggleZaloMenu() {
+    const menu = document.getElementById('zalo-menu-box');
+    if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'block';
+    } else {
+        menu.style.display = 'none';
+    }
+}
+
+// Bấm ra ngoài màn hình thì tự động đóng menu
+window.addEventListener('click', function(e) {
+    const widget = document.getElementById('zalo-floating-widget');
+    const menu = document.getElementById('zalo-menu-box');
+    if (!widget.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
+</script>
 </html>

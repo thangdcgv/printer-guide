@@ -220,7 +220,7 @@
             </div>
 
             <!-- Chỉ hiển thị nút Thêm bước mới nếu người dùng là Admin/KTV đã đăng nhập -->
-            {% if user and (user.role in ['Admin', 'SuperAdmin'] or (guide.created_by and guide.created_by == user.id)) %}
+            {% if user and (user.role in ['Admin', 'SuperAdmin', 'SystemAdmin'] or (guide.created_by and guide.created_by == user.id)) %}
             <button type="button" data-next-step="{{ steps | length + 1 }}" onclick="openAddModal(this)" class="btn-primary-modern shadow-sm">
                 <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Thêm bước mới
@@ -267,7 +267,7 @@
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">
                             
                             <!-- 🖐️ Tay cầm kéo thả (Chỉ Admin hoặc Tác giả mới kéo thả sắp xếp) -->
-                            {% if user and (user.role == 'Admin' or user.role == 'SuperAdmin' or (guide.created_by and guide.created_by == user.id)) %}
+                            {% if user and (user.role == 'Admin' or user.role == 'Super Admin' or user.role == 'System Admin' or (guide.created_by and guide.created_by == user.id)) %}
                             <span class="drag-handle" title="Kéo để đổi vị trí" style="font-size: 1.25rem; user-select: none; cursor: grab;">⋮⋮</span>
                             {% endif %}
                             
@@ -285,7 +285,7 @@
                         </div>
 
                         <!-- Các nút thao tác Sửa/Xóa Bước lớn (Chỉ Admin hoặc Tác giả) -->
-                        {% if user and (user.role == 'Admin' or user.role == 'SuperAdmin' or (guide.created_by and guide.created_by == user.id)) %}
+                        {% if user and (user.role == 'Admin' or user.role == 'Super Admin' or user.role == 'System Admin' or (guide.created_by and guide.created_by == user.id)) %}
                         <div style="display: flex; gap: 6px; align-items: center; white-space: nowrap;">
                             <button type="button" class="action-icon-btn" title="Sửa bước" data-step='{{ step | tojson | safe }}' onclick="openEditModal(this)" style="color: #2563eb;">
                                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Zm0 0L19.5 7.125"/></svg>
@@ -354,9 +354,12 @@
                                             </div>
                                             {% endif %}
 
-                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                <span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">Ý {{ sub.sub_order }}</span>
-                                                <span style="color: #1e293b; line-height: 1.5; font-weight: 500;">{{ sub.content }}</span>
+                                            <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                                <span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; margin-top: 2px;">Ý {{ sub.sub_order }}</span>
+                                                <!-- Thêm | safe và white-space: pre-line để tự động xuống dòng và hiển thị nút đính kèm -->
+                                                <div style="color: #1e293b; line-height: 1.6; font-weight: 500; white-space: pre-line; flex-grow: 1;">
+                                                    {{ sub.content | safe }}
+                                                </div>
                                             </div>
                                             
                                             {% if sub.note %}
@@ -367,7 +370,7 @@
                                         </div>
 
                                         <!-- Thao tác Sửa / Xóa ý nhỏ (Chỉ Admin hoặc Tác giả) -->
-                                        {% if user and (user.role == 'Admin' or user.role == 'SuperAdmin' or (guide.created_by and guide.created_by == user.id)) %}                                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
+                                        {% if user and (user.role == 'Admin' or user.role == 'System Admin' or user.role == 'Super Admin' or (guide.created_by and guide.created_by == user.id)) %}                                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
                                             <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
                                             
                                             <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
@@ -379,7 +382,7 @@
                                     </div>
 
                                     <!-- Chế độ chỉnh sửa ý nhỏ (Chỉ Admin hoặc Tác giả) -->
-                                    {% if user and (user.role == 'Admin' or user.role == 'SuperAdmin' or (guide.created_by and guide.created_by == user.id)) %}
+                                    {% if user and (user.role == 'Admin' or user.role == 'System Admin' or user.role == 'Super Admin' or (guide.created_by and guide.created_by == user.id)) %}
                                     <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
                                         <input type="hidden" name="guide_id" value="{{ guide.id }}">
                                         <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 70px;" class="modern-input" title="Thứ tự">
@@ -398,7 +401,7 @@
                             {% endif %}
 
                             <!-- Form thêm nhanh bước con (Chỉ Admin hoặc Tác giả) -->
-                            {% if user and (user.role == 'Admin' or user.role == 'SuperAdmin' or (guide.created_by and guide.created_by == user.id)) %}
+                            {% if user and (user.role == 'Admin' or user.role == 'Super Admin' or user.role == 'System Admin' or (guide.created_by and guide.created_by == user.id)) %}
                             <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" class="sub-step-add-form" style="background: #f1f5f9; padding: 10px; border-radius: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
                                 <input type="number" name="sub_order" placeholder="Thứ tự" value="1" required style="width: 70px;" class="modern-input">

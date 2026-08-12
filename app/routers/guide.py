@@ -141,7 +141,7 @@ def _check_guide_permission(guide_id: int, current_user: dict) -> dict:
     
     # 2. Quyền 1: Nếu là Admin -> Cho phép toàn quyền
     user_role = current_user.get("role")
-    if user_role == "Admin":
+    if user_role in ("Admin","Super Admin","System Admin"):
         return guide
 
     # 3. Quyền 2: Nếu là người tạo ra bài viết (created_by trùng id người dùng) -> Cho phép

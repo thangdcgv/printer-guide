@@ -26,15 +26,31 @@ router = APIRouter(
 # HELPER FUNCTIONS
 # =====================================================
 
-def auto_linkify(text: Optional[str]) -> str:
-    """Tự động chuyển các chuỗi link (http/https) thành thẻ <a> có thể nhấp được."""
+def auto_linkify(text):
     if not text:
         return ""
-    url_pattern = re.compile(r'(https?://[^\s<>]+)')
+    
+    url_pattern = r'(https?://[^\s<>]+)'
+    
     def replace_url(match):
         url = match.group(0)
-        return f'<a href="{url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;" title="{url}">🔗 {url}</a>'
-    return url_pattern.sub(replace_url, text)
+        try:
+            parsed = urlparse(url)
+            filename = parsed.path.split('/')[-1]
+            name = filename.split('.')[0]
+            match_model = re.match(r'^(PX[^\s_]+|[A-Z0-9\-]+)', name, re.I)
+            model_name = match_model.group(1).upper() if match_model else "File tải"
+        except Exception:
+            model_name = "File tải"
+            
+        # Đổi display từ inline-flex thành flex và margin: 6px 0 để tự động xuống dòng thành các block riêng biệt
+        return f'''<a href="{url}" target="_blank" style="display: flex; width: fit-content; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; color: #2563eb; text-decoration: none; margin: 6px 0; font-weight: 500;" title="Tải xuống">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            <span>{url}</span>
+            <span style="color: #64748b; font-weight: 600;">({model_name})</span>
+        </a>'''
+
+    return re.sub(url_pattern, replace_url, text)
 
 
 def validate_url(url: Optional[str], field_name: str) -> Optional[str]:
