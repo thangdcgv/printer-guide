@@ -28,31 +28,26 @@ class FeedbackCreateSchema(BaseModel):
 # =========================================================
 # HELPER: LẤY DỮ LIỆU THỐNG KÊ
 # =========================================================
-
 def fetch_dashboard_stats():
     """
-    Hàm lấy dữ liệu thống kê máy in và chi tiết danh sách bài viết thuộc từng dòng máy.
+    Hàm lấy dữ liệu thống kê máy in, chi tiết bài viết và thống kê theo tác giả.
     """
     try:
         # 1. Lấy danh sách dòng máy in
         models_res = supabase.table("printer_model").select("*").execute()
         printer_models = models_res.data or []
 
-        # 2. Lấy danh sách bài hướng dẫn
+        # 2. Lấy danh sách bài hướng dẫn + JOIN bảng quan_tri_vien
         guides_res = (
             supabase.table("guide")
-            .select("*")
+            .select("*, quan_tri_vien(ho_ten, username)")
             .order("is_pinned", desc=True)
             .order("id", desc=True)
             .execute()
         )
         guides = guides_res.data or []
 
-        # --- DEBUG LOG ---
-        logger.info(f"==> [DEBUG] Số lượng printer_model lấy được: {len(printer_models)}")
-        logger.info(f"==> [DEBUG] Số lượng guide lấy được: {len(guides)}")
-
-        # 3. Lấy góp ý/phản hồi (ĐÃ SỬA: Đổi tên bảng thành 'feedbacks')
+        # 3. Lấy góp ý/phản hồi
         unread_feedbacks_count = 0
         recent_feedbacks = []
         try:
@@ -78,7 +73,7 @@ def fetch_dashboard_stats():
         total_guides = len(guides)
         total_models = len(printer_models)
 
-        # Khởi tạo Map dùng str() làm Key (Hỗ trợ cả ID dạng Số và UUID)
+        # Map thống kê theo model
         model_map = {}
         for m in printer_models:
             m_id = m.get("id")
@@ -95,29 +90,59 @@ def fetch_dashboard_stats():
                     "guides": [],
                 }
 
+        # Khởi tạo Map gom nhóm bài viết theo Tác giả
+        author_map = {}
+
         other_guides = []
         for g in guides:
             raw_m_id = g.get("printer_model_id")
-            if raw_m_id is None:
-                raw_m_id = g.get("model_id") or g.get("printer_id")
-
             created_at_val = g.get("created_at")
             created_at_str = str(created_at_val) if created_at_val else ""
+
+            # Lấy thông tin tác giả từ cột ho_ten hoặc username từ relation quan_tri_vien
+            qtv_info = g.get("quan_tri_vien")
+            author_name = "Chưa rõ"
+
+            if isinstance(qtv_info, dict):
+                author_name = qtv_info.get("ho_ten") or qtv_info.get("username") or author_name
+            elif isinstance(qtv_info, list) and len(qtv_info) > 0:
+                author_name = qtv_info[0].get("ho_ten") or qtv_info[0].get("username") or author_name
+            elif g.get("created_by"):
+                author_name = f"QTV #{g.get('created_by')}"
+
+            is_active = g.get("is_active", True)
+            is_pinned = g.get("is_pinned", False)
 
             guide_item = {
                 "id": g.get("id"),
                 "title": g.get("title", ""),
-                "is_active": g.get("is_active", True),
-                "is_pinned": g.get("is_pinned", False),
+                "is_active": is_active,
+                "is_pinned": is_pinned,
                 "created_at": created_at_str,
+                "author_name": author_name,
             }
 
+            # Gom nhóm bài viết theo danh mục máy in
             if raw_m_id is not None and str(raw_m_id) in model_map:
                 target_key = str(raw_m_id)
                 model_map[target_key]["count"] += 1
                 model_map[target_key]["guides"].append(guide_item)
             else:
                 other_guides.append(guide_item)
+
+            # Tính toán số lượng bài viết cho từng tác giả
+            if author_name not in author_map:
+                author_map[author_name] = {
+                    "author_name": author_name,
+                    "total_guides": 0,
+                    "pinned_count": 0,
+                    "active_count": 0,
+                }
+            author_map[author_name]["total_guides"] += 1
+            if is_pinned:
+                author_map[author_name]["pinned_count"] += 1
+            if is_active:
+                author_map[author_name]["active_count"] += 1
 
         category_stats = list(model_map.values())
 
@@ -131,11 +156,14 @@ def fetch_dashboard_stats():
                 "guides": other_guides,
             })
 
-        return total_guides, total_models, category_stats, unread_feedbacks_count, recent_feedbacks
+        # Sắp xếp danh sách tác giả theo số bài viết giảm dần
+        author_stats = sorted(list(author_map.values()), key=lambda x: x["total_guides"], reverse=True)
+
+        return total_guides, total_models, category_stats, unread_feedbacks_count, recent_feedbacks, author_stats
 
     except Exception as e:
         logger.error("Lỗi lấy dữ liệu dashboard: %s", e, exc_info=True)
-        return 0, 0, [], 0, []
+        return 0, 0, [], 0, [], []
 
 
 # =========================================================
@@ -145,7 +173,14 @@ def fetch_dashboard_stats():
 @router.get("/dashboard", response_class=HTMLResponse)
 def public_dashboard(request: Request):
     """Trang thống kê công khai (dùng def để tránh block event loop)."""
-    total_guides, total_models, category_stats, unread_count, feedbacks = fetch_dashboard_stats()
+    (
+        total_guides,
+        total_models,
+        category_stats,
+        unread_count,
+        feedbacks,
+        author_stats,
+    ) = fetch_dashboard_stats()
 
     return templates.TemplateResponse(
         "admin_dashboard.html",
@@ -156,6 +191,7 @@ def public_dashboard(request: Request):
             "category_stats": category_stats,
             "unread_feedbacks_count": unread_count,
             "recent_feedbacks": feedbacks,
+            "author_stats": author_stats,
             "admin": None,
         },
     )
@@ -171,7 +207,14 @@ def admin_dashboard(
     admin: dict = Depends(require_login),
 ):
     """Trang Dashboard quản trị (dùng def để tránh block event loop)."""
-    total_guides, total_models, category_stats, unread_count, feedbacks = fetch_dashboard_stats()
+    (
+        total_guides,
+        total_models,
+        category_stats,
+        unread_count,
+        feedbacks,
+        author_stats,
+    ) = fetch_dashboard_stats()
 
     return templates.TemplateResponse(
         "admin_dashboard.html",
@@ -183,6 +226,7 @@ def admin_dashboard(
             "category_stats": category_stats,
             "unread_feedbacks_count": unread_count,
             "recent_feedbacks": feedbacks,
+            "author_stats": author_stats,
         },
     )
 

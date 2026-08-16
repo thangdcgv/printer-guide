@@ -374,7 +374,7 @@
                     Quản lý Hướng dẫn
                 </h3>
                 <p class="text-muted small mb-0" style="color: #64748b;">
-                    Tổ chức và quản lý tài liệu kỹ thuật, hướng dẫn cho các dòng máy in
+                    Tổ chức và quản lý tài liệu kỹ thuật, hướng dẫn cho các thiết bị tại Đại Thành
                 </p>
             </div>
             
@@ -390,18 +390,18 @@
                 <form method="GET" action="/admin/guide" class="row g-2 align-items-center m-0">
                     
                     <!-- 1. Ô Tìm kiếm -->
-                    <div class="col-lg-5 col-md-12 p-1">
+                    <div class="col-lg-3 col-md-12 p-1">
                         <div class="search-wrapper">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             <input type="text" name="search" class="form-control modern-input w-100" 
-                                   placeholder="Tìm kiếm theo tiêu đề, mô tả hoặc mã máy..." value="{{search or ''}}">
+                                placeholder="Tìm kiếm tiêu đề, mô tả..." value="{{search or ''}}">
                         </div>
                     </div>
 
                     <!-- 2. Lọc theo Model máy in -->
                     <div class="col-lg-3 col-md-6 p-1">
                         <select name="printer_model_id" class="form-select modern-select w-100" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Model máy in --</option>
+                            <option value="">-- Tất cả Model --</option>
                             {% for p in printers %}
                             <option value="{{p.id}}" {% if selected_printer_id|string == p.id|string %}selected{% endif %}>
                                 {{p.brand}} - {{p.model}}
@@ -410,7 +410,19 @@
                         </select>
                     </div>
 
-                    <!-- 3. Lọc theo Trạng thái -->
+                    <!-- 3. Lọc theo Tác giả (MỚI BỔ SUNG) -->
+                    <div class="col-lg-2 col-md-6 p-1">
+                        <select name="author_id" class="form-select modern-select w-100" onchange="this.form.submit()">
+                            <option value="">-- Tất cả Tác giả --</option>
+                            {% for a in authors %}
+                            <option value="{{a.id}}" {% if selected_author_id|string == a.id|string %}selected{% endif %}>
+                                {{a.ho_ten or a.username or ('QTV #' ~ a.id)}}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 4. Lọc theo Trạng thái -->
                     <div class="col-lg-2 col-md-6 p-1">
                         <select name="guide_status" class="form-select modern-select w-100" onchange="this.form.submit()">
                             <option value="">-- Trạng thái --</option>
@@ -419,13 +431,13 @@
                         </select>
                     </div>
 
-                    <!-- 4. Nút thao tác lọc -->
-                    <div class="col-lg-2 col-md-12 p-1 d-flex gap-2">
+                    <!-- 5. Nút thao tác lọc -->
+                    <div class="col-lg-2 col-md-6 p-1 d-flex gap-2">
                         <button type="submit" class="btn-secondary-modern flex-grow-1 justify-content-center">
                             Lọc
                         </button>
                         
-                        {% if search or selected_printer_id or status != None %}
+                        {% if search or selected_printer_id or selected_author_id or (status != None and status != '') %}
                         <a href="/admin/guide" class="btn-secondary-modern px-3" title="Xóa bộ lọc" style="color: #ef4444; border-color: #fecaca; background-color: #fef2f2;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                         </a>

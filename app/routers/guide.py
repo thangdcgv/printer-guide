@@ -3,7 +3,8 @@ import math
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Request, Form, status, HTTPException, Depends, status
+from app.services.storage_service import upload_image_to_supabase, delete_image_from_supabase
+from fastapi import APIRouter, Request, Form, status, HTTPException, Depends, status, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -229,6 +230,7 @@ async def list_guides(
     request: Request,
     search: Optional[str] = None,
     printer_model_id: Optional[str] = None,
+    author_id: Optional[str] = None,  # 1. Bổ sung param author_id
     guide_status: Optional[str] = None,
     tag_id: Optional[str] = None,
     page: int = 1,
@@ -241,6 +243,7 @@ async def list_guides(
     end_idx = start_idx + PER_PAGE - 1
 
     parsed_tag_id = int(tag_id) if tag_id and tag_id.isdigit() else None
+    parsed_author_id = int(author_id) if author_id and author_id.isdigit() else None  # Parse author_id an toàn
 
     def build_query(select_fields: str):
         query = supabase.table("guide").select(select_fields, count="exact")
@@ -248,6 +251,8 @@ async def list_guides(
             query = query.ilike("title", f"%{search.strip()}%")
         if printer_model_id and printer_model_id.isdigit():
             query = query.eq("printer_model_id", int(printer_model_id))
+        if parsed_author_id:  # 2. Lọc bài viết theo người tạo (created_by)
+            query = query.eq("created_by", parsed_author_id)
         if guide_status in ["0", "1"]:
             query = query.eq("is_active", guide_status == "1")
         if parsed_tag_id:
@@ -266,7 +271,6 @@ async def list_guides(
         
     except Exception as e:
         logger.warning(f"Lỗi query JOIN nâng cao, chuyển sang fallback query cơ bản: {e}")
-        # Fallback: Nếu JOIN quan_tri_vien trên Supabase bị lỗi schema, chỉ lấy bản ghi đơn
         try:
             fallback_select = f"*, {tag_relation}" if parsed_tag_id else "*"
             guides_res = build_query(fallback_select).range(start_idx, end_idx).execute()
@@ -304,17 +308,45 @@ async def list_guides(
 
     printer_map = {str(p["id"]): p for p in printers}
 
-    # 4. Lấy danh sách quan_tri_vien tạo Map tra cứu dự phòng
+    # 4. Lấy danh sách quan_tri_vien (CHỈ lấy tác giả đã có bài viết trong hệ thống)
+    authors = []
+    admin_map = {}
     try:
-        admins_res = supabase.table("quan_tri_vien").select("id, ho_ten, username").execute()
-        admin_map = {str(a["id"]): a for a in (admins_res.data or [])}
+        # B1: Lấy danh sách các created_by (khác null) từ bảng guide
+        guide_authors_res = (
+            supabase
+            .table("guide")
+            .select("created_by")
+            .not_.is_("created_by", "null")
+            .execute()
+        )
+        # Loại bỏ các ID trùng lặp bằng set
+        active_author_ids = list({
+            item["created_by"] 
+            for item in (guide_authors_res.data or []) 
+            if item.get("created_by") is not None
+        })
+
+        if active_author_ids:
+            # B2: Chỉ query những quan_tri_vien có id nằm trong danh sách active_author_ids
+            admins_res = (
+                supabase
+                .table("quan_tri_vien")
+                .select("id, ho_ten, username")
+                .in_("id", active_author_ids)
+                .order("ho_ten")
+                .execute()
+            )
+            authors = admins_res.data or []
+            admin_map = {str(a["id"]): a for a in authors}
+            
     except Exception as e:
-        logger.warning(f"Không thể tải admin_map: {e}")
+        logger.warning(f"Không thể tải danh sách tác giả có bài viết: {e}")
+        authors = []
         admin_map = {}
 
-    # 5. Xử lý gán dữ liệu printer_model và quan_tri_vien an toàn (Dual Map Bù Đắp)
+    # 5. Xử lý gán dữ liệu printer_model và quan_tri_vien an toàn
     for g in guides:
-        # --- Bù đắp dữ liệu printer_model nếu Supabase JOIN không ra ---
         if not g.get("printer_model") and g.get("printer_model_id") is not None:
             pm_key = str(g["printer_model_id"])
             if pm_key in printer_map:
@@ -324,7 +356,6 @@ async def list_guides(
             brand_name = g["printer_model"].get("brand", "")
             g["printer_model"]["brand_class"] = _get_brand_class(brand_name) if "_get_brand_class" in globals() else brand_name.lower()
 
-        # --- Bù đắp dữ liệu quan_tri_vien nếu Supabase JOIN không ra ---
         if not g.get("quan_tri_vien") and g.get("created_by") is not None:
             admin_key = str(g["created_by"])
             if admin_key in admin_map:
@@ -332,6 +363,7 @@ async def list_guides(
 
     selected_pm_id = int(printer_model_id) if printer_model_id and printer_model_id.isdigit() else None
 
+    # 4. Truyền dữ liệu bổ sung sang Template Jinja2
     return templates.TemplateResponse(
         "guide.html",
         {
@@ -339,19 +371,21 @@ async def list_guides(
             "user": current_user,
             "guides": guides,
             "printers": printers,
-            "printer_models": printers,        # Đồng bộ biến tương thích UI
+            "printer_models": printers,
+            "authors": authors,                      # Danh sách tác giả cho dropdown
+            "selected_author_id": author_id,         # ID tác giả đang chọn để giữ giá trị trên UI
             "all_tags": all_tags,
             "selected_tag_id": parsed_tag_id,
             "search": search or "",
-            "search_query": search or "",      # Đồng bộ biến tương thích UI
+            "search_query": search or "",
             "selected_printer_id": selected_pm_id,
-            "selected_model": selected_pm_id,  # Đồng bộ biến tương thích UI
+            "selected_model": selected_pm_id,
             "status": guide_status,
             "page": page,
             "total_pages": total_pages,
             "total_count": total_count,
-            "total_guides": total_count,       # Đồng bộ biến tương thích UI
-            "total_items": total_count,        # Đồng bộ biến tương thích UI
+            "total_guides": total_count,
+            "total_items": total_count,
             "per_page": PER_PAGE
         }
     )
@@ -381,6 +415,16 @@ async def toggle_pin_guide(
         raise HTTPException(status_code=500, detail="Không thể cập nhật trạng thái ghim")
 
     return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+
+from typing import Optional
+from fastapi import APIRouter, Request, Form, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse
+
+# Import service storage dùng chung
+from app.services.storage_service import upload_image_to_supabase, delete_image_from_supabase
+
+# (Giữ nguyên các import khác như templates, supabase, logger, require_login, _check_guide_permission...)
 
 
 # =====================================================
@@ -417,7 +461,8 @@ async def create_submit(
     title: str = Form(...),
     printer_model_id: int = Form(...),
     description: Optional[str] = Form(""),
-    image_url: Optional[str] = Form(None),
+    image_file: Optional[UploadFile] = File(None),  # 🆕 File ảnh upload từ máy
+    image_url: Optional[str] = Form(None),          # Fallback URL nhập tay
     video_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
     sort_order: Optional[str] = Form("1"),
@@ -428,7 +473,13 @@ async def create_submit(
     except ValueError:
         sort = 1
 
-    clean_image_url = image_url.strip() if image_url and image_url.strip() else None
+    # 🆕 Ưu tiên upload file ảnh từ máy tính lên Supabase Storage (nén WebP)
+    clean_image_url = None
+    if image_file and image_file.filename:
+        clean_image_url = await upload_image_to_supabase(image_file, folder="guides")
+    elif image_url and image_url.strip():
+        clean_image_url = image_url.strip()
+
     clean_video_url = video_url.strip() if video_url and video_url.strip() else None
     admin_id = _get_admin_id(current_user)
 
@@ -456,7 +507,160 @@ async def create_submit(
 
     return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
 
-#Xử lý copy bài viết
+
+# =====================================================
+# EDIT
+# =====================================================
+
+@router.get("/edit/{guide_id}", response_class=HTMLResponse)
+async def edit_form(
+    request: Request, 
+    guide_id: int,
+    current_user: dict = Depends(require_login)
+):
+    _check_guide_permission(guide_id, current_user)
+
+    guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
+    if not guide_res.data:
+        return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+    printers = (
+        supabase
+        .table("printer_model")
+        .select("id, brand, model")
+        .order("brand")
+        .order("model")
+        .execute()
+        .data or []
+    )
+
+    return templates.TemplateResponse(
+        "guide_edit.html",
+        {
+            "request": request,
+            "user": current_user,
+            "guide": guide_res.data[0],
+            "printers": printers
+        }
+    )
+
+
+@router.post("/edit/{guide_id}")
+async def edit_submit(
+    guide_id: int,
+    title: str = Form(...),
+    printer_model_id: int = Form(...),
+    description: Optional[str] = Form(""),
+    image_file: Optional[UploadFile] = File(None),  # 🆕 File ảnh tải mới
+    image_url: Optional[str] = Form(None),          # Link ảnh cũ hoặc đường dẫn URL
+    video_url: Optional[str] = Form(None),
+    is_active: Optional[str] = Form(None),
+    sort_order: Optional[str] = Form("1"),
+    current_user: dict = Depends(require_login)
+):
+    _check_guide_permission(guide_id, current_user)
+
+    # 1. Lấy thông tin bài viết cũ để phục vụ dọn dẹp Storage nếu đổi ảnh
+    old_guide_res = supabase.table("guide").select("image_url").eq("id", guide_id).execute()
+    old_image_url = old_guide_res.data[0].get("image_url") if old_guide_res.data else None
+
+    clean_image_url = image_url.strip() if image_url and image_url.strip() else None
+
+    # 2. Xử lý upload ảnh mới & xóa ảnh cũ trên Storage
+    if image_file and image_file.filename:
+        clean_image_url = await upload_image_to_supabase(image_file, folder="guides")
+        # 🗑️ Nếu upload ảnh mới thành công, xóa ngay ảnh cũ trên Storage
+        if old_image_url and old_image_url != clean_image_url:
+            delete_image_from_supabase(old_image_url)
+
+    clean_video_url = video_url.strip() if video_url and video_url.strip() else None
+
+    update = {
+        "title": title.strip(),
+        "printer_model_id": printer_model_id,
+        "description": description.strip() if description else "",
+        "image_url": clean_image_url,
+        "video_url": clean_video_url,
+        "is_active": is_active in ["true", "on", "1"],
+        "sort_order": int(sort_order) if sort_order and sort_order.isdigit() else 1
+    }
+
+    try:
+        res = supabase.table("guide").update(update).eq("id", guide_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Không tìm thấy bài viết để cập nhật")
+        
+        await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Lỗi khi cập nhật bài hướng dẫn #{guide_id}: {e}")
+        raise HTTPException(status_code=500, detail="Không thể cập nhật bài viết")
+
+    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# =====================================================
+# DELETE
+# =====================================================
+
+@router.post("/delete/{guide_id}")
+async def delete_guide(
+    guide_id: int,
+    current_user: dict = Depends(require_login)
+):
+    _check_guide_permission(guide_id, current_user)
+
+    try:
+        # 1. Quét thông tin bài viết gốc để thu thập tất cả link ảnh đại diện
+        guide_res = supabase.table("guide").select("image_url").eq("id", guide_id).execute()
+        main_image_url = guide_res.data[0].get("image_url") if guide_res.data else None
+
+        # 2. Quét danh sách các bước lớn (guide_step) & lấy ID + link ảnh
+        steps_res = supabase.table("guide_step").select("id, image_urls").eq("guide_id", guide_id).execute()
+        steps_data = steps_res.data or []
+        step_ids = [s["id"] for s in steps_data]
+        
+        # Gom các URL ảnh từ guide_step (hỗ trợ cả chuỗi đơn hoặc list ảnh)
+        step_images = []
+        for step in steps_data:
+            img = step.get("image_urls")
+            if isinstance(img, list):
+                step_images.extend(img)
+            elif isinstance(img, str) and img:
+                step_images.append(img)
+
+        # 3. Quét danh sách các bước nhỏ (guide_sub_steps) lấy link ảnh
+        sub_step_images = []
+        if step_ids:
+            sub_res = supabase.table("guide_sub_steps").select("image_url").in_("step_id", step_ids).execute()
+            sub_step_images = [sub["image_url"] for sub in (sub_res.data or []) if sub.get("image_url")]
+
+        # 🗑️ 4. Xóa dữ liệu trong Database (Tuân thủ thứ tự xóa từ bảng con -> bảng mẹ)
+        if step_ids:
+            supabase.table("guide_sub_steps").delete().in_("step_id", step_ids).execute()
+        
+        supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
+        supabase.table("guide_step").delete().eq("guide_id", guide_id).execute()
+        supabase.table("guide").delete().eq("id", guide_id).execute()
+
+        # 🗑️ 5. Dọn dẹp tất cả các file ảnh liên quan trên Storage
+        if main_image_url:
+            delete_image_from_supabase(main_image_url)
+        for img_url in set(step_images + sub_step_images):
+            delete_image_from_supabase(img_url)
+
+    except Exception as e:
+        logger.error(f"Lỗi khi xóa bài hướng dẫn #{guide_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Không thể xóa bài viết: {str(e)}")
+        
+    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# =====================================================
+# COPY
+# =====================================================
+
 @router.post("/copy/{guide_id}")
 async def copy_guide(
     guide_id: int,
@@ -465,7 +669,7 @@ async def copy_guide(
     try:
         admin_id = _get_admin_id(current_user)
         
-        # 1. Lấy thông tin bài viết gốc (bảng public.guide)
+        # 1. Lấy thông tin bài viết gốc
         guide_res = (
             supabase.table("guide")
             .select("*")
@@ -477,7 +681,7 @@ async def copy_guide(
         
         original_guide = guide_res.data[0]
         
-        # 2. Chuẩn bị dữ liệu bài viết mới (bảng public.guide)
+        # 2. Chuẩn bị dữ liệu bài viết mới (Dùng lại image_url cũ, tránh duplicate file trên Storage)
         new_guide_data = {
             "printer_model_id": original_guide.get("printer_model_id"),
             "title": f"{original_guide['title']} (Bản sao)",
@@ -560,7 +764,7 @@ async def copy_guide(
                     # Insert danh sách bước nhỏ vào bảng guide_sub_steps
                     supabase.table("guide_sub_steps").insert(new_sub_steps_payload).execute()
 
-        # 6. Tự động đồng bộ Tags
+        # 6. Tự động đồng bộ Tags cho bài viết mới
         if new_guide_data["printer_model_id"]:
             await auto_generate_and_link_tags(
                 new_guide_id, 
@@ -582,115 +786,6 @@ async def copy_guide(
             status_code=500, 
             detail=f"Lỗi hệ thống khi sao chép bài viết: {str(e)}"
         )
-
-
-# =====================================================
-# EDIT
-# =====================================================
-
-@router.get("/edit/{guide_id}", response_class=HTMLResponse)
-async def edit_form(
-    request: Request, 
-    guide_id: int,
-    current_user: dict = Depends(require_login)
-):
-    # 🔒 Kiểm tra quyền truy cập (Admin hoặc Người tạo)
-    _check_guide_permission(guide_id, current_user)
-
-    guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
-    if not guide_res.data:
-        return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
-
-    printers = (
-        supabase
-        .table("printer_model")
-        .select("id, brand, model")
-        .order("brand")
-        .order("model")
-        .execute()
-        .data or []
-    )
-
-    return templates.TemplateResponse(
-        "guide_edit.html",
-        {
-            "request": request,
-            "user": current_user,
-            "guide": guide_res.data[0],
-            "printers": printers
-        }
-    )
-
-
-@router.post("/edit/{guide_id}")
-async def edit_submit(
-    guide_id: int,
-    title: str = Form(...),
-    printer_model_id: int = Form(...),
-    description: Optional[str] = Form(""),
-    image_url: Optional[str] = Form(None),
-    video_url: Optional[str] = Form(None),
-    is_active: Optional[str] = Form(None),
-    sort_order: Optional[str] = Form("1"),
-    current_user: dict = Depends(require_login)
-):
-    # 🔒 Kiểm tra quyền cập nhật bài viết
-    _check_guide_permission(guide_id, current_user)
-
-    clean_image_url = image_url.strip() if image_url and image_url.strip() else None
-    clean_video_url = video_url.strip() if video_url and video_url.strip() else None
-
-    update = {
-        "title": title.strip(),
-        "printer_model_id": printer_model_id,
-        "description": description.strip() if description else "",
-        "image_url": clean_image_url,
-        "video_url": clean_video_url,
-        "is_active": is_active in ["true", "on", "1"],
-        "sort_order": int(sort_order) if sort_order and sort_order.isdigit() else 1
-    }
-
-    try:
-        res = supabase.table("guide").update(update).eq("id", guide_id).execute()
-        if not res.data:
-            raise HTTPException(status_code=404, detail="Không tìm thấy bài viết để cập nhật")
-        
-        await auto_generate_and_link_tags(guide_id, printer_model_id, title.strip())
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Lỗi khi cập nhật bài hướng dẫn #{guide_id}: {e}")
-        raise HTTPException(status_code=500, detail="Không thể cập nhật bài viết")
-
-    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
-
-
-# =====================================================
-# DELETE
-# =====================================================
-
-@router.post("/delete/{guide_id}")
-async def delete_guide(
-    guide_id: int,
-    current_user: dict = Depends(require_login)
-):
-    # 🔒 Kiểm tra quyền xóa bài viết
-    _check_guide_permission(guide_id, current_user)
-
-    try:
-        # Xóa các liên kết ở bảng phụ trước để tránh ràng buộc khóa ngoại (Foreign Key)
-        supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
-        supabase.table("guide_step").delete().eq("guide_id", guide_id).execute()
-        
-        # Xóa bài viết chính
-        supabase.table("guide").delete().eq("id", guide_id).execute()
-    except Exception as e:
-        logger.error(f"Lỗi khi xóa bài hướng dẫn #{guide_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Không thể xóa bài viết: {str(e)}")
-        
-    return RedirectResponse("/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
-
-
 # =====================================================
 # DETAIL
 # =====================================================

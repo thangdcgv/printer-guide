@@ -3,7 +3,9 @@ import re
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status, UploadFile, File
+from app.services.storage_service import upload_image_to_supabase, delete_image_from_supabase
+
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
@@ -109,85 +111,6 @@ def get_sub_steps_batch(step_ids: List[int]) -> dict:
         logger.error(f"Lỗi lấy danh sách bước con batch: {e}")
         return {}
 
-
-# =====================================================
-# BƯỚC CON (SUB-STEPS)
-# =====================================================
-
-@router.post("/{step_id}/sub-steps/add")
-async def add_sub_step(
-    step_id: int,
-    guide_id: int = Form(...),
-    sub_order: int = Form(...),
-    content: str = Form(...),
-    note: Optional[str] = Form(None),
-    image_url: Optional[str] = Form(None)
-):
-    clean_content = content.strip()
-    if not clean_content:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
-
-    validated_image_url = validate_url(image_url, "Đường dẫn ảnh ý nhỏ")
-
-    sub_data = {
-        "step_id": step_id,
-        "sub_order": sub_order,
-        "content": clean_content,
-        "note": note.strip() if note else None,
-        "image_url": validated_image_url
-    }
-
-    try:
-        supabase.table("guide_sub_steps").insert(sub_data).execute()
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
-    except Exception as e:
-        logger.error(f"Lỗi thêm bước con: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể thêm bước con: {str(e)}")
-
-
-@router.post("/sub-steps/{sub_id}/update")
-async def update_sub_step(
-    sub_id: int,
-    guide_id: int = Form(...),
-    sub_order: int = Form(...),
-    content: str = Form(...),
-    note: Optional[str] = Form(None),
-    image_url: Optional[str] = Form(None)
-):
-    clean_content = content.strip()
-    if not clean_content:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
-
-    validated_image_url = validate_url(image_url, "Đường dẫn ảnh ý nhỏ")
-
-    sub_data = {
-        "sub_order": sub_order,
-        "content": clean_content,
-        "note": note.strip() if note else None,
-        "image_url": validated_image_url
-    }
-
-    try:
-        supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
-    except Exception as e:
-        logger.error(f"Lỗi cập nhật bước con #{sub_id}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể cập nhật bước con: {str(e)}")
-
-
-@router.post("/sub-steps/{sub_step_id}/delete")
-async def delete_sub_step(
-    sub_step_id: int,
-    guide_id: int = Form(...)
-):
-    try:
-        supabase.table("guide_sub_steps").delete().eq("id", sub_step_id).execute()
-        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
-    except Exception as e:
-        logger.error(f"Lỗi xóa bước con: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước con: {str(e)}")
-
-
 # =====================================================
 # BƯỚC LỚN (GUIDE STEPS)
 # =====================================================
@@ -257,7 +180,6 @@ async def reorder_guide_steps(payload: ReorderRequest):
         logger.error(f"Lỗi sắp xếp các bước: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Lỗi sắp xếp: {str(e)}")
 
-
 @router.post("/guide-step/add/{guide_id}")
 async def add_guide_step(
     request: Request,
@@ -268,16 +190,28 @@ async def add_guide_step(
     note: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
-    is_active: Optional[str] = Form(None)
+    is_active: Optional[str] = Form(None),
+    image_files: List[UploadFile] = File(None)  # 🆕 Nhận danh sách file ảnh tải từ máy
 ):
     form_data = await request.form()
-    image_urls = form_data.getlist("image_url")
+    manual_image_urls = form_data.getlist("image_url")
     
     clean_title = title.strip()
     if not clean_title:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tiêu đề không được để trống.")
 
-    validated_image_urls = validate_url_list(image_urls, "Đường dẫn ảnh")
+    # 1. Upload các file ảnh mới từ máy tính lên Supabase Storage (nén WebP)
+    uploaded_urls = []
+    if image_files:
+        for file in image_files:
+            if file and file.filename:
+                url = await upload_image_to_supabase(file, folder="steps")
+                uploaded_urls.append(url)
+
+    # 2. Gom danh sách URL nhập tay/giữ lại + danh sách URL vừa upload
+    validated_manual_urls = validate_url_list(manual_image_urls, "Đường dẫn ảnh") or []
+    final_image_urls = validated_manual_urls + uploaded_urls
+
     validated_video_url = validate_url(video_url, "Đường dẫn Video")
     validated_download_url = validate_url(download_url, "Đường dẫn Tải xuống")
 
@@ -304,7 +238,7 @@ async def add_guide_step(
             "title": clean_title,
             "content": content.strip() if content else None,
             "note": note.strip() if note else None,
-            "image_urls": validated_image_urls,
+            "image_urls": final_image_urls,
             "video_url": validated_video_url,
             "download_url": validated_download_url,
             "is_active": is_active in ["true", "on", "1"]
@@ -327,7 +261,8 @@ async def add_guide_step_fallback(
     note: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
-    is_active: Optional[str] = Form(None)
+    is_active: Optional[str] = Form(None),
+    image_files: List[UploadFile] = File(None)
 ):
     return await add_guide_step(
         request=request,
@@ -338,7 +273,8 @@ async def add_guide_step_fallback(
         note=note,
         video_url=video_url,
         download_url=download_url,
-        is_active=is_active
+        is_active=is_active,
+        image_files=image_files
     )
 
 
@@ -353,16 +289,43 @@ async def update_guide_step(
     note: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
-    is_active: Optional[str] = Form(None)
+    is_active: Optional[str] = Form(None),
+    image_files: List[UploadFile] = File(None)  # 🆕 Nhận file upload mới
 ):
     form_data = await request.form()
-    image_urls = form_data.getlist("image_url")
+    manual_image_urls = form_data.getlist("image_url")
 
     clean_title = title.strip()
     if not clean_title:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tiêu đề không được để trống.")
 
-    validated_image_urls = validate_url_list(image_urls, "Đường dẫn ảnh")
+    # 1. Lấy thông tin bước cũ để lấy danh sách ảnh hiện tại
+    old_step_res = supabase.table("guide_step").select("image_urls").eq("id", step_id).execute()
+    old_image_urls = []
+    if old_step_res.data:
+        raw_imgs = old_step_res.data[0].get("image_urls")
+        if isinstance(raw_imgs, list):
+            old_image_urls = raw_imgs
+        elif isinstance(raw_imgs, str) and raw_imgs:
+            old_image_urls = [raw_imgs]
+
+    # 2. Upload các file ảnh mới (nếu có)
+    uploaded_urls = []
+    if image_files:
+        for file in image_files:
+            if file and file.filename:
+                url = await upload_image_to_supabase(file, folder="steps")
+                uploaded_urls.append(url)
+
+    # 3. Gom danh sách ảnh mới nhất
+    validated_manual_urls = validate_url_list(manual_image_urls, "Đường dẫn ảnh") or []
+    final_image_urls = validated_manual_urls + uploaded_urls
+
+    # 🗑️ 4. Xóa khỏi Storage các ảnh cũ không còn xuất hiện trong final_image_urls
+    removed_images = set(old_image_urls) - set(final_image_urls)
+    for img_url in removed_images:
+        delete_image_from_supabase(img_url)
+
     validated_video_url = validate_url(video_url, "Đường dẫn Video")
     validated_download_url = validate_url(download_url, "Đường dẫn Tải xuống")
 
@@ -371,7 +334,7 @@ async def update_guide_step(
         "title": clean_title,
         "content": content.strip() if content else None,
         "note": note.strip() if note else None,
-        "image_urls": validated_image_urls,
+        "image_urls": final_image_urls,
         "video_url": validated_video_url,
         "download_url": validated_download_url,
         "is_active": is_active in ["true", "on", "1"]
@@ -391,9 +354,142 @@ async def delete_guide_step(
     guide_id: int = Form(...)
 ):
     try:
+        # 1. Thu thập tất cả link ảnh của bước lớn hiện tại
+        step_res = supabase.table("guide_step").select("image_urls").eq("id", step_id).execute()
+        step_images = []
+        if step_res.data:
+            raw_imgs = step_res.data[0].get("image_urls")
+            if isinstance(raw_imgs, list):
+                step_images = raw_imgs
+            elif isinstance(raw_imgs, str) and raw_imgs:
+                step_images = [raw_imgs]
+
+        # 2. Thu thập tất cả link ảnh của các bước nhỏ (guide_sub_steps) thuộc bước lớn này
+        sub_res = supabase.table("guide_sub_steps").select("image_url").eq("step_id", step_id).execute()
+        sub_step_images = [sub["image_url"] for sub in (sub_res.data or []) if sub.get("image_url")]
+
+        # 3. Xóa bản ghi trong Database (các bước nhỏ trước -> bước lớn sau)
         supabase.table("guide_sub_steps").delete().eq("step_id", step_id).execute()
         supabase.table("guide_step").delete().eq("id", step_id).execute()
+
+        # 🗑️ 4. Xóa toàn bộ ảnh liên quan trên Storage
+        for img_url in set(step_images + sub_step_images):
+            delete_image_from_supabase(img_url)
+
         return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
         logger.error(f"Lỗi xóa bước lớn: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước lớn: {str(e)}")
+
+# =====================================================
+# BƯỚC CON (SUB-STEPS)
+# =====================================================
+
+@router.post("/{step_id}/sub-steps/add")
+async def add_sub_step(
+    step_id: int,
+    guide_id: int = Form(...),
+    sub_order: int = Form(...),
+    content: str = Form(...),
+    note: Optional[str] = Form(None),
+    image_file: Optional[UploadFile] = File(None),  # 🆕 Nhận file ảnh tải từ máy
+    image_url: Optional[str] = Form(None)          # Fallback URL nhập tay
+):
+    clean_content = content.strip()
+    if not clean_content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
+
+    # 1. Ưu tiên upload file ảnh từ máy lên Supabase Storage (nén WebP)
+    clean_image_url = None
+    if image_file and image_file.filename:
+        clean_image_url = await upload_image_to_supabase(image_file, folder="sub_steps")
+    elif image_url and image_url.strip():
+        clean_image_url = validate_url(image_url.strip(), "Đường dẫn ảnh ý nhỏ")
+
+    sub_data = {
+        "step_id": step_id,
+        "sub_order": sub_order,
+        "content": clean_content,
+        "note": note.strip() if note else None,
+        "image_url": clean_image_url
+    }
+
+    try:
+        supabase.table("guide_sub_steps").insert(sub_data).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi thêm bước con: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể thêm bước con: {str(e)}")
+
+
+@router.post("/sub-steps/{sub_id}/update")
+async def update_sub_step(
+    sub_id: int,
+    guide_id: int = Form(...),
+    sub_order: int = Form(...),
+    content: str = Form(...),
+    note: Optional[str] = Form(None),
+    image_file: Optional[UploadFile] = File(None),  # 🆕 Nhận file ảnh tải mới
+    image_url: Optional[str] = Form(None)          # Link URL cũ hoặc nhập tay
+):
+    clean_content = content.strip()
+    if not clean_content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
+
+    # 1. Quét bản ghi cũ để lấy URL ảnh hiện tại
+    old_sub_res = supabase.table("guide_sub_steps").select("image_url").eq("id", sub_id).execute()
+    old_image_url = old_sub_res.data[0].get("image_url") if old_sub_res.data else None
+
+    clean_image_url = validate_url(image_url.strip(), "Đường dẫn ảnh ý nhỏ") if image_url and image_url.strip() else None
+
+    # 2. Xử lý upload ảnh mới & xóa ảnh cũ trên Storage
+    if image_file and image_file.filename:
+        clean_image_url = await upload_image_to_supabase(image_file, folder="sub_steps")
+        # 🗑️ Nếu tải ảnh mới thành công, dọn dẹp ảnh cũ trên Storage
+        if old_image_url and old_image_url != clean_image_url:
+            delete_image_from_supabase(old_image_url)
+    elif old_image_url and old_image_url != clean_image_url:
+        # 🗑️ Người dùng xóa hẳn link ảnh hoặc đổi sang URL khác
+        delete_image_from_supabase(old_image_url)
+
+    sub_data = {
+        "sub_order": sub_order,
+        "content": clean_content,
+        "note": note.strip() if note else None,
+        "image_url": clean_image_url
+    }
+
+    try:
+        supabase.table("guide_sub_steps").update(sub_data).eq("id", sub_id).execute()
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi cập nhật bước con #{sub_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể cập nhật bước con: {str(e)}")
+
+
+@router.post("/sub-steps/{sub_step_id}/delete")
+async def delete_sub_step(
+    sub_step_id: int,
+    guide_id: int = Form(...)
+):
+    try:
+        # 1. Thu thập link ảnh của bước con trước khi xóa bản ghi
+        sub_res = supabase.table("guide_sub_steps").select("image_url").eq("id", sub_step_id).execute()
+        image_url = sub_res.data[0].get("image_url") if sub_res.data else None
+
+        # 2. Xóa bản ghi trong Database
+        supabase.table("guide_sub_steps").delete().eq("id", sub_step_id).execute()
+
+        # 🗑️ 3. Dọn dẹp file ảnh tương ứng trên Supabase Storage
+        if image_url:
+            delete_image_from_supabase(image_url)
+
+        return RedirectResponse(url=f"/admin/guide-step?guide_id={guide_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except Exception as e:
+        logger.error(f"Lỗi xóa bước con: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước con: {str(e)}")
+
+
+
+
+

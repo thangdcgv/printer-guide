@@ -181,7 +181,7 @@
         <!-- FORM CARD -->
         <div class="glass-card">
             <div class="card-body card-body-custom p-4">
-                <form action="/admin/guide/edit/{{ guide.id }}" method="POST">
+                <form action="/admin/guide/edit/{{ guide.id }}" method="POST" enctype="multipart/form-data">
                     
                     <!-- 1. Chọn Model Máy In -->
                     <div class="mb-3">
@@ -212,29 +212,49 @@
 
                     <!-- 🖼️ 4. BỔ SUNG: ĐƯỜNG DẪN ẢNH MINH HỌA / BANNER DÒNG MÁY -->
                     <div class="mb-3">
-                        <label for="image_url" class="form-label form-label-custom">
-                            🖼️ Đường dẫn Ảnh minh họa / Dòng máy (Image URL)
+                        <label class="form-label form-label-custom fw-semibold">
+                            🖼️ Ảnh minh họa / Dòng máy (Image)
                         </label>
-                        <input type="url"
-                               name="image_url"
-                               id="image_url"
-                               class="form-control modern-input"
-                               placeholder="https://example.com/anh-may-in-epson.jpg"
-                               value="{{ guide.image_url or '' }}">
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic;">
-                            📌 Link ảnh đại diện sản phẩm hoặc hình tổng quan. Ảnh này sẽ xuất hiện ở đầu bài viết trước khi vào từng bước chi tiết.
-                        </div>
 
-                        <!-- XEM TRƯỚC ẢNH ĐÃ CÓ -->
+                        <!-- XEM TRƯỚC ẢNH ĐANG SỬ DỤNG (NẾU CÓ) -->
                         {% if guide.image_url %}
-                        <div class="mt-2 p-2 rounded d-flex align-items-center gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0; max-width: 300px;">
-                            <img src="{{ guide.image_url }}" alt="Preview" style="height: 48px; width: 48px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; border: 1px solid #cbd5e1;">
+                        <div class="mb-3 p-2 rounded d-flex align-items-center gap-2" style="background: #f8fafc; border: 1px solid #e2e8f0; max-width: 320px;">
+                            <img src="{{ guide.image_url }}" alt="Preview" style="height: 52px; width: 52px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; border: 1px solid #cbd5e1;">
                             <div class="small text-truncate" style="color: #475569; font-size: 0.75rem;">
-                                <span class="fw-semibold d-block">Ảnh đang sử dụng</span>
+                                <span class="fw-semibold d-block text-dark">Ảnh đang sử dụng</span>
                                 <a href="{{ guide.image_url }}" target="_blank" class="text-primary text-decoration-none" style="font-size: 0.72rem;">Xem ảnh gốc ↗</a>
                             </div>
                         </div>
                         {% endif %}
+
+                        <!-- ĐỀ XUẤT 1: TẢI FILE ẢNH MỚI TỪ MÁY TÍNH -->
+                        <div class="mb-2">
+                            <label for="image_file" class="form-label small text-secondary mb-1">
+                                📁 Chọn file ảnh mới từ máy tính (Hệ thống tự động nén WebP):
+                            </label>
+                            <input type="file" 
+                                name="image_file" 
+                                id="image_file" 
+                                class="form-control modern-input" 
+                                accept="image/*">
+                        </div>
+
+                        <!-- ĐỀ XUẤT 2: LINK ĐƯỜNG DẪN ẢNH (GIỮ LẠI LINK CŨ NẾU KHÔNG CHỌN FILE MỚI) -->
+                        <div>
+                            <label for="image_url" class="form-label small text-secondary mb-1">
+                                🔗 Hoặc giữ/nhập đường dẫn URL ảnh trực tiếp:
+                            </label>
+                            <input type="url"
+                                name="image_url"
+                                id="image_url"
+                                class="form-control modern-input"
+                                placeholder="https://example.com/anh-may-in-epson.jpg"
+                                value="{{ guide.image_url or '' }}">
+                        </div>
+
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; font-style: italic;">
+                            📌 Nếu chọn tải file ảnh mới, hệ thống sẽ tự động upload và thay thế ảnh hiện tại.
+                        </div>
                     </div>
                     <!-- 🎥 5. BỔ SUNG: ĐƯỜNG DẪN VIDEO HƯỚNG DẪN TỔNG QUAN -->
                     <div class="mb-3">

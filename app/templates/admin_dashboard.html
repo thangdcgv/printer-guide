@@ -131,7 +131,7 @@ body {
     font-weight: 700;
 }
 
-/* LAYOUT XẾP CHỒNG DỌC (FULL WIDTH EACH) */
+/* LAYOUT XẾP CHỒNG DỌC */
 .dashboard-sections {
     display: flex;
     flex-direction: column;
@@ -190,7 +190,7 @@ td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middl
     background: #f8fafc;
 }
 .guides-container {
-    padding: 10px 16px 16px 32px;
+    padding: 10px 16px 16px 24px;
 }
 .guide-list {
     list-style: none;
@@ -257,14 +257,14 @@ td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middl
         </div>
         <div class="stat-card">
             <div class="stat-title">🖨️ Model máy in</div>
-            <div class="stat-value">{{ category_stats | length if category_stats else 0 }}</div>
+            <div class="stat-value">{{ total_models or (category_stats | length if category_stats else 0) }}</div>
             <div class="stat-subtext">Dòng máy trong hệ thống</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">🔥 Dòng máy nhiều bài nhất</div>
             {% if category_stats and category_stats | length > 0 %}
                 {% set top_cat = category_stats | sort(attribute='count', reverse=True) | first %}
-                <div class="stat-value" style="font-size: 1.15rem; margin-top: 4px;">
+                <div class="stat-value" style="font-size: 1.1rem; margin-top: 4px;" title="{{ top_cat.display_name }}">
                     {{ top_cat.display_name or ((top_cat.brand or '') ~ ' ' ~ (top_cat.model or '')) }}
                 </div>
                 <div class="stat-subtext">Chiếm <strong>{{ top_cat.count }}</strong> bài hướng dẫn</div>
@@ -285,7 +285,149 @@ td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middl
 
     <!-- Bố cục xếp chồng dọc -->
     <div class="dashboard-sections">
-        <!-- PHẦN: PHẢN HỒI & GÓP Ý TỪ KHÁCH HÀNG -->
+        
+        <!-- PHẦN 1: THỐNG KÊ BÀI VIẾT THEO TÁC GIẢ -->
+        <div class="glass-card">
+            <div class="section-title">
+                <span>✍️ Thống kê bài viết theo tác giả</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Tác giả</th>
+                            <th style="width: 20%; text-align: center;">Tổng bài viết</th>
+                            <th style="width: 20%; text-align: center;">Bài đã ghim</th>
+                            <th style="width: 20%; text-align: right;">Đang hiển thị</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if author_stats %}
+                            {% for author in author_stats %}
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 1.1rem;">👤</span> 
+                                        <span>{{ author.author_name }}</span>
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-blue" style="font-weight: 600;">{{ author.total_guides }} bài</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if author.pinned_count > 0 %}
+                                        <span class="badge badge-warning">📌 {{ author.pinned_count }}</span>
+                                    {% else %}
+                                        <span style="color: #94a3b8; font-size: 0.85rem;">0</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <span class="badge badge-success">{{ author.active_count }} / {{ author.total_guides }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="empty-state">Chưa có dữ liệu bài viết của tác giả.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PHẦN 2: THỐNG KÊ CHI TIẾT BÀI VIẾT THEO DÒNG MÁY -->
+        <div class="glass-card">
+            <div class="section-title">
+                <span>🔍 Chi tiết bài viết theo Dòng máy</span>
+                <span class="badge badge-gray">Bấm vào dòng máy để đóng/mở danh sách bài</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 70%;">Thương hiệu & Model máy in</th>
+                            <th style="width: 30%; text-align: right;">Số lượng bài</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if category_stats %}
+                            {% for item in category_stats %}
+                            <!-- Dòng Header Máy in -->
+                            <tr class="category-row-header" onclick="toggleCategory('cat-{{ loop.index }}', this)">
+                                <td>
+                                    <span class="toggle-icon">▶</span>
+                                    <strong style="color: #0f172a; font-size: 0.92rem;">🖨️ {{ item.display_name or ((item.brand or '') ~ ' ' ~ (item.model or '')) }}</strong>
+                                </td>
+                                <td style="text-align: right;">
+                                    <span class="badge badge-blue">{{ item.count }} bài viết</span>
+                                </td>
+                            </tr>
+                            
+                            <!-- Dòng Chi Tiết Xổ Ra -->
+                            <tr id="cat-{{ loop.index }}" class="guides-detail-row" style="display: none;">
+                                <td colspan="2">
+                                    <div class="guides-container">
+                                        {% if item.guides and item.guides | length > 0 %}
+                                            <ul class="guide-list">
+                                                {% for guide in item.guides %}
+                                                <li class="guide-item">
+                                                    <div class="guide-item-title">
+                                                        {% if guide.is_pinned %}
+                                                            <span class="badge badge-pinned">📌 Ghim</span>
+                                                        {% else %}
+                                                            <span>📄</span>
+                                                        {% endif %}
+                                                        <a href="/admin/guide/edit/{{ guide.id }}" title="Sửa bài viết ID {{ guide.id }}">
+                                                            {{ guide.title }}
+                                                        </a>
+                                                        {% if not guide.is_active %}
+                                                            <span class="badge badge-gray" style="font-size:0.68rem;">Ẩn</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    <!-- Khối hiển thị Tác giả & Ngày tạo -->
+                                                    <div style="display: flex; align-items: center; gap: 12px; font-size: 0.75rem; color: #64748b; white-space: nowrap;">
+                                                        <span style="font-weight: 500; color: #475569;">
+                                                            ✍️ {{ guide.author_name or 'Chưa rõ' }}
+                                                        </span>
+
+                                                        {% if guide.created_at %}
+                                                            <span style="color: #94a3b8;">
+                                                                📅 
+                                                                {% if guide.created_at.strftime is defined %}
+                                                                    {{ guide.created_at.strftime('%Y-%m-%d') }}
+                                                                {% else %}
+                                                                    {{ guide.created_at[:10] }}
+                                                                {% endif %}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <div style="font-size: 0.82rem; color: #64748b; font-style: italic; padding: 6px 0;">
+                                                Chưa có bài hướng dẫn nào cho model máy in này.
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2" class="empty-state">Chưa có dữ liệu dòng máy in nào trong hệ thống.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PHẦN 3: PHẢN HỒI & GÓP Ý TỪ KHÁCH HÀNG -->
         <div class="glass-card">
             <div class="section-title">
                 <span>💬 Phản hồi & Góp ý từ người dùng</span>
@@ -357,7 +499,7 @@ td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middl
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="empty-state" style="text-align: center; color: #94a3b8; padding: 24px;">
+                                <td colspan="4" class="empty-state">
                                     Chưa có góp ý nào từ khách hàng.
                                 </td>
                             </tr>
@@ -367,91 +509,6 @@ td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middl
             </div>
         </div>
 
-        <!-- PHẦN: THỐNG KÊ CHI TIẾT BÀI VIẾT THEO DÒNG MÁY -->
-        <div class="glass-card">
-            <div class="section-title">
-                <span>🔍 Chi tiết bài viết theo Dòng máy</span>
-                <span class="badge badge-gray">Bấm vào dòng máy để xem danh sách bài</span>
-            </div>
-            
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 65%;">Thương hiệu & Model máy in</th>
-                            <th style="width: 20%; text-align: center;">Số lượng bài</th>
-                            <th style="width: 15%; text-align: right;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if category_stats %}
-                            {% for item in category_stats %}
-                            <!-- Dòng Header Máy in -->
-                            <tr class="category-row-header" onclick="toggleCategory('cat-{{ loop.index }}', this)">
-                                <td>
-                                    <span class="toggle-icon">▶</span>
-                                    <strong style="color: #0f172a; font-size: 0.92rem;">🖨️ {{ item.display_name or ((item.brand or '') ~ ' ' ~ (item.model or '')) }}</strong>
-                                </td>
-                                <td style="text-align: center;">
-                                    <span class="badge badge-blue">{{ item.count }} bài viết</span>
-                                </td>
-                                <td style="text-align: right;">
-                                    <span class="btn btn-outline btn-sm" style="pointer-events: none;">Xem danh sách</span>
-                                </td>
-                            </tr>
-                            
-                            <!-- Dòng Chi Tiết Xổ Ra -->
-                            <tr id="cat-{{ loop.index }}" class="guides-detail-row" style="display: none;">
-                                <td colspan="3">
-                                    <div class="guides-container">
-                                        {% if item.guides and item.guides | length > 0 %}
-                                            <ul class="guide-list">
-                                                {% for guide in item.guides %}
-                                                <li class="guide-item">
-                                                    <div class="guide-item-title">
-                                                        {% if guide.is_pinned %}
-                                                            <span class="badge badge-pinned">📌 Ghim</span>
-                                                        {% else %}
-                                                            <span>📄</span>
-                                                        {% endif %}
-                                                        <a href="/admin/guide/edit/{{ guide.id }}" title="Sửa bài viết ID {{ guide.id }}">
-                                                            {{ guide.title }}
-                                                        </a>
-                                                        {% if not guide.is_active %}
-                                                            <span class="badge badge-gray" style="font-size:0.68rem;">Ẩn</span>
-                                                        {% endif %}
-                                                    </div>
-                                                    
-                                                    {% if guide.created_at %}
-                                                        <span style="font-size: 0.75rem; color: #94a3b8;">
-                                                            {% if guide.created_at.strftime is defined %}
-                                                                {{ guide.created_at.strftime('%Y-%m-%d') }}
-                                                            {% else %}
-                                                                {{ guide.created_at[:10] }}
-                                                            {% endif %}
-                                                        </span>
-                                                    {% endif %}
-                                                </li>
-                                                {% endfor %}
-                                            </ul>
-                                        {% else %}
-                                            <div style="font-size: 0.82rem; color: #64748b; font-style: italic; padding: 6px 0;">
-                                                Chưa có bài hướng dẫn nào cho model máy in này.
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="3" class="empty-state">Chưa có dữ liệu dòng máy in nào trong hệ thống.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -482,7 +539,8 @@ async function markProcessed(feedbackId) {
     try {
         const response = await fetch(`/admin/api/feedback/process/${feedbackId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
         });
 
         const result = await response.json();
@@ -493,9 +551,8 @@ async function markProcessed(feedbackId) {
 
             // 2. Giảm badge ở tiêu đề section phản hồi
             const badge = document.getElementById('unread-count-badge');
-            let currentCount = 0;
             if (badge) {
-                currentCount = parseInt(badge.textContent) || 0;
+                const currentCount = parseInt(badge.textContent) || 0;
                 if (currentCount > 1) {
                     badge.textContent = `${currentCount - 1} chưa đọc`;
                 } else {

@@ -220,7 +220,7 @@
             </div>
 
             <!-- Chỉ hiển thị nút Thêm bước mới nếu người dùng là Admin/KTV đã đăng nhập -->
-            {% if user and (user.role in ['Admin', 'SuperAdmin', 'SystemAdmin'] or (guide.created_by and guide.created_by == user.id)) %}
+            {% if user and (user.role in ['Admin', 'Super Admin', 'System Admin'] or (guide.created_by and guide.created_by == user.id)) %}
             <button type="button" data-next-step="{{ steps | length + 1 }}" onclick="openAddModal(this)" class="btn-primary-modern shadow-sm">
                 <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Thêm bước mới
@@ -356,7 +356,6 @@
 
                                             <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
                                                 <span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; margin-top: 2px;">Ý {{ sub.sub_order }}</span>
-                                                <!-- Thêm | safe và white-space: pre-line để tự động xuống dòng và hiển thị nút đính kèm -->
                                                 <div style="color: #1e293b; line-height: 1.6; font-weight: 500; white-space: pre-line; flex-grow: 1;">
                                                     {{ sub.content | safe }}
                                                 </div>
@@ -370,7 +369,8 @@
                                         </div>
 
                                         <!-- Thao tác Sửa / Xóa ý nhỏ (Chỉ Admin hoặc Tác giả) -->
-                                        {% if user and (user.role == 'Admin' or user.role == 'System Admin' or user.role == 'Super Admin' or (guide.created_by and guide.created_by == user.id)) %}                                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
+                                        {% if user and (user.role == 'Admin' or user.role == 'System Admin' or user.role == 'Super Admin' or (guide.created_by and guide.created_by == user.id)) %}
+                                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap;">
                                             <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; cursor: pointer; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;" title="Sửa ý này">✏️ Sửa</button>
                                             
                                             <form action="/admin/sub-steps/{{ sub.id }}/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ý này?');">
@@ -383,12 +383,20 @@
 
                                     <!-- Chế độ chỉnh sửa ý nhỏ (Chỉ Admin hoặc Tác giả) -->
                                     {% if user and (user.role == 'Admin' or user.role == 'System Admin' or user.role == 'Super Admin' or (guide.created_by and guide.created_by == user.id)) %}
-                                    <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" style="display: none; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                                    <form id="sub-step-edit-{{ sub.id }}" action="/admin/sub-steps/{{ sub.id }}/update" method="POST" enctype="multipart/form-data" style="display: none; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
                                         <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                        <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 70px;" class="modern-input" title="Thứ tự">
-                                        <input type="url" name="image_url" value="{{ sub.image_url or '' }}" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 180px;" class="modern-input">
+                                        
+                                        <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                                            <input type="number" name="sub_order" value="{{ sub.sub_order }}" required style="width: 70px;" class="modern-input" title="Thứ tự">
+                                            <!-- 📁 Chọn file ảnh mới từ máy tính -->
+                                            <input type="file" name="image_file" accept="image/*" class="modern-input" style="flex: 1; padding: 5px; background: #ffffff;" title="Tải ảnh mới từ máy">
+                                        </div>
+
+                                        <!-- 🔗 Giữ link cũ hoặc nhập link ngoài -->
+                                        <input type="url" name="image_url" value="{{ sub.image_url or '' }}" placeholder="🔗 Link URL ảnh (hoặc giữ nguyên link cũ)..." style="width: 100%;" class="modern-input">
                                         <input type="text" name="content" value="{{ sub.content }}" required style="width: 100%;" class="modern-input" placeholder="Nội dung các bước chi tiết...">
                                         <input type="text" name="note" value="{{ sub.note or '' }}" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%;" class="modern-input">
+                                        
                                         <div style="display: flex; gap: 6px; width: 100%; justify-content: flex-end; margin-top: 4px;">
                                             <button type="submit" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600;">Lưu lại</button>
                                             <button type="button" onclick="toggleEditSubStep('{{ sub.id }}')" style="background: #64748b; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 600;">Hủy</button>
@@ -402,12 +410,20 @@
 
                             <!-- Form thêm nhanh bước con (Chỉ Admin hoặc Tác giả) -->
                             {% if user and (user.role == 'Admin' or user.role == 'Super Admin' or user.role == 'System Admin' or (guide.created_by and guide.created_by == user.id)) %}
-                            <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" class="sub-step-add-form" style="background: #f1f5f9; padding: 10px; border-radius: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <form action="/admin/{{ step.id }}/sub-steps/add" method="POST" enctype="multipart/form-data" class="sub-step-add-form" style="background: #f1f5f9; padding: 10px; border-radius: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <input type="hidden" name="guide_id" value="{{ guide.id }}">
-                                <input type="number" name="sub_order" placeholder="Thứ tự" value="1" required style="width: 70px;" class="modern-input">
-                                <input type="url" name="image_url" placeholder="🔗 Link ảnh minh họa..." style="flex: 1; min-width: 180px;" class="modern-input">
+                                
+                                <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                                    <input type="number" name="sub_order" placeholder="Thứ tự" value="{{ (step.sub_steps | length) + 1 if step.sub_steps else 1 }}" required style="width: 70px;" class="modern-input">
+                                    <!-- 📁 Tải ảnh trực tiếp từ máy tính -->
+                                    <input type="file" name="image_file" accept="image/*" class="modern-input" style="flex: 1; padding: 5px; background: #ffffff;" title="Tải ảnh từ máy">
+                                </div>
+
+                                <!-- 🔗 Hoặc nhập link ảnh URL bên ngoài -->
+                                <input type="url" name="image_url" placeholder="🔗 Hoặc nhập link URL ảnh..." style="width: 100%;" class="modern-input">
                                 <input type="text" name="content" placeholder="Nội dung các bước chi tiết..." required style="width: 100%;" class="modern-input">
                                 <input type="text" name="note" placeholder="⚠️ Lưu ý nếu có..." style="width: 100%;" class="modern-input">
+                                
                                 <button type="submit" style="background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.15s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">+ Thêm ý chi tiết</button>
                             </form>
                             {% endif %}
@@ -430,13 +446,16 @@
 <!-- Modal Thêm/Sửa Bước -->
 <div id="stepModal" class="modal-overlay">
     <div class="modal-card">
+        <!-- Header Modal -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
             <h4 id="modalTitle" style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Thêm bước mới</h4>
             <button type="button" onclick="closeModal()" style="background: #f1f5f9; border: none; font-size: 1.1rem; cursor: pointer; color: #64748b; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Đóng">✕</button>
         </div>
         
-        <form id="stepForm" method="POST" action="/admin/guide-step/add/{{ guide.id }}">
+        <!-- FORM HỖ TRỢ UPLOAD FILE (enctype="multipart/form-data") -->
+        <form id="stepForm" method="POST" action="/admin/guide-step/add/{{ guide.id }}" enctype="multipart/form-data">
             <input type="hidden" name="guide_id" value="{{ guide.id }}">
+            <input type="hidden" id="step_id" name="step_id" value="">
             
             <div class="modal-grid-step" style="display: grid; grid-template-columns: 100px 1fr; gap: 12px; margin-bottom: 1rem;">
                 <div>
@@ -459,14 +478,28 @@
                 <input type="text" id="note" name="note" class="modern-input" placeholder="Ví dụ: nên sử dụng trình duyệt Google Chrome">
             </div>
 
-            <!-- Ô nhập Đường dẫn Ảnh và Video cho từng bước -->
-            <div style="margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Đường dẫn Ảnh (Có thể thêm nhiều ảnh)</label>
-                    <button type="button" onclick="addImageInput()" style="background: none; border: none; color: #2563eb; font-size: 0.78rem; font-weight: 600; cursor: pointer;">+ Thêm ô ảnh</button>
+            <!-- Khối Upload File Ảnh & Nhập Link URL -->
+            <div style="margin-bottom: 1rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px;">
+                <!-- 1. Tải ảnh mới từ thiết bị -->
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                        📁 Tải ảnh lên từ máy tính (Chọn nhiều file cùng lúc)
+                    </label>
+                    <input type="file" id="image_files" name="image_files" multiple accept="image/*" class="modern-input" style="padding: 6px; background: #ffffff;" onchange="previewLocalFiles(this)">
+                    <div id="filePreviewContainer" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
                 </div>
-                <div id="imageInputsContainer" style="display: flex; flex-direction: column; gap: 8px;">
-                    <!-- Các ô input link ảnh sẽ được thêm tự động bằng JavaScript ở đây -->
+
+                <div style="text-align: center; margin: 10px 0; color: #94a3b8; font-size: 0.75rem; font-weight: 600;">— HOẶC QUẢN LÝ LINK ẢNH —</div>
+
+                <!-- 2. Nhập URL / Giữ lại ảnh cũ -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Đường dẫn Ảnh (URL hiện có hoặc link ngoài)</label>
+                        <button type="button" onclick="addImageInput()" style="background: none; border: none; color: #2563eb; font-size: 0.78rem; font-weight: 600; cursor: pointer;">+ Thêm ô URL</button>
+                    </div>
+                    <div id="imageInputsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Các ô input URL ảnh được render động bằng JS -->
+                    </div>
                 </div>
             </div>
 
@@ -477,7 +510,6 @@
                 </div>
             </div>
 
-            <!-- Ô nhập Link bộ cài / Tải xuống -->
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Link bộ cài</label>
                 <input type="url" id="download_url" name="download_url" class="modern-input" placeholder="https://drive.google.com/file/d/...">

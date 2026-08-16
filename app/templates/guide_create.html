@@ -172,7 +172,7 @@ textarea.modern-control {
         <!-- FORM CARD -->
         <div class="form-card">
             <div class="form-body">
-                <form action="/admin/guide/create" method="POST">
+                <form action="/admin/guide/create" method="POST" enctype="multipart/form-data">
 
                     <!-- MODEL -->
                     <div class="mb-3">
@@ -219,15 +219,36 @@ textarea.modern-control {
 
                     <!-- 🖼️ IMAGE URL (ẢNH MINH HỌA / BANNER DÒNG MÁY) -->
                     <div class="mb-3">
-                        <label class="form-label">
-                            🖼️ Đường dẫn Ảnh minh họa / Dòng máy (Image URL)
+                        <label class="form-label form-label-custom fw-semibold">
+                            🖼️ Ảnh minh họa / Dòng máy (Image)
                         </label>
-                        <input type="url"
-                               name="image_url"
-                               class="form-control modern-control"
-                               placeholder="https://example.com/anh-may-in-epson.jpg">
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic;">
-                            📌 Link ảnh đại diện sản phẩm hoặc hình tổng quan. Ảnh này sẽ xuất hiện ở đầu bài viết trước khi vào từng bước chi tiết.
+
+                        <!-- TẢI FILE ẢNH MỚI TỪ MÁY TÍNH -->
+                        <div class="mb-2">
+                            <label for="image_file" class="form-label small text-secondary mb-1">
+                                📁 Chọn file ảnh từ máy tính (Hệ thống tự động nén WebP):
+                            </label>
+                            <input type="file" 
+                                name="image_file" 
+                                id="image_file" 
+                                class="form-control modern-input" 
+                                accept="image/*">
+                        </div>
+
+                        <!-- HOẶC NHẬP LINK ẢNH TRỰC TIẾP -->
+                        <div>
+                            <label for="image_url" class="form-label small text-secondary mb-1">
+                                🔗 Hoặc nhập đường dẫn URL ảnh trực tiếp:
+                            </label>
+                            <input type="url"
+                                name="image_url"
+                                id="image_url"
+                                class="form-control modern-input"
+                                placeholder="https://example.com/anh-may-in-epson.jpg">
+                        </div>
+
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; font-style: italic;">
+                            📌 Ưu tiên chọn file tải lên từ máy tính để ảnh được tối ưu dung lượng và tự động lưu vào hệ thống.
                         </div>
                     </div>
                     <!-- 🎥 5. BỔ SUNG: ĐƯỜNG DẪN VIDEO HƯỚNG DẪN TỔNG QUAN -->

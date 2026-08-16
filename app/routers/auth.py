@@ -28,7 +28,8 @@ SESSION_MAX_AGE = 60 * 60 * 24 * 7  # Duy trì đăng nhập 7 ngày (604,800 gi
 
 ALLOWED_ADMIN_ROLES = {
     "Admin",
-    "SuperAdmin",
+    "Super Admin",
+    "System Admin",
 }
 
 
