@@ -198,15 +198,15 @@ def public_dashboard(request: Request):
 
 
 # =========================================================
-# 2. ADMIN DASHBOARD
+# 2. ADMIN DASHBOARD (ĐÃ SỬA LỖI)
 # =========================================================
 
 @router.get("/admin/dashboard", response_class=HTMLResponse)
-def admin_dashboard(
+async def admin_dashboard(  # 1. Thêm 'async' để đồng bộ với require_login
     request: Request,
-    admin: dict = Depends(require_login),
+    current_user: dict = Depends(require_login),
 ):
-    """Trang Dashboard quản trị (dùng def để tránh block event loop)."""
+    """Trang Dashboard quản trị."""
     (
         total_guides,
         total_models,
@@ -220,7 +220,8 @@ def admin_dashboard(
         "admin_dashboard.html",
         {
             "request": request,
-            "admin": admin,
+            "current_user": current_user,
+            "admin": current_user,  # 2. BỔ SUNG DÒNG NÀY (hoặc "admin": True) để HTML {% if admin %} nhận diện được!
             "total_guides": total_guides,
             "total_models": total_models,
             "category_stats": category_stats,
@@ -238,7 +239,7 @@ def admin_dashboard(
 @router.post("/admin/api/feedback/process/{feedback_id}")
 def mark_feedback_processed(
     feedback_id: int,
-    admin: dict = Depends(require_login),
+    current_user: dict = Depends(require_login),
 ):
     """Cập nhật trạng thái phản hồi thành 'Đã xử lý'."""
     try:
@@ -255,7 +256,7 @@ def mark_feedback_processed(
                 detail=f"Không tìm thấy phản hồi với ID: {feedback_id}"
             )
 
-        logger.info("Admin %s đã xử lý phản hồi ID: %s", admin.get("email", "unknown"), feedback_id)
+        logger.info("Admin %s đã xử lý phản hồi ID: %s", current_user.get("email", "unknown"), feedback_id)
         return {
             "success": True,
             "message": "Đã đánh dấu xử lý phản hồi thành công.",

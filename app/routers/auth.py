@@ -175,15 +175,13 @@ def authenticate_session(request: Request, response: Optional[Response] = None) 
 
 
 def authenticate_admin_session(request: Request, response: Optional[Response] = None) -> Optional[dict]:
-    """
-    Xác thực session VÀ kiểm tra xem tài khoản có quyền Admin/SuperAdmin hay không.
-    """
     user_profile = authenticate_session(request, response)
 
     if not user_profile:
         return None
 
-    role = user_profile.get("role")
+    # Chuyển role về chữ viết thường và xóa khoảng trắng thừa trước khi so sánh
+    role = str(user_profile.get("role", "")).strip().lower()
 
     if role not in ALLOWED_ADMIN_ROLES:
         logger.warning("User không đủ quyền admin: auth_id=%s role=%s", user_profile.get("auth_id"), role)
@@ -203,14 +201,13 @@ async def login_page(
     error: Optional[str] = None,
 ):
     """GET /admin/login"""
-    user = authenticate_session(request, response)
+    # ĐỔI: Dùng authenticate_admin_session thay vì authenticate_session
+    admin_user = authenticate_admin_session(request, response)
 
-    # Nếu đã đăng nhập thì tự động chuyển hướng về trang tương ứng với role
-    if user:
-        user_role = user.get("role", "User")
-        target_url = "/admin/guide" if user_role in ALLOWED_ADMIN_ROLES else "/"
+    # Chỉ khi thực sự là ADMIN mới cho tự động chuyển sang /admin/guide
+    if admin_user:
         return RedirectResponse(
-            url=target_url,
+            url="/admin/guide",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 

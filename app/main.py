@@ -136,7 +136,7 @@ async def get_manifest():
 # ROOT FAVICON FALLBACK (XỬ LÝ DỨT ĐIỂM LỖI 404 SAFARI)
 # =========================================================
 
-@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/favicon.png", include_in_schema=False)
 @app.get("/apple-touch-icon.png", include_in_schema=False)
 @app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
 async def favicon_fallback():

@@ -20,7 +20,7 @@ router = APIRouter(prefix="/admin", tags=["Admin Hub"])
 async def admin_main(
     request: Request,
     response: Response,
-    current_user: dict = Depends(require_login),  # Cho phép mọi user đã đăng nhập truy cập Hub
+    current_user: dict = Depends(require_login),
 ):
     """
     Trang Hub chính hiển thị các card chức năng
@@ -30,9 +30,9 @@ async def admin_main(
         {
             "request": request,
             "current_user": current_user,
+            "admin": current_user,  # 👉 BỔ SUNG DÒNG NÀY ĐỂ FIX LỖI HTML
         },
     )
-
 
 # =========================================================
 # 3. API ĐÁNH DẤU XỬ LÝ FEEDBACK
@@ -41,7 +41,7 @@ async def admin_main(
 @router.post("/api/feedback/process/{feedback_id}")
 async def mark_feedback_processed(
     feedback_id: int,
-    admin: dict = Depends(require_admin),  # Khuyến nghị dùng require_admin
+    current_user: dict = Depends(require_admin),  # Khuyến nghị dùng require_admin
 ):
     try:
         supabase.table("feedbacks").update({"is_processed": True}).eq(
