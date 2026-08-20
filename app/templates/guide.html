@@ -667,5 +667,37 @@
     window.addEventListener('scroll', updateScrollButton);
     // Kiểm tra trạng thái ngay khi tải trang
     document.addEventListener('DOMContentLoaded', updateScrollButton);
+    //Xử lý chống văng
+    // Tự động sao lưu Form vào localStorage chống mất dữ liệu
+    const DRAFT_KEY = "ktv_form_draft_" + window.location.pathname;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. Khôi phục dữ liệu nháp nếu có
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+            try {
+                const data = JSON.parse(savedDraft);
+                Object.keys(data).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field && field.type !== "file") field.value = data[key];
+                });
+            } catch (e) { console.error("Lỗi đọc bản nháp:", e); }
+        }
+
+        // 2. Lắng nghe thay đổi để lưu nháp tự động
+        const form = document.querySelector("form");
+        if (form) {
+            form.addEventListener("input", () => {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+            });
+
+            // 3. Xóa bản nháp khi submit thành công
+            form.addEventListener("submit", () => {
+                localStorage.removeItem(DRAFT_KEY);
+            });
+        }
+    });
 </script>
 {% endblock %}

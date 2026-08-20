@@ -1,6 +1,4 @@
 import logging
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 
@@ -22,7 +20,7 @@ router = APIRouter(prefix="/admin", tags=["Admin Hub"])
 async def admin_main(
     request: Request,
     response: Response,
-    admin: dict = Depends(require_login),  # Cho phép mọi user đã đăng nhập truy cập Hub
+    current_user: dict = Depends(require_login),  # Cho phép mọi user đã đăng nhập truy cập Hub
 ):
     """
     Trang Hub chính hiển thị các card chức năng
@@ -31,7 +29,7 @@ async def admin_main(
         "admin.html",
         {
             "request": request,
-            "admin": admin,
+            "current_user": current_user,
         },
     )
 

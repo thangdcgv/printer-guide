@@ -1,8 +1,8 @@
 import os
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.routers import (
@@ -44,7 +44,7 @@ app = FastAPI(
 @app.middleware("http")
 async def auth_session_middleware(request: Request, call_next):
     """
-    Middleware kiểm tra Session và tự động gia hạn Token khi hết hạn 15 phút.
+    Middleware kiểm tra Session và tự động gia hạn Token khi hết hạn.
     Đảm bảo Cookie mới luôn được đính kèm vào Response trả về trình duyệt.
     """
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
@@ -62,7 +62,7 @@ async def auth_session_middleware(request: Request, call_next):
         except Exception:
             auth_id = None
 
-    # 2. Nếu Access Token hết hạn (sau 15 phút) -> Refresh bằng Refresh Token
+    # 2. Nếu Access Token hết hạn -> Refresh bằng Refresh Token
     if not auth_id and refresh_token:
         try:
             refresh_res = supabase.auth.refresh_session(refresh_token)
@@ -88,7 +88,7 @@ async def auth_session_middleware(request: Request, call_next):
     return response
 
 # =========================================================
-# EXCEPTION HANDLERS
+# EXCEPTION HANDLERS (ĐÃ CẢI TIẾN TRÁNH TRỎ VĂNG TRANG KTV)
 # =========================================================
 
 @app.exception_handler(AdminUnauthenticatedException)
@@ -97,16 +97,53 @@ async def admin_unauthenticated_handler(
     exc: AdminUnauthenticatedException,
 ):
     """
-    Tự động xóa cookie hết hạn và chuyển hướng trình duyệt về /admin/login (303)
-    khi người dùng chưa đăng nhập hoặc bị hủy Session.
+    Phân loại Request thông minh:
+    - Nếu là API / AJAX (Lưu bài, upload): Trả JSON 401 để JS hiển thị thông báo, KHÔNG redirect làm mất form.
+    - Nếu là Chuyển trang HTML: Mới Redirect về /admin/login (303).
     """
-    response = RedirectResponse(
-        url="/admin/login",
-        status_code=303,
-    )
+    accept_header = request.headers.get("accept", "")
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+    is_api_route = request.url.path.startswith("/api/") or "application/json" in accept_header
+
+    if is_ajax or is_api_route:
+        response = JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={
+                "success": False,
+                "message": "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại ở tab khác.",
+            },
+        )
+    else:
+        response = RedirectResponse(
+            url="/admin/login",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    # Xóa Cookie hỏng/hết hạn
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
     return response
+#SW scope
+@app.get("/sw.js", include_in_schema=False)
+async def get_service_worker():
+    return FileResponse("app/static/sw.js", media_type="application/javascript")
+##Manifest
+
+@app.get("/manifest.json", include_in_schema=False)
+async def get_manifest():
+    return FileResponse("app/static/manifest.json", media_type="application/manifest+json")
+# =========================================================
+# ROOT FAVICON FALLBACK (XỬ LÝ DỨT ĐIỂM LỖI 404 SAFARI)
+# =========================================================
+
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/apple-touch-icon.png", include_in_schema=False)
+@app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
+async def favicon_fallback():
+    favicon_path = "app/static/favicon.png"
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # =========================================================
 # TRUSTED HOST
