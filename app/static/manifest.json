@@ -1,6 +1,6 @@
 {
-  "name": "Thư viện Hướng dẫn Máy in - Đại Thành",
-  "short_name": "Printer Hub",
+  "name": "Đại Thành",
+  "short_name": "Thư Viện Đại Thành",
   "description": "Tra cứu quy trình kỹ thuật, xử lý sự cố và quản trị hệ thống máy in.",
   "start_url": "/",
   "scope": "/",
