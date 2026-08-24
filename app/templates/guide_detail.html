@@ -381,6 +381,20 @@
                 {{ guide.description }}
             </p>
             {% endif %}
+            <!-- Hiển thị Tác giả chuẩn cấu trúc DB -->
+            <div class="d-flex align-items-center gap-1 text-muted mb-1" style="font-size: 0.78rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span style="color: #64748b;">Tác giả:</span> 
+                <strong style="color: #475569;">
+                    {% if guide.quan_tri_vien %}
+                        {{ guide.quan_tri_vien.ho_ten or guide.quan_tri_vien.username }}
+                    {% else %}
+                        Hệ thống / Admin
+                    {% endif %}
+                </strong>
+            </div>
 
             <!-- 🖼️ HIỂN THỊ ẢNH BANNER/MINH HỌA DÒNG MÁY Ở ĐẦU BÀI -->
             {% if guide.image_url and guide.image_url != 'https://...' %}

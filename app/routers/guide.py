@@ -789,17 +789,17 @@ async def copy_guide(
 # =====================================================
 # DETAIL
 # =====================================================
-
 @router.get("/{guide_id}", response_class=HTMLResponse)
 async def view_guide(
     request: Request, 
     guide_id: int,
     current_user: dict = Depends(require_login)
 ):
+    # 1. Query bài viết cơ bản
     res = (
         supabase
         .table("guide")
-        .select("*, guide_tags(tag_id, tags(*)), quan_tri_vien!created_by(ho_ten, username)")
+        .select("*, guide_tags(tag_id, tags(*))")
         .eq("id", guide_id)
         .execute()
     )
@@ -809,6 +809,28 @@ async def view_guide(
 
     guide = res.data[0]
 
+    # 2. Lấy thông tin Tác giả thủ công bằng created_by (Giống hệt logic trang list_guides)
+    created_by_id = guide.get("created_by")
+    if created_by_id:
+        try:
+            author_res = (
+                supabase
+                .table("quan_tri_vien")
+                .select("ho_ten, username")
+                .eq("id", created_by_id)
+                .execute()
+            )
+            if author_res.data:
+                guide["quan_tri_vien"] = author_res.data[0]
+            else:
+                guide["quan_tri_vien"] = None
+        except Exception as e:
+            logger.warning(f"Lỗi khi lấy tác giả cho guide #{guide_id}: {e}")
+            guide["quan_tri_vien"] = None
+    else:
+        guide["quan_tri_vien"] = None
+
+    # 3. Lấy thông tin máy in
     printer = (
         supabase
         .table("printer_model")

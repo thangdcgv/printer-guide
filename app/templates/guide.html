@@ -473,7 +473,19 @@
                             <td>
                                 {% if g.printer_model %}
                                     <span class="brand-tag">{{ g.printer_model.brand }}</span>
-                                    <div class="fw-semibold text-dark" style="color: #0f172a; font-size: 0.9rem;">{{ g.printer_model.model }}</div>
+                                    <div class="fw-semibold text-dark" style="color: #0f172a; font-size: 0.9rem;">
+                                        {{ g.printer_model.model }}
+                                    </div>
+                                    
+                                    <!-- THÊM NGÀY TẠO BÀI VIẾT NẰM NGAY DƯỚI TIÊU ĐỀ -->
+                                    {% if g.created_at %}
+                                        {% set date_part = g.created_at.split('T')[0] %}
+                                        {% set y, m, d = date_part.split('-') %}
+                                        <div class="text-muted small mt-0.5" style="font-size: 0.75rem; color: #64748b;">
+                                            <span>{{ d }}/{{ m }}/{{ y }}</span>
+                                        </div>
+                                    {% endif %}
+
                                 {% else %}
                                     <span class="text-muted fs-7 opacity-75" style="font-style: italic;">Chưa gán</span>
                                 {% endif %}

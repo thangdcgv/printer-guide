@@ -138,6 +138,7 @@ async def search_guides(request: Request, q: str = ""):
 @router.get("/guide/{guide_id}", response_class=HTMLResponse)
 async def view_guide_detail(request: Request, guide_id: int):
     # 1. Lấy thông tin bài hướng dẫn chính
+    # 1. Lấy thông tin bài hướng dẫn chính
     try:
         guide_res = (
             supabase.table("guide")
@@ -149,6 +150,24 @@ async def view_guide_detail(request: Request, guide_id: int):
         if not guide_res.data:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài hướng dẫn hoặc bài viết đã bị ẩn")
         guide = guide_res.data[0]
+
+        # 🆕 BỔ SUNG: Lấy thông tin tác giả bài viết từ created_by
+        created_by_id = guide.get("created_by")
+        if created_by_id:
+            try:
+                author_res = (
+                    supabase.table("quan_tri_vien")
+                    .select("ho_ten, username")
+                    .eq("id", created_by_id)
+                    .execute()
+                )
+                guide["quan_tri_vien"] = author_res.data[0] if author_res.data else None
+            except Exception as e:
+                logger.warning(f"Lỗi lấy thông tin tác giả cho guide #{guide_id}: {e}")
+                guide["quan_tri_vien"] = None
+        else:
+            guide["quan_tri_vien"] = None
+
     except HTTPException:
         raise
     except Exception as e:
