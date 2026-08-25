@@ -135,7 +135,7 @@ async def get_manifest():
 # =========================================================
 # ROOT FAVICON FALLBACK (XỬ LÝ DỨT ĐIỂM LỖI 404 SAFARI)
 # =========================================================
-
+@app.get("/favicon.ico", include_in_schema=False)
 @app.get("/favicon.png", include_in_schema=False)
 @app.get("/apple-touch-icon.png", include_in_schema=False)
 @app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
@@ -154,6 +154,7 @@ allowed_hosts = [
     "*.onrender.com",
     "localhost",
     "127.0.0.1",
+    "192.168.100.40",
     "[::1]",
 ]
 

@@ -358,20 +358,64 @@
                 </div>
                 {% endif %}
 
-                {# NÚT QUẢN TRỊ & BADGE: CHỈ HIỂN THỊ KHI LÀ ADMIN ĐĂNG NHẬP #}
-                {% if is_admin_user %}
-                <div class="d-flex align-items-center gap-2">
-                    {% if guide.is_admin_only %}
-                        <span class="badge-admin">🔒 Bài Nội bộ</span>
+                {# KHU VỰC BÊN PHẢI: CHIA SẺ & CÔNG CỤ QUẢN TRỊ #}
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary btn-sm dropdown-toggle d-inline-flex align-items-center gap-1" 
+                                type="button" 
+                                id="shareMenuBtn" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false"
+                                style="font-size: 0.775rem; font-weight: 600;">
+                            <i class="fa-solid fa-share-nodes"></i> Chia sẻ
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="shareMenuBtn" style="font-size: 0.85rem;">
+                            <!-- 1. Mở thẳng App trên điện thoại (Zalo/FB/Messenger/Telegram...) -->
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 fw-semibold text-primary" href="javascript:void(0)" onclick="shareNativeApp('{{ guide.id }}', '{{ guide.title|e }}')">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Chia sẻ qua...</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <!-- 2. Chia sẻ Zalo -->
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:void(0)" onclick="shareToZaloApp('{{ guide.id }}')">
+                                    <i class="fa-solid fa-comment text-info fs-6"></i>
+                                    <span>Zalo</span>
+                                </a>
+                            </li>
+                            <!-- 3. Chia sẻ Facebook -->
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:void(0)" onclick="shareToFacebookApp('{{ guide.id }}')">
+                                    <i class="fa-brands fa-facebook text-primary fs-6"></i>
+                                    <span>Facebook</span>
+                                </a>
+                            </li>
+                            <!-- 4. Sao chép liên kết -->
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:void(0)" onclick="copyPublicLink('{{ guide.id }}')">
+                                    <i class="fa-solid fa-link text-secondary"></i>
+                                    <span>Sao chép liên kết</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {% if is_admin_user %}
+                    <div class="d-flex align-items-center gap-2">
+                        {% if guide.is_admin_only %}
+                            <span class="badge-admin">🔒 Bài Nội bộ</span>
+                        {% endif %}
+                        {% if guide.is_active is defined and not guide.is_active %}
+                            <span class="badge-admin">👁️ Đang Ẩn</span>
+                        {% endif %}
+                        <a href="/admin/guide-step?guide_id={{ guide.id }}" class="btn btn-sm btn-dark d-inline-flex align-items-center gap-1" style="font-size: 0.775rem;">
+                            ⚙️ Sửa các bước
+                        </a>
+                    </div>
                     {% endif %}
-                    {% if guide.is_active is defined and not guide.is_active %}
-                        <span class="badge-admin">👁️ Đang Ẩn</span>
-                    {% endif %}
-                    <a href="/admin/guide-step?guide_id={{ guide.id }}" class="btn btn-sm btn-dark d-inline-flex align-items-center gap-1" style="font-size: 0.775rem;">
-                        ⚙️ Sửa các bước
-                    </a>
                 </div>
-                {% endif %}
             </div>
             
             <h1 class="guide-main-title">{{ guide.title }}</h1>
@@ -423,9 +467,9 @@
                     {% set yt_raw = guide.video_url.split('v=')[1].split('&')[0] if 'v=' in guide.video_url else guide.video_url.split('/')[-1] %}
                     {% set yt_id = yt_raw.split('?')[0] %}
                     <div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
-                        <iframe src="https://www.youtube.com/embed/{{ yt_id }}" 
+                        <iframe src="https://www.youtube.com/embed/{{ yt_id }}?rel=0&enablejsapi=1" 
                                 title="YouTube video player" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" 
                                 allowfullscreen>
                         </iframe>
                     </div>
@@ -680,4 +724,97 @@
         </style>
     {% endif %}
 </div>
+<script>
+// Tạo URL công khai cho khách
+function getPublicGuideUrl(guideId) {
+    return `${window.location.origin}/guide/${guideId}`;
+}
+
+// Kiểm tra thiết bị di động
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// 1. MỞ BẢNG NATIVE SHARE CỦA HỆ ĐIỀU HÀNH (Kích hoạt thẳng App Zalo/FB/Messenger)
+async function shareNativeApp(guideId, title) {
+    const shareUrl = getPublicGuideUrl(guideId);
+    
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: title || 'Hướng dẫn kỹ thuật máy in',
+                text: 'Xem bài hướng dẫn kỹ thuật chi tiết:',
+                url: shareUrl
+            });
+        } catch (err) {
+            console.log('User cancelled or error:', err);
+        }
+    } else {
+        // Nếu ở trên Máy tính (PC), gọi hàm copy link
+        copyPublicLink(guideId);
+    }
+}
+
+// 2. CHIA SẺ ZALO (Xử lý bật App trên điện thoại)
+function shareToZaloApp(guideId) {
+    const shareUrl = encodeURIComponent(getPublicGuideUrl(guideId));
+    
+    if (isMobileDevice()) {
+        // Dùng Intent/Deep Link mở app Zalo trên Android & iOS
+        window.location.href = `https://zalo.me/s/share?url=${shareUrl}`;
+    } else {
+        // Trên PC mở popup web Zalo
+        window.open(`https://sp.zalo.me/share_inline?url=${shareUrl}`, '_blank', 'width=600,height=500');
+    }
+}
+
+// 3. CHIA SẺ FACEBOOK (Mở App FB nếu có)
+function shareToFacebookApp(guideId) {
+    const shareUrl = encodeURIComponent(getPublicGuideUrl(guideId));
+    
+    if (isMobileDevice()) {
+        // Cố gắng mở app Facebook bằng Deep Link (fb://)
+        const fbAppUrl = `fb://facewebmodal/f?href=https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+        window.location.href = fbAppUrl;
+        
+        // Fallback sau 1.5 giây nếu không cài App FB thì mở trình duyệt
+        setTimeout(() => {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank');
+        }, 1500);
+    } else {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank', 'width=600,height=400');
+    }
+}
+
+// 4. COPY LINK
+function copyPublicLink(guideId) {
+    const shareUrl = getPublicGuideUrl(guideId);
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Đã sao chép link công khai: " + shareUrl);
+    }).catch(() => {
+        prompt("Sao chép liên kết:", shareUrl);
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    // Lắng nghe sự kiện thay đổi chế độ toàn màn hình
+    const handleFullscreenChange = () => {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            // Khi mở Fullscreen: Khóa góc quay màn hình sang ngang (Landscape)
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => {
+                    console.log('Thiết bị không hỗ trợ tự động khóa xoay màn hình:', err);
+                });
+            }
+        } else {
+            // Khi thoát Fullscreen: Mở khóa xoay màn hình về mặc định
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+});
+</script>
 {% endblock %}
