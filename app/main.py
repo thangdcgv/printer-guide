@@ -14,6 +14,7 @@ from app.routers import (
     home,
     library,
     printer,
+    seo,
 )
 from app.routers.auth import (
     AdminUnauthenticatedException,
@@ -201,3 +202,4 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(library.router)
 app.include_router(printer.router)
+app.include_router(seo.router)
