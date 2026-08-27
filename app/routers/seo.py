@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response
-from config import supabase
+from app.config import supabase
 
 router = APIRouter(tags=["SEO"])
 
