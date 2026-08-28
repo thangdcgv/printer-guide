@@ -5,18 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 1. SEO TIÊU ĐỀ & MÔ TẢ (CÓ THỂ GHI ĐÈ Ở TRANG CON) -->
+    <!-- 1. SEO TIÊU ĐỀ & MÔ TẢ -->
     <title>{% block title %}Thư viện Hướng dẫn & sửa chữa máy in Đại Thành{% endblock %}</title>
-    <meta name="description" content="{% block description %}Trang tra cứu thông tin bảo hành máy in phun, máy in laser và thư viện tài liệu hướng dẫn khắc phục lỗi máy in nhanh chóng, chính xác.{% endblock %}">
-    <meta name="keywords" content="hướng dẫn máy in, tra cứu bảo hành máy in, máy in đại thành, sửa lỗi máy in, bảo hành máy in laser, máy in phun">
+    <meta name="description" content="{% block description %}Trang tra cứu hướng dẫn sử dụng máy in phun, máy in laser và tài liệu hướng dẫn khắc phục lỗi máy in nhanh chóng, chính xác.{% endblock %}">
+    <meta name="keywords" content="hướng dẫn máy in, tra cứu lỗi máy in, sửa lỗi máy in đơn giản, hướng dẫn sử dụng phần mềm hỗ trợ in, thiết kế - in ấn tại Máy in Đại Thành">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://printer-guide.onrender.com{{ request.url.path }}">
+    <link rel="canonical" href="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
 
-    <!-- 2. OPEN GRAPH (HIỂN THỊ ĐẸP KHI CHIA SẺ TRÊN ZALO, FACEBOOK) -->
+    <!-- 2. OPEN GRAPH (KẾ THỪA TỰ ĐỘNG TỪ BÀI VIẾT CON) -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://printer-guide.onrender.com{{ request.url.path }}">
-    <meta property="og:title" content="{% block og_title %}Thư viện Hướng dẫn & Tra cứu Bảo hành Máy in{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Tra cứu hạn bảo hành và xem tài liệu hướng dẫn kỹ thuật máy in chính hãng.{% endblock %}">
+    <meta property="og:url" content="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
+    <meta property="og:title" content="{{ self.title() }}">
+    <meta property="og:description" content="{{ self.description() }}">
     <meta property="og:image" content="https://printer-guide.onrender.com/static/favicon.png">
 
     <!-- 3. FAVICON & APPLE IOS -->
