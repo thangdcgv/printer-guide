@@ -752,5 +752,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') hideSuggestions();
     });
 });
+function toggleZaloMenu() {
+    const menuBox = document.getElementById('zalo-menu-box');
+    if (menuBox.style.display === 'none' || menuBox.style.display === '') {
+        menuBox.style.display = 'block';
+    } else {
+        menuBox.style.display = 'none';
+    }
+}
+
+// Tự động đóng menu nếu người dùng click ra ngoài vùng widget
+document.addEventListener('click', function(event) {
+    const widget = document.getElementById('zalo-floating-widget');
+    const menuBox = document.getElementById('zalo-menu-box');
+    if (widget && !widget.contains(event.target)) {
+        if (menuBox) {
+            menuBox.style.display = 'none';
+        }
+    }
+});
 </script>
 </html>
