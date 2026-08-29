@@ -4,28 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
+    <meta name="robots" content="index, follow">
+
     <!-- 1. SEO TIÊU ĐỀ & MÔ TẢ -->
     <title>{% block title %}Thư viện Hướng dẫn & sửa chữa máy in Đại Thành{% endblock %}</title>
     <meta name="description" content="{% block description %}Trang tra cứu hướng dẫn sử dụng máy in phun, máy in laser và tài liệu hướng dẫn khắc phục lỗi máy in nhanh chóng, chính xác.{% endblock %}">
     <meta name="keywords" content="hướng dẫn máy in, tra cứu lỗi máy in, sửa lỗi máy in đơn giản, hướng dẫn sử dụng phần mềm hỗ trợ in, thiết kế - in ấn tại Máy in Đại Thành">
-    <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
 
-    <!-- 2. OPEN GRAPH & TWITTER CARDS -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
-    <meta property="og:title" content="{{ self.title() }}">
-    <meta property="og:description" content="{{ self.description() }}">
-    <meta property="og:image" content="{% block og_image %}https://printer-guide.onrender.com/static/favicon.png{% endblock %}">
+    <!-- KHAI BÁO TÊN THƯƠNG HIỆU CHO GOOGLE SITE NAME -->
+    <meta name="application-name" content="Máy In Đại Thành">
     <meta property="og:site_name" content="Máy In Đại Thành">
+
+    <!-- 2. OPEN GRAPH & TWITTER CARDS -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://printer-guide.onrender.com/static/icons/icon-192.png{% endblock %}">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ self.title() }}">
     <meta name="twitter:description" content="{{ self.description() }}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ self.og_image() if self.og_image else 'https://printer-guide.onrender.com/static/favicon.png' }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ self.og_image() if self.og_image else 'https://printer-guide.onrender.com/static/icons/icon-192.png' }}{% endblock %}">
 
-    <!-- 3. FAVICON & APPLE IOS -->
+    <!-- 3. FAVICON & APPLE IOS (ĐÃ BỔ SUNG CHUẨN 48x48 CHO GOOGLE) -->
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="/static/icons/icon-48.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png?v=2">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
@@ -55,29 +60,40 @@
             });
         }
     </script>
-    <!-- 7. STRUCTURED DATA (SCHEMA.ORG FOR TECH ARTICLE / HOWTO) -->
+
+    <!-- 7. STRUCTURED DATA (GỘP GRAPH SCHEMA CHUẨN GOOGLE) -->
     <script type="application/ld+json">
     {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
-    "headline": "{% block title_schema %}{{ self.title() }}{% endblock %}",
-    "description": "{% block desc_schema %}{{ self.description() }}{% endblock %}",
-    "image": "{% block og_image_schema %}https://printer-guide.onrender.com/static/favicon.png{% endblock %}",
-    "publisher": {
-        "@type": "Organization",
-        "name": "Máy In Đại Thành",
-        "logo": {
-        "@type": "ImageObject",
-        "url": "https://printer-guide.onrender.com/static/favicon.png"
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://printer-guide.onrender.com/#website",
+          "url": "https://printer-guide.onrender.com/",
+          "name": "Máy In Đại Thành",
+          "alternateName": ["Thư viện Máy In Đại Thành"]
+        },
+        {
+          "@type": "TechArticle",
+          "headline": "{% block title_schema %}{{ self.title() }}{% endblock %}",
+          "description": "{% block desc_schema %}{{ self.description() }}{% endblock %}",
+          "image": "{% block og_image_schema %}https://printer-guide.onrender.com/static/icons/icon-192.png{% endblock %}",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Máy In Đại Thành",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://printer-guide.onrender.com/static/icons/icon-192.png"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}"
+          }
         }
-    },
-    "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}"
+      ]
     }
-    }
-    </script>
-
+    </script> 
     {% block head_extra %}{% endblock %}
 
     <style>
