@@ -461,20 +461,50 @@
     </header>
 
     <!-- 2. HERO SEARCH SECTION -->
-    <section class="hero">
-        <h1>Hướng dẫn & Sửa chữa Máy in</h1>
-        <p>Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.</p>
-        
-        <form action="/search" method="GET" class="search-box">
-            <input type="text" name="q" class="search-input" placeholder="Nhập dòng máy cần tìm (vd: PRO-1000, L8050...)" required>
-            <button type="submit" class="search-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                Tìm kiếm
-            </button>
-        </form>
+    <section class="hero flex flex-col items-center text-center py-12 px-4 max-w-4xl mx-auto">
+        <!-- Tiêu đề & Mô tả -->
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-100 tracking-tight mb-2">
+            Hướng dẫn & Sửa chữa Máy in
+        </h1>
+        <p class="text-xs md:text-sm text-slate-400 mb-6 max-w-xl leading-relaxed">
+            Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.
+        </p>
+
+        <!-- Khung Tìm Kiếm & Autocomplete -->
+        <div class="relative w-full max-w-xl mx-auto">
+            <form action="/search" method="GET" class="search-box flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl overflow-hidden focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 transition-all shadow-lg">
+                <input
+                    type="text"
+                    id="searchInput"
+                    name="q"
+                    autocomplete="off"
+                    spellcheck="false"
+                    autocapitalize="off"
+                    class="search-input w-full bg-transparent px-4 py-3 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+                    placeholder="Nhập dòng máy cần tìm (vd: pro 1000, l8050...)"
+                    required
+                >
+                <button
+                    type="submit"
+                    class="search-btn px-5 py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs md:text-sm font-medium flex items-center gap-2 transition-colors shrink-0"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Tìm kiếm</span>
+                </button>
+            </form>
+
+            <!-- Khung Gợi Ý Tìm Kiếm (Autocomplete) -->
+            <div
+                id="suggestionsBox"
+                class="absolute left-0 right-0 mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl hidden z-50 overflow-hidden max-h-80 overflow-y-auto divide-y divide-slate-800/60 text-left"
+                role="listbox"
+            ></div>
+        </div>
+        <!-- Khung chứa kết quả Live Search (Đặt bên dưới khối <section class="hero">) -->
+        <div id="liveSearchResults" class="mt-8 max-w-3xl mx-auto space-y-3 px-4 hidden"></div>
     </section>
 
     <!-- 3. PANEL BÀI VIẾT GHIM (NẰM NGANG ĐỘC LẬP) -->
@@ -617,22 +647,110 @@
 </body>
 <!-- Script xử lý bật/tắt menu -->
 <script>
-function toggleZaloMenu() {
-    const menu = document.getElementById('zalo-menu-box');
-    if (menu.style.display === 'none' || menu.style.display === '') {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsBox = document.getElementById('suggestionsBox');
+    let debounceTimer;
 
-// Bấm ra ngoài màn hình thì tự động đóng menu
-window.addEventListener('click', function(e) {
-    const widget = document.getElementById('zalo-floating-widget');
-    const menu = document.getElementById('zalo-menu-box');
-    if (!widget.contains(e.target)) {
-        menu.style.display = 'none';
+    // Chờ người dùng dừng gõ 250ms mới gửi API (chống spam request)
+    function debounce(func, delay = 250) {
+        return (...args) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func.apply(this, args), delay);
+        };
     }
+
+    // Gửi request lấy gợi ý từ backend
+    async function fetchSuggestions(query) {
+        const cleanQuery = query.trim();
+        if (!cleanQuery) {
+            hideSuggestions();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(cleanQuery)}`);
+            if (!response.ok) return hideSuggestions();
+
+            const items = await response.json();
+            renderSuggestions(items);
+        } catch (error) {
+            console.error('Lỗi tải gợi ý:', error);
+            hideSuggestions();
+        }
+    }
+
+    // Render danh sách Live Search dạng Thẻ Dọc đẹp mắt
+    function renderSuggestions(items) {
+        const resultsContainer = document.getElementById('liveSearchResults');
+        
+        // Nếu không có kết quả
+        if (!items || items.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-8 bg-slate-800/50 border border-slate-700/60 rounded-xl">
+                    <p class="text-xs text-slate-400">Không tìm thấy hướng dẫn nào phù hợp.</p>
+                </div>
+            `;
+            resultsContainer.classList.remove('hidden');
+            return;
+        }
+
+        // Dựng thẻ Card cho từng bài viết
+        resultsContainer.innerHTML = items.map(item => {
+            const brand = item.printer_model?.brand || '';
+            const model = item.printer_model?.model || '';
+            
+            const badgeHtml = (brand || model) 
+                ? `<span class="px-2.5 py-1 text-[11px] font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60 rounded-md shrink-0">${brand} ${model}</span>` 
+                : '';
+
+            return `
+                <a href="/guide/${item.id}" class="group block p-4 bg-slate-800/80 border border-slate-700/80 rounded-xl shadow-md hover:border-cyan-500 hover:bg-slate-800 transition-all text-left">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="space-y-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-slate-100 group-hover:text-cyan-400 transition-colors line-clamp-2">
+                                ${item.title}
+                            </h3>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }).join('');
+
+        resultsContainer.classList.remove('hidden');
+    }
+
+    function hideSuggestions() {
+        const resultsContainer = document.getElementById('liveSearchResults');
+        if (resultsContainer) {
+            resultsContainer.classList.add('hidden');
+            resultsContainer.innerHTML = '';
+        }
+    }
+
+    // Lắng nghe sự kiện gõ phím
+    searchInput.addEventListener('input', debounce((e) => {
+        fetchSuggestions(e.target.value);
+    }));
+
+    // Hiện lại khung gợi ý khi focus lại input nếu đã có kết quả trước đó
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim() && suggestionsBox.children.length > 0) {
+            suggestionsBox.classList.remove('hidden');
+        }
+    });
+
+    // Ẩn khung gợi ý khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+
+    // Bấm ESC để đóng khung gợi ý
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideSuggestions();
+    });
 });
 </script>
 </html>

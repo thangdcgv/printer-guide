@@ -12,12 +12,18 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
 
-    <!-- 2. OPEN GRAPH (KẾ THỪA TỰ ĐỘNG TỪ BÀI VIẾT CON) -->
-    <meta property="og:type" content="website">
+    <!-- 2. OPEN GRAPH & TWITTER CARDS -->
+    <meta property="og:type" content="article">
     <meta property="og:url" content="https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}">
     <meta property="og:title" content="{{ self.title() }}">
     <meta property="og:description" content="{{ self.description() }}">
-    <meta property="og:image" content="https://printer-guide.onrender.com/static/favicon.png">
+    <meta property="og:image" content="{% block og_image %}https://printer-guide.onrender.com/static/favicon.png{% endblock %}">
+    <meta property="og:site_name" content="Máy In Đại Thành">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ self.title() }}">
+    <meta name="twitter:description" content="{{ self.description() }}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ self.og_image() if self.og_image else 'https://printer-guide.onrender.com/static/favicon.png' }}{% endblock %}">
 
     <!-- 3. FAVICON & APPLE IOS -->
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png?v=2">
@@ -48,6 +54,28 @@
                     .catch(err => console.error('PWA SW registration failed:', err));
             });
         }
+    </script>
+    <!-- 7. STRUCTURED DATA (SCHEMA.ORG FOR TECH ARTICLE / HOWTO) -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "{% block title_schema %}{{ self.title() }}{% endblock %}",
+    "description": "{% block desc_schema %}{{ self.description() }}{% endblock %}",
+    "image": "{% block og_image_schema %}https://printer-guide.onrender.com/static/favicon.png{% endblock %}",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Máy In Đại Thành",
+        "logo": {
+        "@type": "ImageObject",
+        "url": "https://printer-guide.onrender.com/static/favicon.png"
+        }
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://printer-guide.onrender.com{% if request %}{{ request.url.path }}{% endif %}"
+    }
+    }
     </script>
 
     {% block head_extra %}{% endblock %}

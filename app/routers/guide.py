@@ -24,11 +24,13 @@ templates = Jinja2Templates(directory="app/templates")
 UPLOAD_DIR = "app/static/images"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 KNOWN_BRANDS = ["brother", "canon", "epson", "hp"]
-STOP_WORDS = {
-    'cách', 'hướng', 'dẫn', 'làm', 'sao', 'để', 'và', 'của', 'cho', 'trong', 
-    'ngoài', 'khi', 'bị', 'lỗi', 'trên', 'dưới', 'với', 'từ', 'đến', 'này', 
-    'kia', 'các', 'những', 'một', 'có', 'không', 'được', 'bằng', 'về', 'thế'
-}
+# Từ khóa kỹ thuật ngành máy in cố định (Whitelist)
+TECHNICAL_KEYWORDS = [
+    "Driver", "Reset", "Mã lỗi", "Hộp bảo trì", "Đầu phun", 
+    "Kẹt giấy", "Bơm mực", "Nạp mực", "Firmware", "Cài đặt", 
+    "Sửa lỗi", "Tháo lắp", "Cáp in", "Mainboard", "Lắp mực", 
+    "Mực in", "In qua Wifi", "In mạng", "Cổng USB"
+]
 
 
 # =====================================================
@@ -43,82 +45,78 @@ def _get_brand_class(brand_name: str) -> str:
             return f"brand-{kb}"
     return "brand-other"
 
-
-async def auto_generate_and_link_tags(guide_id: int, printer_model_id: int, title: str) -> None:
+async def auto_generate_and_link_tags(guide_id: int, printer_model_id: Optional[int], title: str) -> None:
     """
-    Tự động phân tích Model máy in và Tiêu đề bài viết để sinh thẻ tag, 
-    sau đó liên kết vào bảng guide_tags (Tối ưu hóa Batch Query).
+    Tự động sinh tag CHUẨN XÁC từ Model máy in và Danh mục từ khóa Kỹ thuật định sẵn.
     """
     tag_names_to_add = set()
 
-    # 1. Lấy thông tin Hãng và Model từ bảng printer_model
-    try:
-        printer_res = supabase.table("printer_model").select("brand, model").eq("id", printer_model_id).execute()
-        if printer_res.data:
-            p = printer_res.data[0]
-            brand = (p.get("brand") or "").strip()
-            model = (p.get("model") or "").strip()
-            
-            if brand:
-                tag_names_to_add.add(brand)
-            if model:
-                tag_names_to_add.add(model)
-            if brand and model:
-                tag_names_to_add.add(f"{brand} {model}")
-    except Exception as e:
-        logger.error(f"Lỗi khi lấy printer_model #{printer_model_id}: {e}")
+    # 1. Lấy Hãng và Model từ bảng printer_model (Rất chuẩn xác)
+    if printer_model_id:
+        try:
+            printer_res = supabase.table("printer_model").select("brand, model").eq("id", printer_model_id).execute()
+            if printer_res.data:
+                p = printer_res.data[0]
+                brand = (p.get("brand") or "").strip()
+                model = (p.get("model") or "").strip()
+                
+                if brand:
+                    tag_names_to_add.add(brand)
+                if model:
+                    tag_names_to_add.add(model)
+                if brand and model:
+                    tag_names_to_add.add(f"{brand} {model}")
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy printer_model #{printer_model_id}: {e}")
 
-    # 2. Bóc tách các từ khóa từ tiêu đề (title)
+    # 2. Quét tiêu đề theo Whitelist từ khóa Kỹ thuật (Tránh sinh từ rác)
     if title:
-        clean_title = re.sub(
-            r'[^\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]',
-            ' ',
-            title.lower()
-        )
-        words = clean_title.split()
-        
-        # Từ đơn
-        for w in words:
-            if len(w) >= 3 and w not in STOP_WORDS:
-                tag_names_to_add.add(w.capitalize())
+        title_lower = title.lower()
+        for kw in TECHNICAL_KEYWORDS:
+            # Kiểm tra xem từ khóa kỹ thuật có xuất hiện trong tiêu đề không
+            if re.search(r'\b' + re.escape(kw.lower()) + r'\b', title_lower):
+                tag_names_to_add.add(kw)
 
-        # Cụm từ đôi
-        for i in range(len(words) - 1):
-            w1, w2 = words[i], words[i + 1]
-            if w1 not in STOP_WORDS and w2 not in STOP_WORDS:
-                phrase = f"{w1} {w2}"
-                if len(phrase) >= 5:
-                    tag_names_to_add.add(phrase.capitalize())
-
+    # Nếu không có tag nào phù hợp -> Xóa link cũ và thoát
     if not tag_names_to_add:
         supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
         return
 
-    # 3. Batch Query & Insert đồng bộ Tags vào Database
+    # 3. Đồng bộ với Database (Xử lý Case-insensitive để tránh trùng tag)
     try:
         tag_names_list = list(tag_names_to_add)
         
-        # Tìm danh sách tag đã tồn tại
-        existing_tags_res = supabase.table("tags").select("id, name").in_("name", tag_names_list).execute()
-        existing_tags = existing_tags_res.data or []
+        # Lấy toàn bộ tag hiện có để map chính xác ID
+        existing_tags_res = supabase.table("tags").select("id, name").execute()
+        all_existing_tags = existing_tags_res.data or []
         
-        tag_map = {t["name"]: t["id"] for t in existing_tags}
+        # Map tên tag (lowercase) -> ID
+        existing_map = {t["name"].strip().lower(): t["id"] for t in all_existing_tags}
         
-        # Tạo mới các tag chưa có
-        missing_names = [name for name in tag_names_list if name not in tag_map]
-        if missing_names:
-            new_tags_payload = [{"name": name, "color": "blue"} for name in missing_names]
-            new_tags_res = supabase.table("tags").insert(new_tags_payload).execute()
+        tag_ids = []
+        missing_payload = []
+
+        for name in tag_names_list:
+            clean_name_lower = name.strip().lower()
+            if clean_name_lower in existing_map:
+                tag_ids.append(existing_map[clean_name_lower])
+            else:
+                # Chỉ tạo mới nếu là Hãng/Model hoặc Từ khóa kỹ thuật hợp lệ
+                missing_payload.append({"name": name, "color": "blue"})
+
+        # Thêm các tag mới chưa có trong DB
+        if missing_payload:
+            new_tags_res = supabase.table("tags").insert(missing_payload).execute()
             if new_tags_res.data:
-                for t in new_tags_res.data:
-                    tag_map[t["name"]] = t["id"]
+                for nt in new_tags_res.data:
+                    tag_ids.append(nt["id"])
 
-        tag_ids = list(tag_map.values())
-
-        # 4. Làm sạch liên kết cũ và thêm mới vào guide_tags
+        # 4. Cập nhật lại liên kết trong guide_tags
         supabase.table("guide_tags").delete().eq("guide_id", guide_id).execute()
         if tag_ids:
-            tag_links = [{"guide_id": guide_id, "tag_id": tid} for tid in tag_ids]
+            # Loại bỏ ID trùng lặp nếu có
+            unique_tag_ids = list(set(tag_ids))
+            tag_links = [{"guide_id": guide_id, "tag_id": tid} for tid in unique_tag_ids]
             supabase.table("guide_tags").insert(tag_links).execute()
 
     except Exception as e:
@@ -230,20 +228,21 @@ async def list_guides(
     request: Request,
     search: Optional[str] = None,
     printer_model_id: Optional[str] = None,
-    author_id: Optional[str] = None,  # 1. Bổ sung param author_id
+    created_by: Optional[str] = None,  # 1. Đã bổ sung nhận tham số created_by từ URL/Form
+    author_id: Optional[str] = None,   # Giữ lại author_id để hỗ trợ tương thích ngược
     guide_status: Optional[str] = None,
     tag_id: Optional[str] = None,
     page: int = 1,
     current_user: dict = Depends(require_login)
 ):
-
     PER_PAGE = 10
     page = max(1, page)
-    start_idx = (page - 1) * PER_PAGE
-    end_idx = start_idx + PER_PAGE - 1
+
+    # Lấy ID tác giả từ created_by (ưu tiên) hoặc author_id
+    raw_author_id = created_by or author_id
 
     parsed_tag_id = int(tag_id) if tag_id and tag_id.isdigit() else None
-    parsed_author_id = int(author_id) if author_id and author_id.isdigit() else None  # Parse author_id an toàn
+    parsed_author_id = int(raw_author_id) if raw_author_id and raw_author_id.isdigit() else None
 
     def build_query(select_fields: str):
         query = supabase.table("guide").select(select_fields, count="exact")
@@ -251,7 +250,7 @@ async def list_guides(
             query = query.ilike("title", f"%{search.strip()}%")
         if printer_model_id and printer_model_id.isdigit():
             query = query.eq("printer_model_id", int(printer_model_id))
-        if parsed_author_id:  # 2. Lọc bài viết theo người tạo (created_by)
+        if parsed_author_id:  # Lọc theo created_by
             query = query.eq("created_by", parsed_author_id)
         if guide_status in ["0", "1"]:
             query = query.eq("is_active", guide_status == "1")
@@ -265,6 +264,8 @@ async def list_guides(
     select_query = f"*, printer_model(*), {tag_relation}, quan_tri_vien!created_by(ho_ten, username)"
 
     try:
+        start_idx = (page - 1) * PER_PAGE
+        end_idx = start_idx + PER_PAGE - 1
         guides_res = build_query(select_query).range(start_idx, end_idx).execute()
         guides = guides_res.data or []
         total_count = guides_res.count if guides_res.count is not None else len(guides)
@@ -273,6 +274,8 @@ async def list_guides(
         logger.warning(f"Lỗi query JOIN nâng cao, chuyển sang fallback query cơ bản: {e}")
         try:
             fallback_select = f"*, {tag_relation}" if parsed_tag_id else "*"
+            start_idx = (page - 1) * PER_PAGE
+            end_idx = start_idx + PER_PAGE - 1
             guides_res = build_query(fallback_select).range(start_idx, end_idx).execute()
             guides = guides_res.data or []
             total_count = guides_res.count if guides_res.count is not None else len(guides)
@@ -281,9 +284,23 @@ async def list_guides(
             guides = []
             total_count = 0
 
-    total_pages = math.ceil(total_count / PER_PAGE) if total_count > 0 else 1
+    # 2. Tính tổng số trang an toàn
+    total_pages = (total_count + PER_PAGE - 1) // PER_PAGE if total_count > 0 else 1
 
-    # 2. Lấy danh sách tags
+    # 3. XỬ LÝ BẮT LỖI TỰ ĐỘNG RESET VỀ TRANG 1 KHI VƯỢT QUÁ SỐ TRANG BÀI VIẾT
+    if page > total_pages and total_count > 0:
+        page = 1
+        start_idx = 0
+        end_idx = PER_PAGE - 1
+        try:
+            guides_res = build_query(select_query).range(start_idx, end_idx).execute()
+            guides = guides_res.data or []
+        except Exception:
+            fallback_select = f"*, {tag_relation}" if parsed_tag_id else "*"
+            guides_res = build_query(fallback_select).range(start_idx, end_idx).execute()
+            guides = guides_res.data or []
+
+    # 4. Lấy danh sách tags
     try:
         tags_res = supabase.table("tags").select("*").order("name").execute()
         all_tags = tags_res.data or []
@@ -291,7 +308,7 @@ async def list_guides(
         logger.warning(f"Chưa thể lấy danh sách tags: {e}")
         all_tags = []
 
-    # 3. Lấy danh sách printer models tạo Map tra cứu
+    # 5. Lấy danh sách printer models tạo Map tra cứu
     try:
         printers_res = (
             supabase
@@ -308,11 +325,10 @@ async def list_guides(
 
     printer_map = {str(p["id"]): p for p in printers}
 
-    # 4. Lấy danh sách quan_tri_vien (CHỈ lấy tác giả đã có bài viết trong hệ thống)
+    # 6. Lấy danh sách quan_tri_vien có bài viết
     authors = []
     admin_map = {}
     try:
-        # B1: Lấy danh sách các created_by (khác null) từ bảng guide
         guide_authors_res = (
             supabase
             .table("guide")
@@ -320,7 +336,6 @@ async def list_guides(
             .not_.is_("created_by", "null")
             .execute()
         )
-        # Loại bỏ các ID trùng lặp bằng set
         active_author_ids = list({
             item["created_by"] 
             for item in (guide_authors_res.data or []) 
@@ -328,7 +343,6 @@ async def list_guides(
         })
 
         if active_author_ids:
-            # B2: Chỉ query những quan_tri_vien có id nằm trong danh sách active_author_ids
             admins_res = (
                 supabase
                 .table("quan_tri_vien")
@@ -345,7 +359,7 @@ async def list_guides(
         authors = []
         admin_map = {}
 
-    # 5. Xử lý gán dữ liệu printer_model và quan_tri_vien an toàn
+    # 7. Xử lý gán dữ liệu printer_model và quan_tri_vien an toàn
     for g in guides:
         if not g.get("printer_model") and g.get("printer_model_id") is not None:
             pm_key = str(g["printer_model_id"])
@@ -363,7 +377,7 @@ async def list_guides(
 
     selected_pm_id = int(printer_model_id) if printer_model_id and printer_model_id.isdigit() else None
 
-    # 4. Truyền dữ liệu bổ sung sang Template Jinja2
+    # 8. Truyền dữ liệu sang Template Jinja2 (Bổ sung selected_created_by)
     return templates.TemplateResponse(
         "guide.html",
         {
@@ -372,8 +386,9 @@ async def list_guides(
             "guides": guides,
             "printers": printers,
             "printer_models": printers,
-            "authors": authors,                      # Danh sách tác giả cho dropdown
-            "selected_author_id": author_id,         # ID tác giả đang chọn để giữ giá trị trên UI
+            "authors": authors,
+            "selected_created_by": raw_author_id or "",  # Truyền biến mới khớp với UI
+            "selected_author_id": raw_author_id or "",   # Giữ biến cũ để không vỡ template cũ
             "all_tags": all_tags,
             "selected_tag_id": parsed_tag_id,
             "search": search or "",
@@ -415,17 +430,6 @@ async def toggle_pin_guide(
         raise HTTPException(status_code=500, detail="Không thể cập nhật trạng thái ghim")
 
     return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
-
-
-from typing import Optional
-from fastapi import APIRouter, Request, Form, Depends, HTTPException, status, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
-
-# Import service storage dùng chung
-from app.services.storage_service import upload_image_to_supabase, delete_image_from_supabase
-
-# (Giữ nguyên các import khác như templates, supabase, logger, require_login, _check_guide_permission...)
-
 
 # =====================================================
 # CREATE

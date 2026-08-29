@@ -1,9 +1,11 @@
 import logging
 import re
+import unicodedata
+from typing import Any, Dict, List, Tuple
 from typing import Optional
 from pydantic import BaseModel
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -74,48 +76,163 @@ async def home(request: Request):
             "recent_guides": recent_guides
         }
     )
+# =====================================================
+# 1. HELPER FUNCTIONS & LOGIC TÌM KIẾM CHUNG
+# =====================================================
+
+def remove_accents(text: str) -> str:
+    """Hàm loại bỏ dấu tiếng Việt."""
+    if not text:
+        return ""
+    nfkd_form = unicodedata.normalize('NFKD', text)
+    return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
+
+def normalize_text(text: str) -> str:
+    """Chuẩn hóa chuỗi: chữ thường, không dấu, bỏ khoảng trắng và ký tự đặc biệt."""
+    if not text:
+        return ""
+    text = remove_accents(text.lower())
+    return re.sub(r'[^a-z0-9]', '', text)
+
+
+def calculate_match_score(guide: Dict[str, Any], norm_kw: str, tokens: List[str]) -> Tuple[bool, int]:
+    """
+    Hàm đối chiếu & tính điểm độ liên quan (Relevance Score).
+    Trả về: (is_matched: bool, score: int)
+    """
+    # Guard clause: Tránh lỗi khi chuỗi tìm kiếm rỗng
+    if not norm_kw or not tokens:
+        return False, 0
+
+    title = guide.get("title", "")
+    desc = guide.get("description", "") or ""
+    p_model = guide.get("printer_model") or {}
+    brand = p_model.get("brand", "") or ""
+    model = p_model.get("model", "") or ""
+
+    norm_title = normalize_text(title)
+    norm_desc = normalize_text(desc)
+    norm_model = normalize_text(model)
+    norm_brand = normalize_text(brand)
+    
+    corpus = f"{norm_title} {norm_desc} {norm_brand} {norm_model}"
+    score = 0
+
+    # 1. BẮT BỘC LỌC MÃ MÁY (Nếu câu truy vấn chứa mã máy có số như l8050, c5290, pro1000)
+    code_tokens = [t for t in tokens if any(c.isdigit() for c in t) and len(t) >= 3]
+    
+    if code_tokens:
+        # Bắt buộc bài viết phải chứa ít nhất 1 mã máy mà người dùng đã gõ
+        has_code_match = any(ct in norm_model or ct in norm_title for ct in code_tokens)
+        if not has_code_match:
+            return False, 0  # Loại ngay bài viết của máy khác (như C5290)
+
+    # 2. TÍNH ĐIỂM ĐỘ TƯƠNG QUAN
+    # Ưu tiên cao nhất: Khớp nguyên cụm từ tìm kiếm trong tiêu đề hoặc tên model
+    if norm_kw in norm_title or norm_kw in norm_model:
+        score += 300
+    elif norm_kw in corpus:
+        score += 100
+
+    # Cộng điểm chi tiết theo vị trí xuất hiện của từng từ (Token)
+    match_count = 0
+    for t in tokens:
+        if t in norm_model:
+            score += 80   # Khớp đúng mã/thương hiệu máy
+            match_count += 1
+        elif t in norm_title:
+            score += 40   # Khớp trong tiêu đề bài viết
+            match_count += 1
+        elif t in norm_desc:
+            score += 10   # Khớp trong mô tả
+            match_count += 1
+
+    # Điều kiện chấp nhận: Có khớp mã máy HOẶC tỷ lệ từ khóa khớp >= 50%
+    is_matched = (len(code_tokens) > 0) or (match_count >= len(tokens) * 0.5)
+
+    return is_matched, score
+
 
 # =====================================================
-# 2. TRANG TÌM KIẾM
+# 2. API ROUTES
 # =====================================================
+
+@router.get("/api/search-suggestions")
+async def search_suggestions(q: str = Query(..., min_length=1)):
+    """API trả về JSON phục vụ gợi ý tức thì (Autocomplete)."""
+    try:
+        keyword = q.strip()
+        norm_kw = normalize_text(keyword)
+        if not norm_kw:
+            return []
+
+        tokens = [t for t in [normalize_text(t) for t in keyword.lower().split()] if t]
+
+        guides_res = (
+            supabase.table("guide")
+            .select("id, title, description, image_url, printer_model_id, printer_model(brand, model)")
+            .eq("is_active", True)
+            .execute()
+        )
+        all_guides = guides_res.data or []
+
+        suggestions_with_score = []
+        for g in all_guides:
+            is_matched, score = calculate_match_score(g, norm_kw, tokens)
+            if is_matched:
+                suggestions_with_score.append((score, g))
+
+        # Ưu tiên các gợi ý có điểm độ tương quan cao nhất
+        suggestions_with_score.sort(key=lambda x: x[0], reverse=True)
+        return [g for _, g in suggestions_with_score[:5]]
+
+    except Exception as e:
+        logger.error(f"Lỗi API gợi ý tìm kiếm: {e}")
+        return []
+
 
 @router.get("/search", response_class=HTMLResponse)
 async def search_guides(request: Request, q: str = ""):
+    """Trang danh sách kết quả tìm kiếm đầy đủ."""
     keyword = q.strip()
     search_results = []
-    
+
     try:
         if keyword:
-            title_res = (
+            norm_kw = normalize_text(keyword)
+            tokens = [t for t in [normalize_text(t) for t in keyword.lower().split()] if t]
+
+            all_guides_res = (
                 supabase.table("guide")
-                .select("*")
+                .select("id, title, description, image_url, video_url, is_active, is_pinned, sort_order, printer_model_id, printer_model(brand, model)")
                 .eq("is_active", True)
-                .ilike("title", f"%{keyword}%")
                 .execute()
             )
-            title_matches = title_res.data or []
-            
-            model_res = (
-                supabase.table("printer_model")
-                .select("id")
-                .or_(f"brand.ilike.%{keyword}%,model.ilike.%{keyword}%")
-                .execute()
-            )
-            matched_model_ids = [m["id"] for m in (model_res.data or [])]
-            
-            model_matches = []
-            if matched_model_ids:
-                guide_res = (
-                    supabase.table("guide")
-                    .select("*")
-                    .eq("is_active", True)
-                    .in_("printer_model_id", matched_model_ids)
-                    .execute()
+            all_guides = all_guides_res.data or []
+
+            matched_guides = []
+            for g in all_guides:
+                is_matched, score = calculate_match_score(g, norm_kw, tokens)
+                if is_matched:
+                    g_item = dict(g)
+                    g_item["_score"] = score
+                    matched_guides.append(g_item)
+
+            # Sắp xếp ưu tiên: (1) Đã ghim -> (2) Điểm khớp cao -> (3) Thứ tự sort_order
+            matched_guides.sort(
+                key=lambda x: (
+                    not x.get("is_pinned", False),
+                    -x.get("_score", 0),
+                    x.get("sort_order") or 1
                 )
-                model_matches = guide_res.data or []
-            
-            combined_dict = {guide["id"]: guide for guide in title_matches + model_matches}
-            search_results = list(combined_dict.values())
+            )
+
+            # Làm sạch dữ liệu tạm trước khi gửi sang Template
+            for g in matched_guides:
+                g.pop("_score", None)
+
+            search_results = matched_guides
 
     except Exception as e:
         logger.error(f"Lỗi tìm kiếm với từ khóa '{keyword}': {e}")
@@ -129,7 +246,6 @@ async def search_guides(request: Request, q: str = ""):
             "guides": search_results
         }
     )
-
 
 # =====================================================
 # 3. TRANG CHI TIẾT BÀI VIẾT & BÀI LIÊN QUAN

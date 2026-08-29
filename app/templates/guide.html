@@ -410,12 +410,12 @@
                         </select>
                     </div>
 
-                    <!-- 3. Lọc theo Tác giả (MỚI BỔ SUNG) -->
+                    <!-- 3. Lọc theo Tác giả -->
                     <div class="col-lg-2 col-md-6 p-1">
-                        <select name="author_id" class="form-select modern-select w-100" onchange="this.form.submit()">
+                        <select name="created_by" class="form-select modern-select w-100" onchange="submitFilterForm(this.form)">
                             <option value="">-- Tất cả Tác giả --</option>
                             {% for a in authors %}
-                            <option value="{{a.id}}" {% if selected_author_id|string == a.id|string %}selected{% endif %}>
+                            <option value="{{a.id}}" {% if selected_created_by|string == a.id|string %}selected{% endif %}>
                                 {{a.ho_ten or a.username or ('QTV #' ~ a.id)}}
                             </option>
                             {% endfor %}
@@ -519,14 +519,26 @@
                                     </div>
                                 {% endif %}
                                 {% if g.guide_tags %}
-                                    <div class="d-flex gap-1 flex-wrap mt-1">
+                                    <div class="d-flex gap-1 flex-wrap mt-1 align-items-center">
                                         {% for gt in g.guide_tags %}
-                                            {% if gt.tags %}
-                                                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 6px;">
-                                                    {{ gt.tags.name }}
-                                                </span>
+                                            {% if gt.tags and loop.index <= 4 %}
+                                                <a href="?tag_id={{ gt.tags.id }}" 
+                                                class="badge text-decoration-none hover-shadow" 
+                                                title="Bấm để lọc theo tag: {{ gt.tags.name }}"
+                                                style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; transition: all 0.2s;">
+                                                    <span style="opacity: 0.6; margin-right: 1px;">#</span>{{ gt.tags.name }}
+                                                </a>
                                             {% endif %}
                                         {% endfor %}
+
+                                        <!-- Nếu nhiều hơn 4 tag thì hiện số lượng tag còn lại -->
+                                        {% if g.guide_tags|length > 4 %}
+                                            <span class="badge" 
+                                                title="Còn {{ g.guide_tags|length - 4 }} tag khác"
+                                                style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.68rem; padding: 2px 6px; border-radius: 4px;">
+                                                +{{ g.guide_tags|length - 4 }}
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </td>
@@ -615,11 +627,10 @@
             trong tổng số <span class="font-semibold">{{ total_count }}</span> bài viết
         </p>
     </div>
-    <div class="flex gap-2 items-center">
-        <!-- Nút Trang trước -->
+   <div class="flex gap-2 items-center">
         {% if page > 1 %}
-        <a href="?page={{ page - 1 }}&search={{ search }}&printer_model_id={{ selected_printer_id or '' }}&guide_status={{ status or '' }}&tag_id={{ selected_tag_id or '' }}" 
-           class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <a href="?page={{ page - 1 }}&search={{ search }}&printer_model_id={{ selected_printer_id or '' }}&guide_status={{ status or '' }}&tag_id={{ selected_tag_id or '' }}&created_by={{ selected_created_by or '' }}" 
+        class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             &laquo; Trang trước
         </a>
         {% endif %}
@@ -628,10 +639,9 @@
             Trang {{ page }} / {{ total_pages }}
         </span>
 
-        <!-- Nút Trang sau -->
         {% if page < total_pages %}
-        <a href="?page={{ page + 1 }}&search={{ search }}&printer_model_id={{ selected_printer_id or '' }}&guide_status={{ status or '' }}&tag_id={{ selected_tag_id or '' }}" 
-           class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <a href="?page={{ page + 1 }}&search={{ search }}&printer_model_id={{ selected_printer_id or '' }}&guide_status={{ status or '' }}&tag_id={{ selected_tag_id or '' }}&created_by={{ selected_created_by or '' }}" 
+        class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             Trang sau &raquo;
         </a>
         {% endif %}
@@ -665,7 +675,13 @@
             scrollBtn.setAttribute('title', 'Cuộn xuống cuối trang');
         }
     }
-
+    function submitFilterForm(form) {
+        // Nếu trong form có input tên "page", hãy reset nó về 1
+        if (form.page) {
+            form.page.value = 1;
+        }
+        form.submit();
+    }
     function handleScrollToggle() {
         if (isNearTop) {
             // Cuộn mượt xuống cuối trang
@@ -750,5 +766,6 @@
             });
         }
     });
+
 </script>
 {% endblock %}
