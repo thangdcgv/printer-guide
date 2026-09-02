@@ -448,12 +448,12 @@
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-<div class="container">
+<div class="container mx-auto px-4 max-w-6xl">
     
     <!-- 1. HEADER BANNER -->
-    <header class="navbar-banner">
+    <header class="py-6 border-b border-slate-800 flex justify-center">
         <a href="/" class="brand-centered">
             <img src="https://ejbillnpxxiubbiyyaxn.supabase.co/storage/v1/object/public/publicLogo/LOGO.png" alt="Logo Máy In Đại Thành" class="brand-logo">
             <span>Máy In Đại Thành</span>
@@ -461,8 +461,7 @@
     </header>
 
     <!-- 2. HERO SEARCH SECTION -->
-    <section class="hero flex flex-col items-center text-center py-12 px-4 max-w-4xl mx-auto">
-        <!-- Tiêu đề & Mô tả -->
+    <section class="hero flex flex-col items-center text-center py-10 md:py-14 max-w-4xl mx-auto">
         <h1 class="text-2xl md:text-3xl font-bold text-slate-100 tracking-tight mb-2">
             Hướng dẫn & Sửa chữa Máy in
         </h1>
@@ -503,11 +502,12 @@
                 role="listbox"
             ></div>
         </div>
-        <!-- Khung chứa kết quả Live Search (Đặt bên dưới khối <section class="hero">) -->
-        <div id="liveSearchResults" class="mt-8 max-w-3xl mx-auto space-y-3 px-4 hidden"></div>
+        
+        <!-- Khung kết quả Live Search dạng Thẻ -->
+        <div id="liveSearchResults" class="mt-6 w-full max-w-xl mx-auto space-y-3 hidden"></div>
     </section>
 
-    <!-- 3. PANEL BÀI VIẾT GHIM (NẰM NGANG ĐỘC LẬP) -->
+    <!-- 3. PANEL BÀI VIẾT GHIM -->
     {% if pinned_guides %}
     <section class="glass-card pinned-panel">
         <div class="pinned-header">
@@ -532,7 +532,7 @@
     <div class="grid-section">
         
         <!-- Cột trái: Bài viết mới cập nhật -->
-        <main class="glass-card" style="margin-bottom: 0;">
+        <main class="glass-card">
             <div class="section-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -549,7 +549,7 @@
                     </a>
                     {% endfor %}
                 {% else %}
-                    <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; padding: 20px 0;">
+                    <p style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 20px 0;">
                         Chưa có bài viết mới.
                     </p>
                 {% endif %}
@@ -557,7 +557,7 @@
         </main>
 
         <!-- Cột phải: Khu vực Quản trị -->
-        <aside class="glass-card admin-panel-card" style="margin-bottom: 0;">
+        <aside class="glass-card">
             <div class="section-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--violet-primary);">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -569,7 +569,6 @@
                 Đăng nhập quản lý bài viết, cấu hình hệ thống và cập nhật bước kỹ thuật.
             </p>
             <div class="admin-actions">
-                <!-- Sửa từ /admin/login thành /admin/guide -->
                 <a href="/admin/guide" class="admin-link-btn">
                     Quản lý bài viết hướng dẫn
                 </a>
@@ -587,47 +586,79 @@
     </footer>
 
 </div>
-<!-- NÚT CHAT NỔI ZALO MULTI-OPTION -->
+
+<!-- AI CHATBOT WIDGET -->
+<div id="ai-chat-widget" style="position: fixed; bottom: 20px; left: 20px; z-index: 9990; font-family: system-ui, -apple-system, sans-serif;">
+    <button id="chat-toggle-btn" type="button" aria-label="Mở Trợ lý AI" title="Hỏi AI" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 50%; width: 100px; height: 56px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;">
+        <span id="chat-icon-open" style="font-size: 18px; font-weight: 700; line-height: 1;">Hỏi AI</span>
+        <svg id="chat-icon-close" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+
+    <div id="chat-box" style="display: none; width: 340px; height: 460px; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); flex-direction: column; overflow: hidden; position: absolute; bottom: 70px; left: 0; border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 800; font-size: 1.1rem;">AI</span>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">Hỗ trợ AI Trực tuyến</div>
+                    <div style="font-size: 0.7rem; opacity: 0.85;">Hỏi lỗi máy in & tra cứu bài viết</div>
+                </div>
+            </div>
+            <button id="chat-close-btn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
+        </div>
+
+        <div id="chat-messages" style="flex: 1; padding: 14px; overflow-y: auto; background: #f8fafc; font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Xin chào! Bạn cần tìm hướng dẫn sửa lỗi hay tra cứu tài liệu máy in nào?
+            </div>
+        </div>
+
+        <div style="padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.85rem; background: #f8fafc; color: #0f172a;">
+            <button id="chat-send-btn" type="button" style="background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- NÚT CHAT ZALO MULTI-OPTION -->
 <div id="zalo-floating-widget" style="position: fixed; bottom: 25px; right: 25px; z-index: 99999; font-family: system-ui, -apple-system, sans-serif;">
-    
-    <!-- Menu lựa chọn (Mặc định ẩn) -->
-    <div id="zalo-menu-box" style="display: none; position: absolute; bottom: 70px; right: 0; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); width: 270px; padding: 14px; border: 1px solid #e2e8f0; animation: fadeIn 0.2s ease-in-out;">
-        
+    <div id="zalo-menu-box" style="display: none; position: absolute; bottom: 70px; right: 0; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); width: 270px; padding: 14px; border: 1px solid #e2e8f0;">
         <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
             <span>💬</span> Hỗ trợ trực tuyến Đại Thành
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 6px;">
-            <!-- Lựa chọn 1: Kỹ thuật Lắp đặt -->
-            <a href="https://zalo.me/0795570380" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
-                <div style="width: 34px; height: 34px; background: #0068ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,104,255,0.2);">🛠️</div>
+            <a href="https://zalo.me/0795570380" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: background 0.2s;">
+                <div style="width: 34px; height: 34px; background: #0068ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0;">🛠️</div>
                 <div style="line-height: 1.3;">
                     <div>Kỹ thuật Lắp đặt</div>
                     <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Hướng dẫn lắp đặt máy in</div>
                 </div>
             </a>
 
-            <!-- Lựa chọn 2: Kỹ thuật Sửa chữa / Bảo hành -->
-            <a href="https://zalo.me/0795570381" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
-                <div style="width: 34px; height: 34px; background: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16,185,129,0.2);">🔧</div>
+            <a href="https://zalo.me/0795570381" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: background 0.2s;">
+                <div style="width: 34px; height: 34px; background: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0;">🔧</div>
                 <div style="line-height: 1.3;">
                     <div>Sửa chữa & Bảo hành</div>
                     <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Xử lý sự cố máy in</div>
                 </div>
             </a>
 
-            <!-- Lựa chọn 3: Tư vấn bán hàng 01 -->
-            <a href="https://zalo.me/0908762316" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
-                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,158,11,0.2);">📦</div>
+            <a href="https://zalo.me/0908762316" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: background 0.2s;">
+                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0;">📦</div>
                 <div style="line-height: 1.3;">
                     <div>Tư vấn bán hàng 01</div>
                     <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Báo giá & Đặt mua máy</div>
                 </div>
             </a>
 
-            <!-- Lựa chọn 4: Tư vấn bán hàng 02 -->
-            <a href="https://zalo.me/0902724806" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateX(3px)'" onmouseout="this.style.background='transparent'; this.style.transform='translateX(0)'">
-                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,158,11,0.2);">💡</div>
+            <a href="https://zalo.me/0902724806" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: #1e293b; font-size: 0.82rem; font-weight: 600; transition: background 0.2s;">
+                <div style="width: 34px; height: 34px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0;">💡</div>
                 <div style="line-height: 1.3;">
                     <div>Tư vấn bán hàng 02</div>
                     <div style="font-size: 0.68rem; color: #64748b; font-weight: normal;">Báo giá & Đặt mua máy</div>
@@ -636,23 +667,25 @@
         </div>
     </div>
 
-    <!-- Nút tròn Zalo chính hiển thị góc màn hình -->
-    <button onclick="toggleZaloMenu()" style="width: 56px; height: 56px; background: #0068ff; border: none; border-radius: 50%; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 104, 255, 0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Liên hệ Zalo hỗ trợ">
+    <button id="zalo-toggle-btn" style="width: 56px; height: 56px; background: #0068ff; border: none; border-radius: 50%; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 104, 255, 0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Liên hệ Zalo hỗ trợ">
         <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M24 4C12.954 4 4 12.954 4 24C4 29.531 6.221 34.531 9.845 38.155L7.5 43.5L13.12 41.25C16.36 43.32 20.02 44 24 44C35.046 44 44 35.046 44 24C44 12.954 35.046 4 24 4Z" fill="white"/>
             <path d="M34.5 28.5C34.5 29.328 33.828 30 33 30H17C16.172 30 15.5 29.328 15.5 28.5V19.5C15.5 18.672 16.172 18 17 18H33C33.828 18 34.5 18.672 34.5 19.5V28.5ZM21.5 22.5C21.5 22.224 21.276 22 21 22H19.5C19.224 22 19 22.224 19 22.5V25.5C19 25.776 19.224 26 19.5 26H21C21.276 26 21.5 25.776 21.5 25.5V22.5ZM26.5 22.5C26.5 22.224 26.276 22 26 22H24.5C24.224 24 24 22.224 24 22.5V25.5C24 25.776 24.224 26 24.5 26H26C26.276 26 26.5 25.776 26.5 25.5V22.5ZM31.5 22.5C31.5 22.224 31.276 22 31 22H29.5C29.224 22 29 22.224 29 22.5V25.5C29 25.776 29.224 26 29.5 26H31C31.276 26 31.5 25.776 31.5 25.5V22.5Z" fill="#0068ff"/>
         </svg>
     </button>
 </div>
-</body>
-<!-- Script xử lý bật/tắt menu -->
+
+<!-- CLIENT JAVASCRIPT LOGIC -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // ----------------------------
+    // 1. TIM KIEM & AUTOCOMPLETE
+    // ----------------------------
     const searchInput = document.getElementById('searchInput');
     const suggestionsBox = document.getElementById('suggestionsBox');
+    const resultsContainer = document.getElementById('liveSearchResults');
     let debounceTimer;
 
-    // Chờ người dùng dừng gõ 250ms mới gửi API (chống spam request)
     function debounce(func, delay = 250) {
         return (...args) => {
             clearTimeout(debounceTimer);
@@ -660,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Gửi request lấy gợi ý từ backend
     async function fetchSuggestions(query) {
         const cleanQuery = query.trim();
         if (!cleanQuery) {
@@ -680,14 +712,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Render danh sách Live Search dạng Thẻ Dọc đẹp mắt
     function renderSuggestions(items) {
-        const resultsContainer = document.getElementById('liveSearchResults');
-        
-        // Nếu không có kết quả
         if (!items || items.length === 0) {
             resultsContainer.innerHTML = `
-                <div class="text-center py-8 bg-slate-800/50 border border-slate-700/60 rounded-xl">
+                <div class="text-center py-6 bg-slate-800/80 border border-slate-700/60 rounded-xl">
                     <p class="text-xs text-slate-400">Không tìm thấy hướng dẫn nào phù hợp.</p>
                 </div>
             `;
@@ -695,23 +723,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Dựng thẻ Card cho từng bài viết
         resultsContainer.innerHTML = items.map(item => {
             const brand = item.printer_model?.brand || '';
             const model = item.printer_model?.model || '';
-            
             const badgeHtml = (brand || model) 
-                ? `<span class="px-2.5 py-1 text-[11px] font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60 rounded-md shrink-0">${brand} ${model}</span>` 
+                ? `<span class="px-2 py-0.5 text-[11px] font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60 rounded shrink-0">${brand} ${model}</span>` 
                 : '';
 
             return `
-                <a href="/guide/${item.id}" class="group block p-4 bg-slate-800/80 border border-slate-700/80 rounded-xl shadow-md hover:border-cyan-500 hover:bg-slate-800 transition-all text-left">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="space-y-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-slate-100 group-hover:text-cyan-400 transition-colors line-clamp-2">
-                                ${item.title}
-                            </h3>
-                        </div>
+                <a href="/guide/${item.id}" class="group block p-3.5 bg-slate-800/90 border border-slate-700/80 rounded-xl hover:border-cyan-500 hover:bg-slate-800 transition-all text-left">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="text-xs md:text-sm font-medium text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
+                            ${item.title}
+                        </h3>
+                        ${badgeHtml}
                     </div>
                 </a>
             `;
@@ -721,55 +746,130 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideSuggestions() {
-        const resultsContainer = document.getElementById('liveSearchResults');
         if (resultsContainer) {
             resultsContainer.classList.add('hidden');
             resultsContainer.innerHTML = '';
         }
     }
 
-    // Lắng nghe sự kiện gõ phím
-    searchInput.addEventListener('input', debounce((e) => {
+    searchInput?.addEventListener('input', debounce((e) => {
         fetchSuggestions(e.target.value);
     }));
 
-    // Hiện lại khung gợi ý khi focus lại input nếu đã có kết quả trước đó
-    searchInput.addEventListener('focus', () => {
-        if (searchInput.value.trim() && suggestionsBox.children.length > 0) {
-            suggestionsBox.classList.remove('hidden');
-        }
-    });
-
-    // Ẩn khung gợi ý khi click ra ngoài
     document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        if (!searchInput?.contains(e.target) && !resultsContainer?.contains(e.target)) {
             hideSuggestions();
         }
     });
 
-    // Bấm ESC để đóng khung gợi ý
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') hideSuggestions();
     });
-});
-function toggleZaloMenu() {
-    const menuBox = document.getElementById('zalo-menu-box');
-    if (menuBox.style.display === 'none' || menuBox.style.display === '') {
-        menuBox.style.display = 'block';
-    } else {
-        menuBox.style.display = 'none';
-    }
-}
 
-// Tự động đóng menu nếu người dùng click ra ngoài vùng widget
-document.addEventListener('click', function(event) {
-    const widget = document.getElementById('zalo-floating-widget');
-    const menuBox = document.getElementById('zalo-menu-box');
-    if (widget && !widget.contains(event.target)) {
-        if (menuBox) {
-            menuBox.style.display = 'none';
+    // ----------------------------
+    // 2. ZALO FLOATING MENU
+    // ----------------------------
+    const zaloBtn = document.getElementById('zalo-toggle-btn');
+    const zaloMenu = document.getElementById('zalo-menu-box');
+    const zaloWidget = document.getElementById('zalo-floating-widget');
+
+    zaloBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = zaloMenu.style.display === 'none' || zaloMenu.style.display === '';
+        zaloMenu.style.display = isHidden ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (zaloWidget && !zaloWidget.contains(e.target)) {
+            if (zaloMenu) zaloMenu.style.display = 'none';
         }
+    });
+
+    // ----------------------------
+    // 3. AI CHATBOT WIDGET
+    // ----------------------------
+    const toggleBtn = document.getElementById("chat-toggle-btn");
+    const closeBtn = document.getElementById("chat-close-btn");
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("chat-send-btn");
+    const chatInput = document.getElementById("chat-input");
+    const chatMessages = document.getElementById("chat-messages");
+    const iconOpen = document.getElementById("chat-icon-open");
+    const iconClose = document.getElementById("chat-icon-close");
+
+    function toggleChat() {
+        const isHidden = chatBox.style.display === "none" || chatBox.style.display === "";
+        chatBox.style.display = isHidden ? "flex" : "none";
+        iconOpen.style.display = isHidden ? "none" : "inline";
+        iconClose.style.display = isHidden ? "block" : "none";
+        if (isHidden) chatInput?.focus();
     }
+
+    toggleBtn?.addEventListener("click", toggleChat);
+    closeBtn?.addEventListener("click", toggleChat);
+
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        chatMessages.innerHTML += `
+            <div style="background: #2563eb; color: white; padding: 8px 12px; border-radius: 12px 12px 2px 12px; margin-left: auto; max-width: 85%; word-break: break-word; font-size: 0.825rem;">
+                ${escapeHtml(text)}
+            </div>`;
+        chatInput.value = "";
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        const loadingId = "loading-" + Date.now();
+        chatMessages.innerHTML += `
+            <div id="${loadingId}" style="background: #e2e8f0; color: #64748b; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 85%; font-size: 0.825rem;">
+                ⏳ AI đang tìm câu trả lời...
+            </div>`;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            
+            document.getElementById(loadingId)?.remove();
+
+            if (data.success) {
+                let formattedReply = data.reply.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #2563eb; font-weight: 600; text-decoration: underline;">$1</a>');
+                chatMessages.innerHTML += `
+                    <div style="background: #ffffff; color: #1e293b; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4; word-break: break-word; font-size: 0.825rem;">
+                        ${formattedReply}
+                    </div>`;
+            } else {
+                chatMessages.innerHTML += `
+                    <div style="background: #fef2f2; color: #dc2626; padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.825rem;">
+                        Không thể lấy phản hồi từ AI.
+                    </div>`;
+            }
+        } catch (e) {
+            document.getElementById(loadingId)?.remove();
+            chatMessages.innerHTML += `
+                <div style="background: #fef2f2; color: #dc2626; padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.825rem;">
+                    Không thể kết nối đến máy chủ.
+                </div>`;
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    sendBtn?.addEventListener("click", sendMessage);
+    chatInput?.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 });
 </script>
+</body>
 </html>

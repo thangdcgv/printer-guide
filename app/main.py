@@ -16,6 +16,7 @@ from app.routers import (
     library,
     printer,
     seo,
+    chat,
 )
 from app.routers.auth import (
     AdminUnauthenticatedException,
@@ -206,3 +207,4 @@ app.include_router(dashboard.router)
 app.include_router(library.router)
 app.include_router(printer.router)
 app.include_router(seo.router)
+app.include_router(chat.router)

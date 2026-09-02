@@ -611,7 +611,6 @@
                     🏠 <span>Trang chủ</span>
                 </a>
 
-                <!-- SỬA LỖI: Kiểm tra đúng biến admin hoặc cookie admin_session -->
                 {% if admin or request.cookies.get("admin_session") %}
                     <a href="/admin" class="btn btn-dashboard">
                         📊 <span>Dashboard</span>
@@ -628,7 +627,6 @@
                         </span>
                     {% endif %}
 
-                    <!-- Form Logout POST chuẩn chống lỗi 405 -->
                     <form method="post" action="/admin/logout" class="m-0">
                         <button type="submit" class="btn btn-logout">
                             🚪 <span>Thoát</span>
@@ -652,9 +650,10 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+
 {% if request.url.path == "/" or (request.url.path.startswith("/guide/") and not request.url.path.startswith("/admin/")) %}
-    <!-- FLOATING FEEDBACK BUTTON -->
-    <button id="feedbackBtn" type="button" class="feedback-float-btn" onclick="toggleFeedbackModal()" aria-label="Gửi góp ý hoặc báo lỗi" title="Gửi góp ý hoặc báo lỗi">
+    <!-- FLOATING FEEDBACK BUTTON (ĐÃ DI CHUYỂN SANG BÊN PHẢI) -->
+    <button id="feedbackBtn" type="button" class="feedback-float-btn" onclick="toggleFeedbackModal()" aria-label="Gửi góp ý hoặc báo lỗi" title="Gửi góp ý hoặc báo lỗi" style="position: fixed; bottom: 20px; right: 20px; z-index: 9980;">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
@@ -709,6 +708,7 @@
             </div>
         </div>
     </div>
+
 {% endif %}   
 </div>
 
@@ -717,21 +717,19 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Tự động ẩn Flash Messages sau 3.5s
         setTimeout(function () {
             document.querySelectorAll(".alert").forEach(function(alertEl){
                 var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
-                if (bsAlert) {
-                    bsAlert.close();
-                }
+                if (bsAlert) bsAlert.close();
             });
         }, 3500);
+
+        initAIChatbot();
     });
 
     function toggleFeedbackModal() {
         const modal = document.getElementById("feedbackModal");
         if (!modal) return;
-
         const isActive = modal.classList.toggle("is-active");
         modal.setAttribute("aria-hidden", String(!isActive));
         document.body.style.overflow = isActive ? "hidden" : "";
@@ -739,24 +737,17 @@
 
     function handleOverlayClick(event) {
         const modal = document.getElementById("feedbackModal");
-        if (event.target === modal) {
-            toggleFeedbackModal();
-        }
+        if (event.target === modal) toggleFeedbackModal();
     }
 
-    /* Đóng modal bằng phím ESC */
     document.addEventListener("keydown", function (event) {
         if (event.key !== "Escape") return;
         const modal = document.getElementById("feedbackModal");
-        if (modal && modal.classList.contains("is-active")) {
-            toggleFeedbackModal();
-        }
+        if (modal && modal.classList.contains("is-active")) toggleFeedbackModal();
     });
 
-    /* Gửi Feedback bằng AJAX fetch mượt mà không reload trang */
     async function submitFeedback(event) {
         event.preventDefault();
-
         const submitBtn = document.getElementById('feedbackSubmitBtn');
         const category = document.getElementById('feedbackCategory').value;
         const content = document.getElementById('feedbackContent').value;
@@ -770,12 +761,7 @@
             const response = await fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    category: category,
-                    rating: rating,
-                    content: content,
-                    page_url: window.location.href
-                })
+                body: JSON.stringify({ category, rating, content, page_url: window.location.href })
             });
 
             if (response.ok) {
@@ -792,6 +778,94 @@
             submitBtn.disabled = false;
             submitBtn.innerText = 'Gửi phản hồi';
         }
+    }
+
+    function initAIChatbot() {
+        const toggleBtn = document.getElementById("chat-toggle-btn");
+        const closeBtn = document.getElementById("chat-close-btn");
+        const chatBox = document.getElementById("chat-box");
+        const sendBtn = document.getElementById("chat-send-btn");
+        const chatInput = document.getElementById("chat-input");
+        const chatMessages = document.getElementById("chat-messages");
+        const iconOpen = document.getElementById("chat-icon-open");
+        const iconClose = document.getElementById("chat-icon-close");
+
+        if (!toggleBtn || !chatBox) return;
+
+        function toggleChat() {
+            const isHidden = chatBox.style.display === "none";
+            chatBox.style.display = isHidden ? "flex" : "none";
+            iconOpen.style.display = isHidden ? "none" : "inline";
+            iconClose.style.display = isHidden ? "block" : "none";
+            if (isHidden) chatInput.focus();
+        }
+
+        toggleBtn.onclick = toggleChat;
+        closeBtn.onclick = toggleChat;
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            chatMessages.innerHTML += `
+                <div style="background: #2563eb; color: white; padding: 10px 14px; border-radius: 12px 12px 2px 12px; margin-left: auto; max-width: 85%; width: fit-content; word-break: break-word;">
+                    ${escapeHtml(text)}
+                </div>`;
+            chatInput.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const loadingId = "loading-" + Date.now();
+            chatMessages.innerHTML += `
+                <div id="${loadingId}" style="background: #e2e8f0; color: #64748b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%;">
+                    ⏳ AI đang tìm câu trả lời...
+                </div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const res = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+
+                if (data.success) {
+                    let formattedReply = data.reply.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #2563eb; font-weight: 600; text-decoration: underline;">$1</a>');
+                    chatMessages.innerHTML += `
+                        <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.45; word-break: break-word;">
+                            ${formattedReply}
+                        </div>`;
+                } else {
+                    chatMessages.innerHTML += `
+                        <div style="background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 12px; max-width: 85%;">
+                            Không thể lấy phản hồi từ AI.
+                        </div>`;
+                }
+            } catch (e) {
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+                chatMessages.innerHTML += `
+                    <div style="background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 12px; max-width: 85%;">
+                        Không thể kết nối đến máy chủ.
+                    </div>`;
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        sendBtn.onclick = sendMessage;
+        chatInput.onkeypress = (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
     }
 </script>
 
