@@ -26,18 +26,19 @@ class FeedbackCreateSchema(BaseModel):
 
 
 # =========================================================
-# HELPER: LẤY DỮ LIỆU THỐNG KÊ
+# HELPER: LẤY DỮ LIỆU THỐNG KÊ (SYNCHRONOUS)
 # =========================================================
 def fetch_dashboard_stats():
     """
     Hàm lấy dữ liệu thống kê máy in, chi tiết bài viết và thống kê theo tác giả.
+    Chạy Synchronous an toàn cho thread pool.
     """
     try:
         # 1. Lấy danh sách dòng máy in
         models_res = supabase.table("printer_model").select("*").execute()
         printer_models = models_res.data or []
 
-        # 2. Lấy danh sách bài hướng dẫn + JOIN bảng quan_tri_vien
+        # 2. Lấy danh sách bài hướng dẫn
         guides_res = (
             supabase.table("guide")
             .select("*, quan_tri_vien(ho_ten, username)")
@@ -90,16 +91,16 @@ def fetch_dashboard_stats():
                     "guides": [],
                 }
 
-        # Khởi tạo Map gom nhóm bài viết theo Tác giả
+        # Map gom nhóm bài viết theo Tác giả
         author_map = {}
-
         other_guides = []
+
         for g in guides:
             raw_m_id = g.get("printer_model_id")
             created_at_val = g.get("created_at")
             created_at_str = str(created_at_val) if created_at_val else ""
 
-            # Lấy thông tin tác giả từ cột ho_ten hoặc username từ relation quan_tri_vien
+            # Lấy thông tin tác giả từ quan_tri_vien relation
             qtv_info = g.get("quan_tri_vien")
             author_name = "Chưa rõ"
 
@@ -162,7 +163,7 @@ def fetch_dashboard_stats():
         return total_guides, total_models, category_stats, unread_feedbacks_count, recent_feedbacks, author_stats
 
     except Exception as e:
-        logger.error("Lỗi lấy dữ liệu dashboard: %s", e, exc_info=True)
+        logger.error("❌ Lỗi lấy dữ liệu dashboard: %s", e, exc_info=True)
         return 0, 0, [], 0, [], []
 
 
@@ -172,7 +173,7 @@ def fetch_dashboard_stats():
 
 @router.get("/dashboard", response_class=HTMLResponse)
 def public_dashboard(request: Request):
-    """Trang thống kê công khai (dùng def để tránh block event loop)."""
+    """Trang thống kê công khai (chạy synchronous)."""
     (
         total_guides,
         total_models,
@@ -198,15 +199,15 @@ def public_dashboard(request: Request):
 
 
 # =========================================================
-# 2. ADMIN DASHBOARD (ĐÃ SỬA LỖI)
+# 2. ADMIN DASHBOARD
 # =========================================================
 
 @router.get("/admin/dashboard", response_class=HTMLResponse)
-async def admin_dashboard(  # 1. Thêm 'async' để đồng bộ với require_login
+def admin_dashboard(
     request: Request,
     current_user: dict = Depends(require_login),
 ):
-    """Trang Dashboard quản trị."""
+    """Trang Dashboard quản trị (Dùng 'def' để tránh block event loop khi truy vấn DB)."""
     (
         total_guides,
         total_models,
@@ -221,7 +222,7 @@ async def admin_dashboard(  # 1. Thêm 'async' để đồng bộ với require_
         {
             "request": request,
             "current_user": current_user,
-            "admin": current_user,  # 2. BỔ SUNG DÒNG NÀY (hoặc "admin": True) để HTML {% if admin %} nhận diện được!
+            "admin": current_user,
             "total_guides": total_guides,
             "total_models": total_models,
             "category_stats": category_stats,
@@ -256,7 +257,7 @@ def mark_feedback_processed(
                 detail=f"Không tìm thấy phản hồi với ID: {feedback_id}"
             )
 
-        logger.info("Admin %s đã xử lý phản hồi ID: %s", current_user.get("email", "unknown"), feedback_id)
+        logger.info("Admin %s đã xử lý phản hồi ID: %s", current_user.get("username", "unknown"), feedback_id)
         return {
             "success": True,
             "message": "Đã đánh dấu xử lý phản hồi thành công.",
@@ -282,10 +283,10 @@ def create_user_feedback(payload: FeedbackCreateSchema):
     """Lưu phản hồi mới từ người dùng vào bảng `feedbacks`."""
     try:
         new_feedback = {
-            "category": payload.category,
+            "category": payload.category.strip().lower(),
             "rating": payload.rating,
             "content": payload.content.strip(),
-            "page_url": payload.page_url,
+            "page_url": payload.page_url.strip() if payload.page_url else None,
             "is_processed": False,
         }
 

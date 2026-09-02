@@ -21,12 +21,25 @@ class ReorderRequest(BaseModel):
 router = APIRouter(
     prefix="/admin", 
     tags=["Guide Steps"],
-    dependencies=[Depends(require_login)]  # ➔ THAY ĐỔI: Cho phép mọi user đã đăng nhập thao tác
+    dependencies=[Depends(require_login)]
 )
 
 # =====================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS & PERMISSION CHECK
 # =====================================================
+
+def _check_guide_permission(guide_id: int, user: dict):
+    """Kiểm tra quyền truy cập/chỉnh sửa bài viết của user."""
+    if user.get("role") == "super_admin":
+        return
+    
+    res = supabase.table("guide").select("created_by").eq("id", guide_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bài viết.")
+    
+    if res.data[0].get("created_by") != user.get("id"):
+        raise HTTPException(status_code=403, detail="Bạn không có quyền chỉnh sửa bài viết này.")
+
 
 def auto_linkify(text):
     if not text:
@@ -45,7 +58,6 @@ def auto_linkify(text):
         except Exception:
             model_name = "File tải"
             
-        # Đổi display từ inline-flex thành flex và margin: 6px 0 để tự động xuống dòng thành các block riêng biệt
         return f'''<a href="{url}" target="_blank" style="display: flex; width: fit-content; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; color: #2563eb; text-decoration: none; margin: 6px 0; font-weight: 500;" title="Tải xuống">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
             <span>{url}</span>
@@ -76,6 +88,8 @@ def validate_url_list(urls: List[str], field_name: str = "Đường dẫn ảnh"
     """Kiểm tra tính hợp lệ của một danh sách URL."""
     validated_urls = []
     for url in urls:
+        if not url:
+            continue
         cleaned = url.strip()
         if not cleaned:
             continue
@@ -90,9 +104,7 @@ def validate_url_list(urls: List[str], field_name: str = "Đường dẫn ảnh"
 
 
 def get_sub_steps_batch(step_ids: List[int]) -> dict:
-    """
-    Tối ưu hóa: Lấy tất cả sub-steps cho danh sách step_ids trong 1 truy vấn duy nhất (Tránh N+1).
-    """
+    """Lấy tất cả sub-steps cho danh sách step_ids trong 1 truy vấn duy nhất."""
     if not step_ids:
         return {}
     try:
@@ -116,13 +128,15 @@ def get_sub_steps_batch(step_ids: List[int]) -> dict:
 # =====================================================
 
 @router.get("/guide-step", response_class=HTMLResponse)
-async def list_guide_steps(
+def list_guide_steps(
     request: Request, 
     guide_id: Optional[int] = None,
-    current_user: dict = Depends(require_login)  # ➔ THAY ĐỔI: Dùng require_login
+    current_user: dict = Depends(require_login)
 ):
     if not guide_id:
         return RedirectResponse(url="/admin/guide", status_code=status.HTTP_303_SEE_OTHER)
+
+    _check_guide_permission(guide_id, current_user)
 
     # 1. Lấy thông tin bài hướng dẫn chính
     guide_res = supabase.table("guide").select("*").eq("id", guide_id).execute()
@@ -147,8 +161,6 @@ async def list_guide_steps(
     
     for step in steps:
         step["sub_steps"] = sub_steps_map.get(step["id"], [])
-        
-        # Tự động nhận dạng link cho nội dung và lưu ý
         step["content"] = auto_linkify(step.get("content"))
         step["note"] = auto_linkify(step.get("note"))
         
@@ -168,7 +180,10 @@ async def list_guide_steps(
 
 
 @router.post("/guide-step/reorder")
-async def reorder_guide_steps(payload: ReorderRequest):
+def reorder_guide_steps(
+    payload: ReorderRequest,
+    current_user: dict = Depends(require_login)
+):
     try:
         for index, step_id in enumerate(payload.ordered_ids, start=1):
             supabase.table("guide_step").update({
@@ -179,6 +194,7 @@ async def reorder_guide_steps(payload: ReorderRequest):
     except Exception as e:
         logger.error(f"Lỗi sắp xếp các bước: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Lỗi sắp xếp: {str(e)}")
+
 
 @router.post("/guide-step/add/{guide_id}")
 async def add_guide_step(
@@ -191,8 +207,11 @@ async def add_guide_step(
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
-    image_files: List[UploadFile] = File(None)  # 🆕 Nhận danh sách file ảnh tải từ máy
+    image_files: List[UploadFile] = File(None),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     form_data = await request.form()
     manual_image_urls = form_data.getlist("image_url")
     
@@ -262,7 +281,8 @@ async def add_guide_step_fallback(
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
-    image_files: List[UploadFile] = File(None)
+    image_files: List[UploadFile] = File(None),
+    current_user: dict = Depends(require_login)
 ):
     return await add_guide_step(
         request=request,
@@ -274,7 +294,8 @@ async def add_guide_step_fallback(
         video_url=video_url,
         download_url=download_url,
         is_active=is_active,
-        image_files=image_files
+        image_files=image_files,
+        current_user=current_user
     )
 
 
@@ -290,8 +311,11 @@ async def update_guide_step(
     video_url: Optional[str] = Form(None),
     download_url: Optional[str] = Form(None),
     is_active: Optional[str] = Form(None),
-    image_files: List[UploadFile] = File(None)  # 🆕 Nhận file upload mới
+    image_files: List[UploadFile] = File(None),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     form_data = await request.form()
     manual_image_urls = form_data.getlist("image_url")
 
@@ -321,7 +345,7 @@ async def update_guide_step(
     validated_manual_urls = validate_url_list(manual_image_urls, "Đường dẫn ảnh") or []
     final_image_urls = validated_manual_urls + uploaded_urls
 
-    # 🗑️ 4. Xóa khỏi Storage các ảnh cũ không còn xuất hiện trong final_image_urls
+    # 4. Xóa khỏi Storage các ảnh cũ không còn xuất hiện trong final_image_urls
     removed_images = set(old_image_urls) - set(final_image_urls)
     for img_url in removed_images:
         delete_image_from_supabase(img_url)
@@ -349,10 +373,13 @@ async def update_guide_step(
 
 
 @router.post("/guide-step/{step_id}/delete")
-async def delete_guide_step(
+def delete_guide_step(
     step_id: int,
-    guide_id: int = Form(...)
+    guide_id: int = Form(...),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     try:
         # 1. Thu thập tất cả link ảnh của bước lớn hiện tại
         step_res = supabase.table("guide_step").select("image_urls").eq("id", step_id).execute()
@@ -364,7 +391,7 @@ async def delete_guide_step(
             elif isinstance(raw_imgs, str) and raw_imgs:
                 step_images = [raw_imgs]
 
-        # 2. Thu thập tất cả link ảnh của các bước nhỏ (guide_sub_steps) thuộc bước lớn này
+        # 2. Thu thập tất cả link ảnh của các bước nhỏ thuộc bước lớn này
         sub_res = supabase.table("guide_sub_steps").select("image_url").eq("step_id", step_id).execute()
         sub_step_images = [sub["image_url"] for sub in (sub_res.data or []) if sub.get("image_url")]
 
@@ -372,7 +399,7 @@ async def delete_guide_step(
         supabase.table("guide_sub_steps").delete().eq("step_id", step_id).execute()
         supabase.table("guide_step").delete().eq("id", step_id).execute()
 
-        # 🗑️ 4. Xóa toàn bộ ảnh liên quan trên Storage
+        # 4. Xóa toàn bộ ảnh liên quan trên Storage
         for img_url in set(step_images + sub_step_images):
             delete_image_from_supabase(img_url)
 
@@ -392,14 +419,17 @@ async def add_sub_step(
     sub_order: int = Form(...),
     content: str = Form(...),
     note: Optional[str] = Form(None),
-    image_file: Optional[UploadFile] = File(None),  # 🆕 Nhận file ảnh tải từ máy
-    image_url: Optional[str] = Form(None)          # Fallback URL nhập tay
+    image_file: Optional[UploadFile] = File(None),
+    image_url: Optional[str] = Form(None),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     clean_content = content.strip()
     if not clean_content:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
 
-    # 1. Ưu tiên upload file ảnh từ máy lên Supabase Storage (nén WebP)
+    # 1. Ưu tiên upload file ảnh từ máy lên Supabase Storage
     clean_image_url = None
     if image_file and image_file.filename:
         clean_image_url = await upload_image_to_supabase(image_file, folder="sub_steps")
@@ -429,9 +459,12 @@ async def update_sub_step(
     sub_order: int = Form(...),
     content: str = Form(...),
     note: Optional[str] = Form(None),
-    image_file: Optional[UploadFile] = File(None),  # 🆕 Nhận file ảnh tải mới
-    image_url: Optional[str] = Form(None)          # Link URL cũ hoặc nhập tay
+    image_file: Optional[UploadFile] = File(None),
+    image_url: Optional[str] = Form(None),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     clean_content = content.strip()
     if not clean_content:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nội dung ý nhỏ không được để trống.")
@@ -445,11 +478,9 @@ async def update_sub_step(
     # 2. Xử lý upload ảnh mới & xóa ảnh cũ trên Storage
     if image_file and image_file.filename:
         clean_image_url = await upload_image_to_supabase(image_file, folder="sub_steps")
-        # 🗑️ Nếu tải ảnh mới thành công, dọn dẹp ảnh cũ trên Storage
         if old_image_url and old_image_url != clean_image_url:
             delete_image_from_supabase(old_image_url)
     elif old_image_url and old_image_url != clean_image_url:
-        # 🗑️ Người dùng xóa hẳn link ảnh hoặc đổi sang URL khác
         delete_image_from_supabase(old_image_url)
 
     sub_data = {
@@ -468,10 +499,13 @@ async def update_sub_step(
 
 
 @router.post("/sub-steps/{sub_step_id}/delete")
-async def delete_sub_step(
+def delete_sub_step(
     sub_step_id: int,
-    guide_id: int = Form(...)
+    guide_id: int = Form(...),
+    current_user: dict = Depends(require_login)
 ):
+    _check_guide_permission(guide_id, current_user)
+
     try:
         # 1. Thu thập link ảnh của bước con trước khi xóa bản ghi
         sub_res = supabase.table("guide_sub_steps").select("image_url").eq("id", sub_step_id).execute()
@@ -480,7 +514,7 @@ async def delete_sub_step(
         # 2. Xóa bản ghi trong Database
         supabase.table("guide_sub_steps").delete().eq("id", sub_step_id).execute()
 
-        # 🗑️ 3. Dọn dẹp file ảnh tương ứng trên Supabase Storage
+        # 3. Dọn dẹp file ảnh tương ứng trên Supabase Storage
         if image_url:
             delete_image_from_supabase(image_url)
 
@@ -488,8 +522,3 @@ async def delete_sub_step(
     except Exception as e:
         logger.error(f"Lỗi xóa bước con: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Không thể xóa bước con: {str(e)}")
-
-
-
-
-

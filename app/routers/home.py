@@ -1,8 +1,7 @@
 import logging
 import re
 import unicodedata
-from typing import Any, Dict, List, Tuple
-from typing import Optional
+from typing import Any, Dict, List, Tuple, Optional
 from pydantic import BaseModel
 
 from fastapi import APIRouter, Request, HTTPException, Query
@@ -31,55 +30,6 @@ def auto_linkify(text: Optional[str]) -> str:
     return url_pattern.sub(replace_url, text)
 
 
-# =====================================================
-# 1. TRANG CHỦ
-# =====================================================
-
-@router.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    pinned_guides = []
-    recent_guides = []
-    
-    try:
-        # 1. Lấy danh sách các bài viết được GHIM (is_pinned = True)
-        pinned_res = (
-            supabase.table("guide")
-            .select("*")
-            .eq("is_active", True)
-            .eq("is_pinned", True)
-            .order("id", desc=True)
-            .execute()
-        )
-        pinned_guides = pinned_res.data or []
-
-        # 2. Lấy các bài viết mới cập nhật chưa ghim (để tránh trùng lặp)
-        recent_res = (
-            supabase.table("guide")
-            .select("*")
-            .eq("is_active", True)
-            .eq("is_pinned", False)
-            .order("id", desc=True)
-            .limit(3)
-            .execute()
-        )
-        recent_guides = recent_res.data or []
-
-    except Exception as e:
-        logger.error(f"Lỗi load trang chủ: {e}")
-
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "title": "Trang chủ",
-            "pinned_guides": pinned_guides,
-            "recent_guides": recent_guides
-        }
-    )
-# =====================================================
-# 1. HELPER FUNCTIONS & LOGIC TÌM KIẾM CHUNG
-# =====================================================
-
 def remove_accents(text: str) -> str:
     """Hàm loại bỏ dấu tiếng Việt."""
     if not text:
@@ -97,11 +47,7 @@ def normalize_text(text: str) -> str:
 
 
 def calculate_match_score(guide: Dict[str, Any], norm_kw: str, tokens: List[str]) -> Tuple[bool, int]:
-    """
-    Hàm đối chiếu & tính điểm độ liên quan (Relevance Score).
-    Trả về: (is_matched: bool, score: int)
-    """
-    # Guard clause: Tránh lỗi khi chuỗi tìm kiếm rỗng
+    """Hàm đối chiếu & tính điểm độ liên quan (Relevance Score)."""
     if not norm_kw or not tokens:
         return False, 0
 
@@ -119,47 +65,98 @@ def calculate_match_score(guide: Dict[str, Any], norm_kw: str, tokens: List[str]
     corpus = f"{norm_title} {norm_desc} {norm_brand} {norm_model}"
     score = 0
 
-    # 1. BẮT BỘC LỌC MÃ MÁY (Nếu câu truy vấn chứa mã máy có số như l8050, c5290, pro1000)
+    # 1. BẮT BỘC LỌC MÃ MÁY
     code_tokens = [t for t in tokens if any(c.isdigit() for c in t) and len(t) >= 3]
-    
     if code_tokens:
-        # Bắt buộc bài viết phải chứa ít nhất 1 mã máy mà người dùng đã gõ
         has_code_match = any(ct in norm_model or ct in norm_title for ct in code_tokens)
         if not has_code_match:
-            return False, 0  # Loại ngay bài viết của máy khác (như C5290)
+            return False, 0
 
     # 2. TÍNH ĐIỂM ĐỘ TƯƠNG QUAN
-    # Ưu tiên cao nhất: Khớp nguyên cụm từ tìm kiếm trong tiêu đề hoặc tên model
     if norm_kw in norm_title or norm_kw in norm_model:
         score += 300
     elif norm_kw in corpus:
         score += 100
 
-    # Cộng điểm chi tiết theo vị trí xuất hiện của từng từ (Token)
     match_count = 0
     for t in tokens:
         if t in norm_model:
-            score += 80   # Khớp đúng mã/thương hiệu máy
+            score += 80
             match_count += 1
         elif t in norm_title:
-            score += 40   # Khớp trong tiêu đề bài viết
+            score += 40
             match_count += 1
         elif t in norm_desc:
-            score += 10   # Khớp trong mô tả
+            score += 10
             match_count += 1
 
-    # Điều kiện chấp nhận: Có khớp mã máy HOẶC tỷ lệ từ khóa khớp >= 50%
     is_matched = (len(code_tokens) > 0) or (match_count >= len(tokens) * 0.5)
-
     return is_matched, score
 
 
 # =====================================================
-# 2. API ROUTES
+# 1. TRANG CHỦ PUBLIC
+# =====================================================
+
+@router.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    """
+    Dùng 'def' để FastAPI tự đẩy I/O Supabase sang ThreadPool.
+    Có trả về 'is_db_error' để giao diện hiển thị fallback khi lỗi DB.
+    """
+    pinned_guides = []
+    recent_guides = []
+    is_db_error = False
+    
+    try:
+        if supabase:
+            # 1. Lấy danh sách bài GHIM
+            pinned_res = (
+                supabase.table("guide")
+                .select("*, printer_model(brand, model)")
+                .eq("is_active", True)
+                .eq("is_pinned", True)
+                .order("id", desc=True)
+                .execute()
+            )
+            pinned_guides = pinned_res.data or []
+
+            # 2. Lấy danh sách bài MỚI (chưa ghim)
+            recent_res = (
+                supabase.table("guide")
+                .select("*, printer_model(brand, model)")
+                .eq("is_active", True)
+                .eq("is_pinned", False)
+                .order("id", desc=True)
+                .limit(3)
+                .execute()
+            )
+            recent_guides = recent_res.data or []
+        else:
+            is_db_error = True
+
+    except Exception as e:
+        logger.error(f"❌ Lỗi load trang chủ: {e}")
+        is_db_error = True
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "title": "Trang chủ",
+            "pinned_guides": pinned_guides,
+            "recent_guides": recent_guides,
+            "is_db_error": is_db_error
+        }
+    )
+
+
+# =====================================================
+# 2. API & SEARCH ROUTES
 # =====================================================
 
 @router.get("/api/search-suggestions")
-async def search_suggestions(q: str = Query(..., min_length=1)):
+def search_suggestions(q: str = Query(..., min_length=1)):
     """API trả về JSON phục vụ gợi ý tức thì (Autocomplete)."""
     try:
         keyword = q.strip()
@@ -183,20 +180,20 @@ async def search_suggestions(q: str = Query(..., min_length=1)):
             if is_matched:
                 suggestions_with_score.append((score, g))
 
-        # Ưu tiên các gợi ý có điểm độ tương quan cao nhất
         suggestions_with_score.sort(key=lambda x: x[0], reverse=True)
         return [g for _, g in suggestions_with_score[:5]]
 
     except Exception as e:
-        logger.error(f"Lỗi API gợi ý tìm kiếm: {e}")
+        logger.error(f"❌ Lỗi API gợi ý tìm kiếm: {e}")
         return []
 
 
 @router.get("/search", response_class=HTMLResponse)
-async def search_guides(request: Request, q: str = ""):
+def search_guides(request: Request, q: str = ""):
     """Trang danh sách kết quả tìm kiếm đầy đủ."""
     keyword = q.strip()
     search_results = []
+    is_db_error = False
 
     try:
         if keyword:
@@ -219,7 +216,6 @@ async def search_guides(request: Request, q: str = ""):
                     g_item["_score"] = score
                     matched_guides.append(g_item)
 
-            # Sắp xếp ưu tiên: (1) Đã ghim -> (2) Điểm khớp cao -> (3) Thứ tự sort_order
             matched_guides.sort(
                 key=lambda x: (
                     not x.get("is_pinned", False),
@@ -228,37 +224,37 @@ async def search_guides(request: Request, q: str = ""):
                 )
             )
 
-            # Làm sạch dữ liệu tạm trước khi gửi sang Template
             for g in matched_guides:
                 g.pop("_score", None)
 
             search_results = matched_guides
 
     except Exception as e:
-        logger.error(f"Lỗi tìm kiếm với từ khóa '{keyword}': {e}")
-        search_results = []
+        logger.error(f"❌ Lỗi tìm kiếm với từ khóa '{keyword}': {e}")
+        is_db_error = True
 
     return templates.TemplateResponse(
         "search_results.html",
         {
             "request": request,
             "keyword": keyword,
-            "guides": search_results
+            "guides": search_results,
+            "is_db_error": is_db_error
         }
     )
 
+
 # =====================================================
-# 3. TRANG CHI TIẾT BÀI VIẾT & BÀI LIÊN QUAN
+# 3. CHI TIẾT BÀI VIẾT
 # =====================================================
 
 @router.get("/guide/{guide_id}", response_class=HTMLResponse)
-async def view_guide_detail(request: Request, guide_id: int):
-    # 1. Lấy thông tin bài hướng dẫn chính
-    # 1. Lấy thông tin bài hướng dẫn chính
+def view_guide_detail(request: Request, guide_id: int):
+    # 1. Lấy thông tin bài viết + printer_model + tác giả trong 1 query duy nhất (Tối ưu performance)
     try:
         guide_res = (
             supabase.table("guide")
-            .select("*, printer_model(brand, model)")
+            .select("*, printer_model(brand, model), quan_tri_vien(ho_ten, username)")
             .eq("id", guide_id)
             .eq("is_active", True) 
             .execute()
@@ -267,30 +263,13 @@ async def view_guide_detail(request: Request, guide_id: int):
             raise HTTPException(status_code=404, detail="Không tìm thấy bài hướng dẫn hoặc bài viết đã bị ẩn")
         guide = guide_res.data[0]
 
-        # 🆕 BỔ SUNG: Lấy thông tin tác giả bài viết từ created_by
-        created_by_id = guide.get("created_by")
-        if created_by_id:
-            try:
-                author_res = (
-                    supabase.table("quan_tri_vien")
-                    .select("ho_ten, username")
-                    .eq("id", created_by_id)
-                    .execute()
-                )
-                guide["quan_tri_vien"] = author_res.data[0] if author_res.data else None
-            except Exception as e:
-                logger.warning(f"Lỗi lấy thông tin tác giả cho guide #{guide_id}: {e}")
-                guide["quan_tri_vien"] = None
-        else:
-            guide["quan_tri_vien"] = None
-
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Lỗi khi load chi tiết bài guide #{guide_id}: {e}")
+        logger.error(f"❌ Lỗi khi load chi tiết bài guide #{guide_id}: {e}")
         raise HTTPException(status_code=500, detail="Lỗi máy chủ khi tải nội dung bài viết")
 
-    # 2. Lấy danh sách các bước lớn & bước con
+    # 2. Lấy các bước hướng dẫn (Steps & Sub-steps)
     try:
         steps_res = (
             supabase.table("guide_step")
@@ -325,12 +304,12 @@ async def view_guide_detail(request: Request, guide_id: int):
                     sub["content"] = auto_linkify(sub.get("content"))
                     sub["note"] = auto_linkify(sub.get("note"))
     except Exception as e:
-        logger.error(f"Lỗi lấy các bước của bài guide #{guide_id}: {e}")
+        logger.error(f"❌ Lỗi lấy các bước của bài guide #{guide_id}: {e}")
         steps = []
 
     printer_model_id = guide.get("printer_model_id")
 
-    # 3. LẤY BÀI VIẾT TIẾP THEO (NEXT GUIDE)
+    # 3. LẤY BÀI VIẾT TIẾP THEO
     next_guide = None
     if printer_model_id:
         try:
@@ -351,10 +330,9 @@ async def view_guide_detail(request: Request, guide_id: int):
         except Exception as e:
             logger.warning(f"Lỗi lấy next_guide: {e}")
 
-    # 4. LẤY BÀI VIẾT LIÊN QUAN (TÁCH BIỆT 3 CẤP XỬ LÝ)
+    # 4. LẤY BÀI VIẾT LIÊN QUAN
     related_guides = []
 
-    # CẤP 1: Lấy bài cùng dòng máy (printer_model_id)
     if printer_model_id:
         try:
             res1 = (
@@ -371,7 +349,6 @@ async def view_guide_detail(request: Request, guide_id: int):
         except Exception as e:
             logger.warning(f"[Gợi ý Cấp 1] Lỗi query printer_model_id: {e}")
 
-    # CẤP 2: Lấy bài cùng từ khóa trong tiêu đề (ví dụ: L1300)
     if not related_guides and guide.get("title"):
         try:
             title = guide["title"]
@@ -394,7 +371,6 @@ async def view_guide_detail(request: Request, guide_id: int):
         except Exception as e:
             logger.warning(f"[Gợi ý Cấp 2] Lỗi query theo từ khóa: {e}")
 
-    # CẤP 3: Lấy 3 bài mới nhất toàn hệ thống (Fallback)
     if not related_guides:
         try:
             res3 = (
@@ -421,6 +397,11 @@ async def view_guide_detail(request: Request, guide_id: int):
         }
     )
 
+
+# =====================================================
+# 4. FEEDBACK API
+# =====================================================
+
 class FeedbackPayload(BaseModel):
     category: str
     rating: int
@@ -428,7 +409,7 @@ class FeedbackPayload(BaseModel):
     page_url: Optional[str] = None
 
 @router.post("/api/feedback")
-async def create_feedback(data: FeedbackPayload):
+def create_feedback(data: FeedbackPayload):
     try:
         feedback_data = {
             "category": data.category,
@@ -436,10 +417,8 @@ async def create_feedback(data: FeedbackPayload):
             "content": data.content,
             "page_url": data.page_url
         }
-        
-        # Lưu vào bảng "feedbacks" trong Supabase
         supabase.table("feedbacks").insert(feedback_data).execute()
         return {"success": True, "message": "Gửi phản hồi thành công"}
     except Exception as e:
-        logger.error(f"Lỗi lưu feedback: {e}")
+        logger.error(f"❌ Lỗi lưu feedback: {e}")
         raise HTTPException(status_code=500, detail="Không thể lưu phản hồi")

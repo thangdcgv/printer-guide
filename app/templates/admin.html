@@ -3,6 +3,102 @@
 {% block content %}
 
 <style>
+    /* Card Container */
+    .stats-card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Nội dung & Chữ */
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 0.825rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+
+    /* Icon đại diện */
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.visitors {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .stat-icon.accounts {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+
+    /* Chấm phát sáng nhấp nháy hiệu ứng LIVE */
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        animation: pulse 1.6s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        }
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+        }
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        }
+    }
 /* =========================
    VARIABLES & CONTAINER
 ========================= */
@@ -235,6 +331,38 @@
     </div>
 
 </div>
+<!-- HTML Block -->
+<div class="stats-card-container">
+    <!-- Card 1: Tổng người truy cập -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <span class="stat-label">
+                <span class="pulse-dot"></span> Đang truy cập
+            </span>
+            <span class="stat-value" id="total-online">0</span>
+        </div>
+        <div class="stat-icon visitors">
+            <!-- SVG Icon Người dùng -->
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Card 2: Tài khoản đã đăng nhập -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <span class="stat-label">Tài khoản online</span>
+            <span class="stat-value" id="accounts-online">0</span>
+        </div>
+        <div class="stat-icon accounts">
+            <!-- SVG Icon Shield / Admin -->
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+    </div>
+</div>
 
 {% else %}
 
@@ -254,4 +382,24 @@
 
 {% endif %}
 
+
+<script>
+    async function refreshOnlineStats() {
+        try {
+            const res = await fetch('/api/admin/online-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('total-online').textContent = data.total_online;
+                document.getElementById('accounts-online').textContent = data.accounts_online;
+            }
+        } catch (e) {
+            console.error("Lỗi cập nhật online stats:", e);
+        }
+    }
+
+    // Tự động gọi API mỗi 10 giây
+    setInterval(refreshOnlineStats, 10000);
+    // Gọi ngay khi tải trang
+    refreshOnlineStats();
+</script>
 {% endblock %}
