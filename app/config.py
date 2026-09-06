@@ -9,6 +9,7 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. Kiểm tra biến môi trường trước
@@ -17,12 +18,15 @@ if not SUPABASE_URL:
 
 if not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_KEY chưa được cấu hình trong environment.")
+if not SUPABASE_SERVICE_ROLE_KEY:
+    raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY chưa được cấu hình trong environment.")
 
 if not GEMINI_API_KEY:
     raise RuntimeError("GEMINI_API_KEY chưa được cấu hình trong environment.")
 
 # 2. Khởi tạo các SDK dịch vụ sau khi chắc chắn đã có đủ Key
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 # Jinja2 Templates

@@ -88,24 +88,20 @@
         }
 
         /* =====================================================
-        2. HEADER BANNER
+        2. HEADER BANNER (ĐÃ ĐIỀU CHỈNH KÍCH THƯỚC CHO MOBILE)
         ===================================================== */
         .navbar-banner {
             display: flex;
             justify-content: center;
             align-items: center;
             background: var(--bg-surface);
-            padding: clamp(14px, 2.5vw, 22px) clamp(16px, 3vw, 28px);
+            /* Giảm padding mobile để dành thêm không gian cho Logo & Title lớn hơn */
+            padding: clamp(10px, 2.5vw, 22px) clamp(12px, 3vw, 28px);
             border-radius: var(--radius-xl);
             border: 1px solid var(--border-subtle);
             box-shadow: var(--shadow-sm);
             margin-bottom: 20px;
             transition: var(--transition);
-        }
-
-        .navbar-banner:hover {
-            box-shadow: var(--shadow-md);
-            border-color: #cbd5e1;
         }
 
         .brand-centered {
@@ -118,7 +114,8 @@
         }
 
         .brand-logo {
-            height: clamp(48px, 9vw, 84px);
+            /* Tăng chiều cao tối thiểu từ 48px lên 64px (Mobile) */
+            height: clamp(64px, 12vw, 88px);
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 4px 8px rgba(220, 38, 38, 0.12));
@@ -131,15 +128,29 @@
         }
 
         .brand-centered span {
-            font-size: clamp(1.6rem, 4.5vw, 3.2rem);
+            /* Tăng font chữ tối thiểu từ 1.6rem (~25px) lên 2.2rem (~35px) trên Mobile */
+            font-size: clamp(2.2rem, 6vw, 3.4rem);
             font-weight: 800;
             letter-spacing: -0.03em;
             background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%);
             -webkit-background-clip: text;
-            background-clip: text; /* Standard property cho tương thích chuẩn W3C */
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             white-space: nowrap;
         }
+
+        /* Tùy chỉnh riêng cho màn hình điện thoại rất nhỏ (dưới 480px) nếu bị tràn lề */
+        @media (max-width: 480px) {
+            .brand-centered {
+                gap: 8px; /* Thu hẹp khoảng cách giữa Logo và Tiêu đề */
+            }
+            .brand-centered span {
+                font-size: 2rem; /* Giữ chữ vừa vặn không bị nổ khung */
+            }
+            .brand-logo {
+                height: 58px;
+            }
+}
 
         /* =====================================================
         3. HERO SEARCH SECTION
@@ -446,6 +457,39 @@
             border-top: 1px solid var(--border-subtle);
             font-weight: 500;
         }
+        /* Khung Chat Box & Animation */
+        #chat-box {
+            width: 350px;
+            height: 480px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+            flex-direction: column;
+            overflow: hidden;
+            position: absolute;
+            bottom: 68px;
+            left: 0;
+            border: 1px solid #e2e8f0;
+            transform-origin: bottom left;
+            z-index: 9999;
+        }
+
+        /* Hiển thị mượt mà khi có class is-active */
+        #chat-box.is-active {
+            display: flex !important;
+            animation: ai-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes ai-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -466,12 +510,11 @@
             Hướng dẫn & Sửa chữa Máy in
         </h1>
         <p class="text-xs md:text-sm text-slate-400 mb-6 max-w-xl leading-relaxed">
-            Tra cứu nhanh quy trình xử lý lỗi, cài đặt và bảo trì các dòng máy in chuyên nghiệp.
+            Tra cứu quy trình lắp đặt và xử lý lỗi đơn giản các thiết bị ngành in tại Đại Thành.
         </p>
 
-        <!-- Khung Tìm Kiếm & Autocomplete -->
-        <div class="relative w-full max-w-xl mx-auto">
-            <form action="/search" method="GET" class="search-box flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl overflow-hidden focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 transition-all shadow-lg">
+        <div class="relative w-full max-w-2xl mx-auto px-4">
+            <form action="/search" method="GET" class="search-box flex items-center bg-slate-800/90 border border-slate-700/80 rounded-2xl p-1.5 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 transition-all shadow-xl gap-1.5">
                 <input
                     type="text"
                     id="searchInput"
@@ -479,33 +522,65 @@
                     autocomplete="off"
                     spellcheck="false"
                     autocapitalize="off"
-                    class="search-input w-full bg-transparent px-4 py-3 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
-                    placeholder="Nhập dòng máy cần tìm (vd: pro 1000, l8050...)"
+                    class="search-input w-full bg-transparent px-3.5 py-2.5 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+                    placeholder="Nhập dòng máy hoặc mã lỗi (vd: Pro 1000, L8050, E05...)"
                     required
                 >
+
                 <button
                     type="submit"
-                    class="search-btn px-5 py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs md:text-sm font-medium flex items-center gap-2 transition-colors shrink-0"
+                    class="search-btn px-4 py-2.5 bg-slate-700/80 hover:bg-slate-600 text-slate-200 hover:text-white text-xs md:text-sm font-medium rounded-xl flex items-center gap-1.5 transition-all shrink-0 border border-slate-600/50"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <span>Tìm kiếm</span>
+                    <span class="hidden sm:inline">Tìm kiếm</span>
                 </button>
             </form>
 
-            <!-- Khung Gợi Ý Tìm Kiếm (Autocomplete) -->
-            <div
-                id="suggestionsBox"
-                class="absolute left-0 right-0 mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl hidden z-50 overflow-hidden max-h-80 overflow-y-auto divide-y divide-slate-800/60 text-left"
-                role="listbox"
-            ></div>
+            <div id="suggestionsBox" class="absolute left-4 right-4 mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl hidden z-50 overflow-hidden max-h-80 overflow-y-auto divide-y divide-slate-800/60 text-left" role="listbox"></div>
         </div>
         
-        <!-- Khung kết quả Live Search dạng Thẻ -->
-        <div id="liveSearchResults" class="mt-6 w-full max-w-xl mx-auto space-y-3 hidden"></div>
+        <div id="liveSearchResults" class="mt-6 w-full max-w-2xl mx-auto space-y-3 hidden px-4"></div>
     </section>
+
+    <div id="ai-chat-widget" style="position: fixed; bottom: 20px; left: 20px; z-index: 9990; font-family: system-ui, -apple-system, sans-serif;">
+        <button id="chat-toggle-btn" type="button" aria-label="Mở Trợ lý AI" title="Hỏi AI" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 26px; padding: 0 18px; height: 50px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span id="chat-icon-open" style="font-size: 14px; font-weight: 700;">Hỏi AI</span>
+            <svg id="chat-icon-close" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <div id="chat-box" style="display: none;">
+            <div style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 800; font-size: 1.1rem;">AI</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">AI Hỗ Trợ Trực tuyến</div>
+                        <div style="font-size: 0.7rem; opacity: 0.85;">Tìm nội dung hướng dẫn & tra cứu dòng máy</div>
+                    </div>
+                </div>
+                <button id="chat-close-btn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
+            </div>
+
+            <div id="chat-messages" style="flex: 1; padding: 14px; overflow-y: auto; background: #f8fafc; font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
+                <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4;">
+                    Xin chào! Bạn cần tìm hướng dẫn sửa lỗi hay tra cứu tài liệu máy in nào?
+                </div>
+            </div>
+
+            <div style="padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.85rem; background: #f8fafc; color: #0f172a;">
+                <button id="chat-send-btn" type="button" style="background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- 3. PANEL BÀI VIẾT GHIM -->
     {% if pinned_guides %}
@@ -587,44 +662,6 @@
 
 </div>
 
-<!-- AI CHATBOT WIDGET -->
-<div id="ai-chat-widget" style="position: fixed; bottom: 20px; left: 20px; z-index: 9990; font-family: system-ui, -apple-system, sans-serif;">
-    <button id="chat-toggle-btn" type="button" aria-label="Mở Trợ lý AI" title="Hỏi AI" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 50%; width: 100px; height: 56px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;">
-        <span id="chat-icon-open" style="font-size: 18px; font-weight: 700; line-height: 1;">Hỏi AI</span>
-        <svg id="chat-icon-close" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-    </button>
-
-    <div id="chat-box" style="display: none; width: 340px; height: 460px; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); flex-direction: column; overflow: hidden; position: absolute; bottom: 70px; left: 0; border: 1px solid #e2e8f0;">
-        <div style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-weight: 800; font-size: 1.1rem;">AI</span>
-                <div>
-                    <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">Hỗ trợ AI Trực tuyến</div>
-                    <div style="font-size: 0.7rem; opacity: 0.85;">Hỏi lỗi máy in & tra cứu bài viết</div>
-                </div>
-            </div>
-            <button id="chat-close-btn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
-        </div>
-
-        <div id="chat-messages" style="flex: 1; padding: 14px; overflow-y: auto; background: #f8fafc; font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
-            <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4;">
-                Xin chào! Bạn cần tìm hướng dẫn sửa lỗi hay tra cứu tài liệu máy in nào?
-            </div>
-        </div>
-
-        <div style="padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
-            <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.85rem; background: #f8fafc; color: #0f172a;">
-            <button id="chat-send-btn" type="button" style="background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- NÚT CHAT ZALO MULTI-OPTION -->
 <div id="zalo-floating-widget" style="position: fixed; bottom: 25px; right: 25px; z-index: 99999; font-family: system-ui, -apple-system, sans-serif;">
     <div id="zalo-menu-box" style="display: none; position: absolute; bottom: 70px; right: 0; background: #ffffff; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); width: 270px; padding: 14px; border: 1px solid #e2e8f0;">
@@ -679,10 +716,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------
-    // 1. TIM KIEM & AUTOCOMPLETE
+    // TÌM KIẾM & AUTOCOMPLETE
     // ----------------------------
     const searchInput = document.getElementById('searchInput');
-    const suggestionsBox = document.getElementById('suggestionsBox');
     const resultsContainer = document.getElementById('liveSearchResults');
     let debounceTimer;
 
@@ -695,30 +731,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchSuggestions(query) {
         const cleanQuery = query.trim();
-        if (!cleanQuery) {
-            hideSuggestions();
-            return;
-        }
+        if (!cleanQuery) return hideSuggestions();
 
         try {
             const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(cleanQuery)}`);
             if (!response.ok) return hideSuggestions();
-
             const items = await response.json();
             renderSuggestions(items);
         } catch (error) {
-            console.error('Lỗi tải gợi ý:', error);
             hideSuggestions();
         }
     }
 
     function renderSuggestions(items) {
+        if (!resultsContainer) return;
         if (!items || items.length === 0) {
             resultsContainer.innerHTML = `
                 <div class="text-center py-6 bg-slate-800/80 border border-slate-700/60 rounded-xl">
                     <p class="text-xs text-slate-400">Không tìm thấy hướng dẫn nào phù hợp.</p>
-                </div>
-            `;
+                </div>`;
             resultsContainer.classList.remove('hidden');
             return;
         }
@@ -733,15 +764,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
                 <a href="/guide/${item.id}" class="group block p-3.5 bg-slate-800/90 border border-slate-700/80 rounded-xl hover:border-cyan-500 hover:bg-slate-800 transition-all text-left">
                     <div class="flex items-center justify-between gap-3">
-                        <h3 class="text-xs md:text-sm font-medium text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
-                            ${item.title}
-                        </h3>
+                        <h3 class="text-xs md:text-sm font-medium text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">${item.title}</h3>
                         ${badgeHtml}
                     </div>
-                </a>
-            `;
+                </a>`;
         }).join('');
-
         resultsContainer.classList.remove('hidden');
     }
 
@@ -752,22 +779,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    searchInput?.addEventListener('input', debounce((e) => {
-        fetchSuggestions(e.target.value);
-    }));
-
-    document.addEventListener('click', (e) => {
-        if (!searchInput?.contains(e.target) && !resultsContainer?.contains(e.target)) {
-            hideSuggestions();
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') hideSuggestions();
-    });
-
+    searchInput?.addEventListener('input', debounce((e) => fetchSuggestions(e.target.value)));
     // ----------------------------
-    // 2. ZALO FLOATING MENU
+    // 2. ZALO FLOATING MENU (ĐÃ KHÔI PHỤC)
     // ----------------------------
     const zaloBtn = document.getElementById('zalo-toggle-btn');
     const zaloMenu = document.getElementById('zalo-menu-box');
@@ -775,18 +789,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     zaloBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isHidden = zaloMenu.style.display === 'none' || zaloMenu.style.display === '';
+        if (!zaloMenu) return;
+
+        // Kiểm tra trạng thái hiển thị thực tế
+        const isHidden = window.getComputedStyle(zaloMenu).display === 'none';
         zaloMenu.style.display = isHidden ? 'block' : 'none';
     });
 
+    // Tự đóng menu Zalo khi click ra ngoài
     document.addEventListener('click', (e) => {
         if (zaloWidget && !zaloWidget.contains(e.target)) {
             if (zaloMenu) zaloMenu.style.display = 'none';
         }
     });
-
     // ----------------------------
-    // 3. AI CHATBOT WIDGET
+    // AI CHATBOT WIDGET
     // ----------------------------
     const toggleBtn = document.getElementById("chat-toggle-btn");
     const closeBtn = document.getElementById("chat-close-btn");
@@ -796,19 +813,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById("chat-messages");
     const iconOpen = document.getElementById("chat-icon-open");
     const iconClose = document.getElementById("chat-icon-close");
+    const heroAiBtn = document.getElementById("hero-ai-btn");
+
+    function openChat() {
+        if (!chatBox) return;
+        chatBox.style.display = "flex";
+        chatBox.classList.add("is-active");
+        if (iconOpen) iconOpen.style.display = "none";
+        if (iconClose) iconClose.style.display = "block";
+    }
+
+    function closeChat() {
+        if (!chatBox) return;
+        chatBox.style.display = "none";
+        chatBox.classList.remove("is-active");
+        if (iconOpen) iconOpen.style.display = "inline";
+        if (iconClose) iconClose.style.display = "none";
+    }
 
     function toggleChat() {
-        const isHidden = chatBox.style.display === "none" || chatBox.style.display === "";
-        chatBox.style.display = isHidden ? "flex" : "none";
-        iconOpen.style.display = isHidden ? "none" : "inline";
-        iconClose.style.display = isHidden ? "block" : "none";
-        if (isHidden) chatInput?.focus();
+        if (!chatBox) return;
+        const isVisible = chatBox.style.display === "flex" || chatBox.classList.contains("is-active");
+        if (isVisible) closeChat();
+        else openChat();
     }
 
     toggleBtn?.addEventListener("click", toggleChat);
-    closeBtn?.addEventListener("click", toggleChat);
+    closeBtn?.addEventListener("click", closeChat);
+
+    // Xử lý bấm "Hỏi AI" cạnh ô tìm kiếm
+    heroAiBtn?.addEventListener("click", () => {
+        openChat();
+        const searchText = searchInput?.value.trim();
+        if (searchText && chatInput) {
+            chatInput.value = searchText;
+            sendMessage(); // Tự động gửi tin nhắn nếu có văn bản
+        } else if (chatInput) {
+            chatInput.focus();
+        }
+    });
 
     async function sendMessage() {
+        if (!chatInput || !chatMessages) return;
         const text = chatInput.value.trim();
         if (!text) return;
 
