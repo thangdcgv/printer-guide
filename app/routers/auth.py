@@ -16,6 +16,9 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+# Mã định danh cho App Thư viện
+APP_CODE = "LIBRARY"
+
 ENV = os.getenv("ENV", "development").lower()
 IS_PRODUCTION = ENV == "production"
 
@@ -46,14 +49,16 @@ def _hash_token(token: str) -> str:
 def register_user_session(auth_id: str, access_token: str, request: Request):
     try:
         token_hash = _hash_token(access_token)
-        user_agent = request.headers.get("user-agent", "Unknown")
+        user_agent = request.headers.get("user-agent", "Unknown")[:255]
         client_ip = request.client.host if request.client else "Unknown"
 
         supabase_admin.table("user_sessions").insert({
+            "user_id": auth_id,
             "auth_id": auth_id,
             "access_token_hash": token_hash,
             "user_agent": user_agent,
             "ip_address": client_ip,
+            "app_code": APP_CODE,
         }).execute()
     except Exception as exc:
         logger.error(f"❌ Lỗi ghi nhận user session: {exc}")
@@ -61,7 +66,13 @@ def register_user_session(auth_id: str, access_token: str, request: Request):
 
 def revoke_all_other_sessions(auth_id: str, current_token: Optional[str] = None):
     try:
-        query = supabase_admin.table("user_sessions").delete().eq("auth_id", auth_id)
+        # ✅ Chỉ xóa các phiên thuộc riêng App LIBRARY
+        query = (
+            supabase_admin.table("user_sessions")
+            .delete()
+            .eq("app_code", APP_CODE)
+            .or_(f"user_id.eq.{auth_id},auth_id.eq.{auth_id}")
+        )
         if current_token:
             query = query.neq("access_token_hash", _hash_token(current_token))
         query.execute()
@@ -73,8 +84,7 @@ def revoke_current_session(access_token: str):
     """Xóa session cụ thể khi user bấm Logout."""
     try:
         token_hash = _hash_token(access_token)
-        # ✅ FIX: Dùng supabase_admin tránh lỗi RLS khi Logout
-        supabase_admin.table("user_sessions").delete().eq("access_token_hash", token_hash).execute()
+        supabase_admin.table("user_sessions").delete().eq("app_code", APP_CODE).eq("access_token_hash", token_hash).execute()
     except Exception as exc:
         logger.error(f"❌ Lỗi xoá session hiện tại: {exc}")
 
@@ -126,7 +136,6 @@ def render_login_error(
 
 def get_admin_profile(auth_id: str) -> Optional[dict]:
     try:
-        # ✅ FIX: Dùng supabase_admin để luôn đọc được profile quản trị viên
         result = (
             supabase_admin
             .table("quan_tri_vien")
@@ -150,24 +159,34 @@ def authenticate_session(request: Request, response: Optional[Response] = None) 
     if hasattr(request.state, "user_profile") and request.state.user_profile:
         return request.state.user_profile
 
-    auth_id = getattr(request.state, "auth_id", None)
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
 
-    if not auth_id or not access_token:
+    if not access_token:
         return None
 
     try:
         token_hash = _hash_token(access_token)
+        # ✅ Chỉ kiểm tra session hợp lệ thuộc về App LIBRARY
         session_check = (
             supabase_admin.table("user_sessions")
-            .select("id")
+            .select("id, user_id, auth_id")
+            .eq("app_code", APP_CODE)
             .eq("access_token_hash", token_hash)
             .limit(1)
             .execute()
         )
         if not session_check.data:
             return None
+        
+        session_data = session_check.data[0]
+        # ✅ Ưu tiên lấy auth_id từ request.state, nếu không có sẽ tự lấy từ DB session
+        auth_id = getattr(request.state, "auth_id", None) or session_data.get("user_id") or session_data.get("auth_id")
+        
+        if not auth_id:
+            return None
+
     except Exception as exc:
+        logger.error(f"❌ Lỗi xác thực session: {exc}")
         return None
 
     user_profile = get_admin_profile(auth_id)
@@ -220,7 +239,6 @@ def handle_login(
     try:
         target_email = clean_username
         if "@" not in clean_username:
-            # ✅ FIX: Dùng supabase_admin để lookup email theo username
             lookup = (
                 supabase_admin.table("quan_tri_vien")
                 .select("email")
@@ -242,11 +260,12 @@ def handle_login(
         if not user_profile:
             return render_login_error(request, "Tài khoản chưa được cấp quyền.", status.HTTP_403_FORBIDDEN)
 
-        # ✅ FIX: Dùng supabase_admin kiểm tra session tồn tại
+        # ✅ FIX: Chỉ quét các session thuộc riêng App LIBRARY để phát hiện xung đột
         existing_sessions = (
             supabase_admin.table("user_sessions")
             .select("id, user_agent, created_at")
-            .eq("auth_id", user.id)
+            .eq("app_code", APP_CODE)
+            .or_(f"user_id.eq.{user.id},auth_id.eq.{user.id}")
             .execute()
         )
 
