@@ -588,6 +588,72 @@
                 animation-duration: 0.01ms !important;
             }
         }
+        .assistant-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            cursor: pointer;
+        }
+
+        /* Bong bóng hội thoại ngắn */
+        .assistant-speech-bubble {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            padding: 8px 14px;
+            border-radius: 16px 16px 2px 16px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            max-width: 220px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        /* Khung chứa Avatar */
+        .assistant-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .assistant-avatar:hover {
+            transform: scale(1.08);
+        }
+
+        /* Các trạng thái Hoạt ảnh */
+        .assistant-avatar.listening .pulse-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 2px solid #06b6d4;
+            animation: pulse 1.2s infinite;
+        }
+
+        .assistant-avatar.speaking {
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-6px); }
+        }
     </style>
 </head>
 
@@ -650,7 +716,6 @@
             {% block content %}{% endblock %}
         </main>
     </div>
-
 {% if request.url.path == "/" or (request.url.path.startswith("/guide/") and not request.url.path.startswith("/admin/")) %}
     <!-- FLOATING FEEDBACK BUTTON (ĐÃ DI CHUYỂN SANG BÊN PHẢI) -->
     <button id="feedbackBtn" type="button" class="feedback-float-btn" onclick="toggleFeedbackModal()" aria-label="Gửi góp ý hoặc báo lỗi" title="Gửi góp ý hoặc báo lỗi" style="position: fixed; bottom: 20px; right: 20px; z-index: 9980;">
@@ -717,6 +782,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // Tự động đóng alert sau 3.5s
         setTimeout(function () {
             document.querySelectorAll(".alert").forEach(function(alertEl){
                 var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
@@ -724,9 +790,14 @@
             });
         }, 3500);
 
+        // Khởi tạo Chatbot & Trợ lý ảo
         initAIChatbot();
+        initVirtualAssistant();
     });
 
+    /* =====================================================
+       1. FEEDBACK MODAL LOGIC
+    ===================================================== */
     function toggleFeedbackModal() {
         const modal = document.getElementById("feedbackModal");
         if (!modal) return;
@@ -780,6 +851,9 @@
         }
     }
 
+    /* =====================================================
+       2. AI CHATBOT BOX LOGIC
+    ===================================================== */
     function initAIChatbot() {
         const toggleBtn = document.getElementById("chat-toggle-btn");
         const closeBtn = document.getElementById("chat-close-btn");
@@ -793,15 +867,15 @@
         if (!toggleBtn || !chatBox) return;
 
         function toggleChat() {
-            const isHidden = chatBox.style.display === "none";
+            const isHidden = chatBox.style.display === "none" || !chatBox.style.display;
             chatBox.style.display = isHidden ? "flex" : "none";
-            iconOpen.style.display = isHidden ? "none" : "inline";
-            iconClose.style.display = isHidden ? "block" : "none";
-            if (isHidden) chatInput.focus();
+            if (iconOpen) iconOpen.style.display = isHidden ? "none" : "inline";
+            if (iconClose) iconClose.style.display = isHidden ? "block" : "none";
+            if (isHidden && chatInput) chatInput.focus();
         }
 
         toggleBtn.onclick = toggleChat;
-        closeBtn.onclick = toggleChat;
+        if (closeBtn) closeBtn.onclick = toggleChat;
 
         async function sendMessage() {
             const text = chatInput.value.trim();
@@ -855,18 +929,21 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        if (sendBtn) sendBtn.onclick = sendMessage;
+        if (chatInput) {
+            chatInput.onkeypress = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
         }
-
-        sendBtn.onclick = sendMessage;
-        chatInput.onkeypress = (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-            }
-        };
     }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
 </script>
 
 {% block scripts %}{% endblock %}

@@ -150,44 +150,6 @@ def home(request: Request):
         }
     )
 
-
-# =====================================================
-# 2. API & SEARCH ROUTES
-# =====================================================
-
-@router.get("/api/search-suggestions")
-def search_suggestions(q: str = Query(..., min_length=1)):
-    """API trả về JSON phục vụ gợi ý tức thì (Autocomplete)."""
-    try:
-        keyword = q.strip()
-        norm_kw = normalize_text(keyword)
-        if not norm_kw:
-            return []
-
-        tokens = [t for t in [normalize_text(t) for t in keyword.lower().split()] if t]
-
-        guides_res = (
-            supabase.table("guide")
-            .select("id, title, description, image_url, printer_model_id, printer_model(brand, model)")
-            .eq("is_active", True)
-            .execute()
-        )
-        all_guides = guides_res.data or []
-
-        suggestions_with_score = []
-        for g in all_guides:
-            is_matched, score = calculate_match_score(g, norm_kw, tokens)
-            if is_matched:
-                suggestions_with_score.append((score, g))
-
-        suggestions_with_score.sort(key=lambda x: x[0], reverse=True)
-        return [g for _, g in suggestions_with_score[:5]]
-
-    except Exception as e:
-        logger.error(f"❌ Lỗi API gợi ý tìm kiếm: {e}")
-        return []
-
-
 @router.get("/search", response_class=HTMLResponse)
 def search_guides(request: Request, q: str = ""):
     """Trang danh sách kết quả tìm kiếm đầy đủ."""

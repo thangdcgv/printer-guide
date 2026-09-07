@@ -8,7 +8,7 @@ from fastapi import UploadFile, HTTPException, status
 from PIL import Image, ImageOps
 
 # Import nhất quán từ app.database
-from app.database import supabase
+from app.database import supabase, supabase_admin
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +66,13 @@ async def upload_image_to_supabase(file: UploadFile, folder: str = "general") ->
         filename = f"{clean_folder}/{uuid.uuid4()}.webp"
 
         # Push file lên Supabase Storage
-        supabase.storage.from_(BUCKET_NAME).upload(
+        supabase_admin.storage.from_(BUCKET_NAME).upload(
             path=filename,
             file=webp_bytes,
             file_options={"content-type": "image/webp"},
         )
 
-        return supabase.storage.from_(BUCKET_NAME).get_public_url(filename)
+        return supabase_admin.storage.from_(BUCKET_NAME).get_public_url(filename)
 
     except HTTPException:
         raise
@@ -108,7 +108,7 @@ def delete_image_from_supabase(image_url: Optional[str]) -> bool:
             storage_path = storage_path[1:]
 
         # 3. Thực hiện xóa file trên Storage
-        res = supabase.storage.from_(BUCKET_NAME).remove([storage_path])
+        res = supabase_admin.storage.from_(BUCKET_NAME).remove([storage_path])
         logger.info("Đã xóa file trên Supabase Storage: %s | Response: %s", storage_path, res)
         return True
 

@@ -538,11 +538,7 @@
                     <span class="hidden sm:inline">Tìm kiếm</span>
                 </button>
             </form>
-
-            <div id="suggestionsBox" class="absolute left-4 right-4 mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl hidden z-50 overflow-hidden max-h-80 overflow-y-auto divide-y divide-slate-800/60 text-left" role="listbox"></div>
         </div>
-        
-        <div id="liveSearchResults" class="mt-6 w-full max-w-2xl mx-auto space-y-3 hidden px-4"></div>
     </section>
 
     <div id="ai-chat-widget" style="position: fixed; bottom: 20px; left: 20px; z-index: 9990; font-family: system-ui, -apple-system, sans-serif;">
@@ -729,57 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    async function fetchSuggestions(query) {
-        const cleanQuery = query.trim();
-        if (!cleanQuery) return hideSuggestions();
-
-        try {
-            const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(cleanQuery)}`);
-            if (!response.ok) return hideSuggestions();
-            const items = await response.json();
-            renderSuggestions(items);
-        } catch (error) {
-            hideSuggestions();
-        }
-    }
-
-    function renderSuggestions(items) {
-        if (!resultsContainer) return;
-        if (!items || items.length === 0) {
-            resultsContainer.innerHTML = `
-                <div class="text-center py-6 bg-slate-800/80 border border-slate-700/60 rounded-xl">
-                    <p class="text-xs text-slate-400">Không tìm thấy hướng dẫn nào phù hợp.</p>
-                </div>`;
-            resultsContainer.classList.remove('hidden');
-            return;
-        }
-
-        resultsContainer.innerHTML = items.map(item => {
-            const brand = item.printer_model?.brand || '';
-            const model = item.printer_model?.model || '';
-            const badgeHtml = (brand || model) 
-                ? `<span class="px-2 py-0.5 text-[11px] font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60 rounded shrink-0">${brand} ${model}</span>` 
-                : '';
-
-            return `
-                <a href="/guide/${item.id}" class="group block p-3.5 bg-slate-800/90 border border-slate-700/80 rounded-xl hover:border-cyan-500 hover:bg-slate-800 transition-all text-left">
-                    <div class="flex items-center justify-between gap-3">
-                        <h3 class="text-xs md:text-sm font-medium text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">${item.title}</h3>
-                        ${badgeHtml}
-                    </div>
-                </a>`;
-        }).join('');
-        resultsContainer.classList.remove('hidden');
-    }
-
-    function hideSuggestions() {
-        if (resultsContainer) {
-            resultsContainer.classList.add('hidden');
-            resultsContainer.innerHTML = '';
-        }
-    }
-
-    searchInput?.addEventListener('input', debounce((e) => fetchSuggestions(e.target.value)));
     // ----------------------------
     // 2. ZALO FLOATING MENU (ĐÃ KHÔI PHỤC)
     // ----------------------------
