@@ -30,17 +30,24 @@ router = APIRouter(
 
 def _check_guide_permission(guide_id: int, user: dict):
     """Kiểm tra quyền truy cập/chỉnh sửa bài viết của user."""
-    if user.get("role") == "super_admin":
+    print("DEBUG USER DATA:", user) # Xem log ở terminal
+    # 1. Chuẩn hóa role: chuyển về chữ thường và xóa khoảng trắng thừa (nếu có)
+    user_role = str(user.get("role") or "").lower().strip()
+    
+    # 2. Tập hợp các role có quyền Admin (đều viết thường)
+    ALLOWED_ADMIN_ROLES = {"system admin", "super admin", "admin"}
+    
+    # Nếu user thuộc một trong các role Admin trên thì bỏ qua kiểm tra chính chủ
+    if user_role in ALLOWED_ADMIN_ROLES:
         return
     
+    # 3. Truy vấn kiểm tra người tạo bài viết
     res = supabase.table("guide").select("created_by").eq("id", guide_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài viết.")
     
     if res.data[0].get("created_by") != user.get("id"):
         raise HTTPException(status_code=403, detail="Bạn không có quyền chỉnh sửa bài viết này.")
-
-
 def auto_linkify(text):
     if not text:
         return ""

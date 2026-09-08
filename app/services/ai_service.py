@@ -105,11 +105,9 @@ Quy tắc trả lời:
 3. [Tên tiêu đề bài viết 3](URL_3)
 """
 
-        # 5. Gọi AI qua SDK google-genai mới
-        response = ai_client.models.generate_content(
-            model=SELECTED_MODEL_NAME,
-            contents=prompt,
-        )
+        # 5. Gọi AI qua phiên Chat để tránh cảnh báo AFC của google-genai
+        chat_session = ai_client.chats.create(model=SELECTED_MODEL_NAME)
+        response = chat_session.send_message(prompt)
         return response.text
 
     except Exception as e:

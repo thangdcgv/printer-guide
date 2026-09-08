@@ -457,38 +457,106 @@
             border-top: 1px solid var(--border-subtle);
             font-weight: 500;
         }
-        /* Khung Chat Box & Animation */
+        /* =========================================
+        AI PET & CHAT WIDGET STYLES
+        ========================================= */
+
+        #fish-aquarium-container {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 180px;
+            pointer-events: none;
+            z-index: 9990;
+            overflow: hidden; /* Tránh hiện thanh cuộn ngang khi pet đi sát mép */
+        }
+
+        #ai-pet-container {
+            position: absolute;
+            left: 30px;
+            bottom: 15px;
+            width: 100px; /* Thu gọn theo đúng cỡ ảnh GIF */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 9991;
+            will-change: left, bottom;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Bong bóng AI "Hỏi AI nè!" */
+        .fish-speech-bubble {
+            background: rgba(37, 99, 235, 0.95);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            margin-bottom: 4px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            backdrop-filter: blur(4px);
+            animation: floatBubble 2s infinite alternate ease-in-out;
+        }
+
+        /* Khung chứa nhân vật (GIF / 3D / Lottie) */
+        #ai-pet-img-wrap {
+            width: 100px;
+            height: 100px; /* Khớp tỉ lệ vuông cho GIF */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+            will-change: transform;
+        }
+
+        /* Định dạng cho Ảnh GIF / Thẻ img bên trong */
+        #ai-pet-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Model Viewer (Dành cho bản 3D nếu cần dùng lại) */
+        #ai-pet-3d {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+
+        /* Hiệu ứng nhấp nhô bong bóng chữ */
+        @keyframes floatBubble {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* KHUNG CHAT POPUP AI */
         #chat-box {
+            display: none;
+            position: fixed;
+            bottom: 90px;
             width: 350px;
-            height: 480px;
+            max-width: calc(100vw - 30px);
+            height: 430px;
             background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+            z-index: 9999;
             flex-direction: column;
             overflow: hidden;
-            position: absolute;
-            bottom: 68px;
-            left: 0;
             border: 1px solid #e2e8f0;
-            transform-origin: bottom left;
-            z-index: 9999;
-        }
-
-        /* Hiển thị mượt mà khi có class is-active */
-        #chat-box.is-active {
-            display: flex !important;
-            animation: ai-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes ai-slide-up {
-            from {
-                opacity: 0;
-                transform: translateY(16px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            transition: all 0.2s ease-in-out;
         }
     </style>
 </head>
@@ -541,43 +609,46 @@
         </div>
     </section>
 
-    <div id="ai-chat-widget" style="position: fixed; bottom: 20px; left: 20px; z-index: 9990; font-family: system-ui, -apple-system, sans-serif;">
-        <button id="chat-toggle-btn" type="button" aria-label="Mở Trợ lý AI" title="Hỏi AI" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 26px; padding: 0 18px; height: 50px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span id="chat-icon-open" style="font-size: 14px; font-weight: 700;">Hỏi AI</span>
-            <svg id="chat-icon-close" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-
-        <div id="chat-box" style="display: none;">
-            <div style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-weight: 800; font-size: 1.1rem;">AI</span>
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">AI Hỗ Trợ Trực tuyến</div>
-                        <div style="font-size: 0.7rem; opacity: 0.85;">Tìm nội dung hướng dẫn & tra cứu dòng máy</div>
-                    </div>
-                </div>
-                <button id="chat-close-btn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
+    <!-- KHUNG VÙNG CHẠY NGANG MÀN HÌNH -->
+    <div id="fish-aquarium-container">
+        <div id="ai-pet-container">
+            <div class="fish-speech-bubble">
+                Hỏi AI nè! 
             </div>
-
-            <div id="chat-messages" style="flex: 1; padding: 14px; overflow-y: auto; background: #f8fafc; font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
-                <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4;">
-                    Xin chào! Bạn cần tìm hướng dẫn sửa lỗi hay tra cứu tài liệu máy in nào?
-                </div>
-            </div>
-
-            <div style="padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.85rem; background: #f8fafc; color: #0f172a;">
-                <button id="chat-send-btn" type="button" style="background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                </button>
+            <div id="ai-pet-img-wrap">
+                <img src="/static/blind.gif" alt="AI Pet" />
             </div>
         </div>
     </div>
 
+    <!-- KHUNG CHAT AI POPUP -->
+    <div id="chat-box">
+        <div style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🐔</span>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">AI Trợ Lý Máy In</div>
+                    <div style="font-size: 0.7rem; opacity: 0.85;">Máy In Đại Thành</div>
+                </div>
+            </div>
+            <button id="chat-close-btn" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
+        </div>
+
+        <div id="chat-messages" style="flex: 1; padding: 14px; overflow-y: auto; background: #f8fafc; font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: #ffffff; color: #1e293b; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Xin chào! Bạn cần tìm hướng dẫn sửa lỗi hay tra cứu tài liệu máy in nào?
+            </div>
+        </div>
+
+        <div style="padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="chat-input" placeholder="Nhập câu hỏi..." style="flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.85rem; background: #f8fafc; color: #0f172a;">
+            <button id="chat-send-btn" type="button" style="background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+            </button>
+        </div>
+    </div>
     <!-- 3. PANEL BÀI VIẾT GHIM -->
     {% if pinned_guides %}
     <section class="glass-card pinned-panel">
@@ -711,23 +782,10 @@
 <!-- CLIENT JAVASCRIPT LOGIC -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // ----------------------------
-    // TÌM KIẾM & AUTOCOMPLETE
-    // ----------------------------
+    // ----------------------------------------
+    // 1. TÌM KIẾM & ZALO MENU
+    // ----------------------------------------
     const searchInput = document.getElementById('searchInput');
-    const resultsContainer = document.getElementById('liveSearchResults');
-    let debounceTimer;
-
-    function debounce(func, delay = 250) {
-        return (...args) => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
-
-    // ----------------------------
-    // 2. ZALO FLOATING MENU (ĐÃ KHÔI PHỤC)
-    // ----------------------------
     const zaloBtn = document.getElementById('zalo-toggle-btn');
     const zaloMenu = document.getElementById('zalo-menu-box');
     const zaloWidget = document.getElementById('zalo-floating-widget');
@@ -735,69 +793,127 @@ document.addEventListener('DOMContentLoaded', () => {
     zaloBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!zaloMenu) return;
-
-        // Kiểm tra trạng thái hiển thị thực tế
         const isHidden = window.getComputedStyle(zaloMenu).display === 'none';
         zaloMenu.style.display = isHidden ? 'block' : 'none';
     });
 
-    // Tự đóng menu Zalo khi click ra ngoài
     document.addEventListener('click', (e) => {
         if (zaloWidget && !zaloWidget.contains(e.target)) {
             if (zaloMenu) zaloMenu.style.display = 'none';
         }
     });
-    // ----------------------------
-    // AI CHATBOT WIDGET
-    // ----------------------------
-    const toggleBtn = document.getElementById("chat-toggle-btn");
-    const closeBtn = document.getElementById("chat-close-btn");
+
+
+    // ----------------------------------------
+    // 2. AI PET ANIMATION & CHAT POPUP
+    // ----------------------------------------
+    const petContainer = document.getElementById("ai-pet-container");
+    const petImgWrap = document.getElementById("ai-pet-img-wrap");
     const chatBox = document.getElementById("chat-box");
-    const sendBtn = document.getElementById("chat-send-btn");
+    const chatCloseBtn = document.getElementById("chat-close-btn");
+    
+    // Các biến elements cho khung chat gửi tin nhắn
     const chatInput = document.getElementById("chat-input");
     const chatMessages = document.getElementById("chat-messages");
-    const iconOpen = document.getElementById("chat-icon-open");
-    const iconClose = document.getElementById("chat-icon-close");
-    const heroAiBtn = document.getElementById("hero-ai-btn");
+    const sendBtn = document.getElementById("chat-send-btn");
+    const heroAiBtn = document.getElementById("hero-ai-btn"); // Nếu có nút trigger ở giao diện chính
 
-    function openChat() {
-        if (!chatBox) return;
-        chatBox.style.display = "flex";
-        chatBox.classList.add("is-active");
-        if (iconOpen) iconOpen.style.display = "none";
-        if (iconClose) iconClose.style.display = "block";
+    let posX = 30;
+    let posY = 20;
+    let speedX = 0.5;   // Tốc độ bước đi thong thả
+    let direction = 1;  // 1: đi sang phải, -1: đi sang trái
+    let stepAngle = 0;
+    
+    let isIdle = false;
+    let idleTimer = 0;
+    let isChatOpen = false;
+
+    // --- Vòng lặp chuyển động nhân vật ---
+    function animatePet() {
+        if (petContainer && petImgWrap) {
+            const petWidth = petContainer.offsetWidth || 100;
+            const screenWidth = window.innerWidth;
+
+            // Nếu đang mở khung chat thì nhân vật đứng yên nghỉ ngơi
+            if (isChatOpen) {
+                petImgWrap.style.transform = `scaleX(${-direction}) translateY(0px)`;
+            } 
+            else if (isIdle) {
+                idleTimer--;
+                if (idleTimer <= 0) isIdle = false;
+            } 
+            else {
+                posX += speedX * direction;
+                stepAngle += 0.06;
+                const stepBounce = Math.abs(Math.sin(stepAngle)) * 4;
+
+                // Xử lý đụng tường quay đầu
+                if (posX >= screenWidth - petWidth - 15) {
+                    posX = screenWidth - petWidth - 15;
+                    direction = -1;
+                } else if (posX <= 15) {
+                    posX = 15;
+                    direction = 1;
+                }
+
+                // Cập nhật vị trí tọa độ
+                petContainer.style.left = `${posX}px`;
+                petContainer.style.bottom = `${posY}px`;
+
+                // scaleX(-direction): ĐẢO CHIỀU GIÚP NHÂN VẬT KHÔNG BỊ ĐI LÙI
+                petImgWrap.style.transform = `scaleX(${-direction}) translateY(${-stepBounce}px)`;
+
+                // Tỉ lệ ngẫu nhiên đứng lại nghỉ ngơi
+                if (Math.random() < 0.0005) {
+                    isIdle = true;
+                    idleTimer = Math.floor(Math.random() * 60) + 30; //nghỉ từ 30-90 frames
+                }
+            }
+        }
+        requestAnimationFrame(animatePet);
     }
 
-    function closeChat() {
+    // --- Hàm mở/đóng khung chat chung ---
+    function toggleChat(forceState) {
+        isChatOpen = (forceState !== undefined) ? forceState : !isChatOpen;
+        
         if (!chatBox) return;
-        chatBox.style.display = "none";
-        chatBox.classList.remove("is-active");
-        if (iconOpen) iconOpen.style.display = "inline";
-        if (iconClose) iconClose.style.display = "none";
+        
+        if (isChatOpen) {
+            chatBox.style.left = `${Math.min(posX, window.innerWidth - 370)}px`;
+            chatBox.style.display = "flex";
+        } else {
+            chatBox.style.display = "none";
+        }
     }
 
-    function toggleChat() {
-        if (!chatBox) return;
-        const isVisible = chatBox.style.display === "flex" || chatBox.classList.contains("is-active");
-        if (isVisible) closeChat();
-        else openChat();
-    }
+    // Click vào nhân vật để Bật/Tắt chat
+    petContainer?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleChat();
+    });
 
-    toggleBtn?.addEventListener("click", toggleChat);
-    closeBtn?.addEventListener("click", closeChat);
+    // Nút bấm ✕ để đóng chat
+    chatCloseBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleChat(false);
+    });
 
-    // Xử lý bấm "Hỏi AI" cạnh ô tìm kiếm
     heroAiBtn?.addEventListener("click", () => {
-        openChat();
+        toggleChat(true);
         const searchText = searchInput?.value.trim();
         if (searchText && chatInput) {
             chatInput.value = searchText;
-            sendMessage(); // Tự động gửi tin nhắn nếu có văn bản
+            sendMessage();
         } else if (chatInput) {
             chatInput.focus();
         }
     });
 
+
+    // ----------------------------------------
+    // 3. GỬI TIN NHẮN CHATBOT
+    // ----------------------------------------
     async function sendMessage() {
         if (!chatInput || !chatMessages) return;
         const text = chatInput.value.trim();
@@ -860,6 +976,9 @@ document.addEventListener('DOMContentLoaded', () => {
             sendMessage();
         }
     });
+
+    // --- Khởi chạy Animation di chuyển ---
+    animatePet();
 });
 </script>
 </body>
