@@ -155,41 +155,87 @@ def get_admin_profile(auth_id: str) -> Optional[dict]:
 # =========================================================
 
 def authenticate_session(request: Request, response: Optional[Response] = None) -> Optional[dict]:
-    """Xác thực session và kiểm tra xem session có bị hủy từ thiết bị khác không."""
+    """Xác thực session, tự động refresh token nếu hết hạn, và kiểm tra thiết bị."""
     if hasattr(request.state, "user_profile") and request.state.user_profile:
         return request.state.user_profile
 
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
 
-    if not access_token:
+    if not access_token and not refresh_token:
         return None
 
+    user_id_from_jwt = None
+
+    # BƯỚC 1: Kiểm tra Access Token hiện tại
+    if access_token:
+        try:
+            user_resp = supabase.auth.get_user(access_token)
+            if user_resp and user_resp.user:
+                user_id_from_jwt = user_resp.user.id
+        except Exception as exc:
+            logger.info(f"⚠️ Access token hết hạn hoặc lỗi, chuẩn bị refresh: {exc}")
+
+    # BƯỚC 2: TỰ ĐỘNG REFRESH TOKEN (Nếu Access Token hết hạn)
+    if not user_id_from_jwt and refresh_token:
+        try:
+            # Lấy token mới từ Supabase
+            session_resp = supabase.auth.set_session(access_token or "", refresh_token)
+            if session_resp and session_resp.user:
+                user_id_from_jwt = session_resp.user.id
+                
+                new_access_token = session_resp.access_token
+                new_refresh_token = session_resp.refresh_token
+                
+                # Ghi đè Cookie mới lên trình duyệt
+                if response:
+                    set_auth_cookies(response, new_access_token, new_refresh_token)
+                
+                # Cập nhật Hash mới vào bảng user_sessions
+                old_hash = _hash_token(access_token) if access_token else ""
+                new_hash = _hash_token(new_access_token)
+                
+                supabase_admin.table("user_sessions").update(
+                    {"access_token_hash": new_hash}
+                ).eq("access_token_hash", old_hash).execute()
+                
+                # Cập nhật biến access_token để chạy Bước 3
+                access_token = new_access_token
+                
+        except Exception as exc:
+            logger.warning(f"❌ Refresh token thất bại (có thể đã hết hạn 7 ngày): {exc}")
+            return None
+
+    # Nếu cả 2 bước không lấy được User ID -> Bắt buộc Login lại
+    if not user_id_from_jwt:
+        return None
+
+    # BƯỚC 3: Kiểm tra trong Database xem có bị văng do đăng nhập nơi khác không
     try:
         token_hash = _hash_token(access_token)
-        # ✅ Chỉ kiểm tra session hợp lệ thuộc về App LIBRARY
         session_check = (
             supabase_admin.table("user_sessions")
-            .select("id, user_id, auth_id")
+            .select("id, user_id, auth_id") # Sửa lỗi: Cần select user_id/auth_id để kiểm tra
             .eq("app_code", APP_CODE)
             .eq("access_token_hash", token_hash)
             .limit(1)
             .execute()
         )
         if not session_check.data:
-            return None
-        
+            return None # Bị xóa khỏi DB do chọn "Đăng xuất thiết bị khác"
+            
         session_data = session_check.data[0]
-        # ✅ Ưu tiên lấy auth_id từ request.state, nếu không có sẽ tự lấy từ DB session
         auth_id = getattr(request.state, "auth_id", None) or session_data.get("user_id") or session_data.get("auth_id")
         
-        if not auth_id:
+        if not auth_id or auth_id != user_id_from_jwt:
             return None
 
     except Exception as exc:
-        logger.error(f"❌ Lỗi xác thực session: {exc}")
+        logger.error(f"❌ Lỗi truy vấn session DB: {exc}")
         return None
 
-    user_profile = get_admin_profile(auth_id)
+    # BƯỚC 4: Lấy thông tin Profile
+    user_profile = get_admin_profile(user_id_from_jwt)
     if not user_profile:
         return None
 
@@ -260,7 +306,6 @@ def handle_login(
         if not user_profile:
             return render_login_error(request, "Tài khoản chưa được cấp quyền.", status.HTTP_403_FORBIDDEN)
 
-        # ✅ FIX: Chỉ quét các session thuộc riêng App LIBRARY để phát hiện xung đột
         existing_sessions = (
             supabase_admin.table("user_sessions")
             .select("id, user_agent, created_at")
